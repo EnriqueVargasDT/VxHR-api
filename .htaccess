@@ -1,0 +1,8 @@
+# .htaccess
+
+RewriteEngine On
+
+# Reescribe las URL para que apunten a index.php sin necesidad de poner .php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.php/$1 [QSA,L]
