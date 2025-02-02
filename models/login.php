@@ -1,32 +1,43 @@
 <?php
 require_once '../config/config.php';
+require_once '../libs/php-jwt/src/JWT.php';
+use \Firebase\JWT\JWT;
 
 class Login {
     private $dbConnection;
+    private $secretKey;
 
     public function __construct() {
         $this->dbConnection = dbConnection();
+        $this->secretKey = "clave_super_secreta";
     }
 
-    public function validate($username, $password, $iv) {
+    public function validate($username, $password) {
         try {
-            // Insert $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-            $decryptedPassword = openssl_decrypt($password, 'AES-256-CBC', '4tdySvjGanV7ya7mkUqTzp4XBBS3gCf3', 0, hex2bin($iv));
             $sql = "SELECT * FROM dbo.employees_auth WHERE username = '$username'";
             $stmt = $this->dbConnection->query($sql);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            $valid = array();
-            if (password_verify($decryptedPassword, $result['password'])) {
-                $valid['valid'] = true;
-                $valid['pk_employee_id'] = $result['pk_employee_id'];
+            if (password_verify($password, $result['password'])) {
+                $payload = [
+                    'iat' => time(),
+                    'exp' => time() + 3600, // Token válido por 1 hora
+                    'sub' => $username
+                ];
+                
+                // Generar el JWT con la librería JWT
+                $jwt = JWT::encode($payload, $this->secretKey, 'HS256');
+                echo json_encode([
+                    'token' => $jwt,
+                    'pk_employee_id' => $result['pk_employee_id']
+                ]);
             }
             else {
-                $valid['valid'] = false;
+                http_response_code(401);
+                echo json_encode(['error' => 'Contraseña incorrecta.']);
             }
-            echo json_encode($valid);
         }
         catch(error) {
-            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            echo json_encode(array('error' => true, 'message' => 'Ha ocurrido un error no conocido.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
         exit();

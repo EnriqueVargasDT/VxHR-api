@@ -1,18 +1,18 @@
 <?php
-require_once '../controllers/temperatureController.php';
 require_once '../controllers/loginController.php';
-require_once '../controllers/employeeController.php';
+require_once '../controllers/userController.php';
+require_once '../controllers/temperatureController.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
-$urlParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
+$requestUriParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
 
-if ($urlParts[0] === 'api' && strpos($urlParts[1], 'login') !== false) {
+if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'login') !== false) {
     $loginController = new LoginController();
     switch ($method) {
         case 'POST':
             $body = json_decode(file_get_contents('php://input'), true);
             if (isset($body['username']) && isset($body['password'])) {
-                echo $loginController->validate($body['username'], $body['password'], $body['iv']);
+                echo $loginController->validate($body['username'], $body['password']);
             }
             else {
                 echo json_encode(['error' => true, 'message' => 'No se recibió un usuario y/o contraseña.']);
@@ -23,20 +23,20 @@ if ($urlParts[0] === 'api' && strpos($urlParts[1], 'login') !== false) {
             break;
     }
 }
-else if ($urlParts[0] === 'api' && strpos($urlParts[1], 'employee') !== false) {
-    $employeeController = new EmployeeController();
+else if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'user') !== false) {
+    $userController = new UserController();
     switch ($method) {
         case 'GET':
-            if (isset($urlParts[2])) {
-                if (is_numeric($requestUri[2])) {
-                    echo $employeeController->getById($requestUri[2]);
+            if (isset($requestUriParts[2])) {
+                if (is_numeric($requestUriParts[2])) {
+                    echo $userController->getById($requestUriParts[2]);
                 }
                 else {
                     echo json_encode(['error' => true, 'message' => 'No se recibió un id de empleado válido.']);
                 }
             }
             else {
-                echo $employeeController->getAll();
+                echo $userController->getAll();
             }
             break;
         default:
@@ -44,7 +44,7 @@ else if ($urlParts[0] === 'api' && strpos($urlParts[1], 'employee') !== false) {
             break;
     }
 }
-else if ($urlParts[0] === 'api' && strpos($urlParts[1], 'temperature') !== false) {
+else if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'temperature') !== false) {
     echo TemperatureController::get();
 }
 else {

@@ -1,7 +1,7 @@
 <?php
 require_once '../config/config.php';
 
-class Employee {
+class User {
     private $dbConnection;
 
     public function __construct() {
@@ -10,14 +10,14 @@ class Employee {
 
     public function getAll() {
         try {
-            $sql = "SELECT * FROM dbo.employees";
+            $sql = "SELECT * FROM dbo.users";
             $stmt = $this->dbConnection->query($sql);
-            $employees = array();
+            $users = array();
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $employees[] = $row;
+                $users[] = $row;
             }
 
-            echo json_encode($employees);
+            echo json_encode($users);
         }
         catch(error) {
             echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -26,12 +26,12 @@ class Employee {
         exit();
     }
 
-    public function getById($pk_employee_id) {
+    public function getById($pk_user_id) {
         try {
-            $sql = "SELECT * FROM dbo.employees WHERE pk_employee_id = $pk_employee_id";
+            $sql = "SELECT *, CONCAT(first_name, ' ' , last_name_1, ' ', last_name_2) AS full_name FROM dbo.users WHERE pk_user_id = $pk_employee_id";
             $stmt = $this->dbConnection->query($sql);
-            $employee = $stmt->fetch(PDO::FETCH_ASSOC);
-            echo json_encode($employee);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            echo json_encode($user);
         }
         catch(error) {
             echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
