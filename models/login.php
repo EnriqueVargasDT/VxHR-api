@@ -28,7 +28,7 @@ class Login {
                 $jwt = JWT::encode($payload, $this->secretKey, 'HS256');
                 echo json_encode([
                     'token' => $jwt,
-                    'pk_employee_id' => $result['pk_employee_id']
+                    'pk_user_id' => $result['pk_user_id']
                 ]);
             }
             else {
