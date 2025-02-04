@@ -9,35 +9,34 @@ class Login {
 
     public function __construct() {
         $this->dbConnection = dbConnection();
-        $this->secretKey = "clave_super_secreta";
+        $this->secretKey = getenv('APP_SECRET_KEY');
     }
 
-    public function validate($username, $password) {
+    public function validate($username, $password, $rememberMe) {
         try {
             $sql = "SELECT * FROM dbo.users_auth WHERE username = '$username'";
             $stmt = $this->dbConnection->query($sql);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($result) {
-                if (password_verify($password, $result['password'])) {
-                    $payload = [
+                $decryptedPassword = $this->decryptedPassword($password);
+                if (password_verify($decryptedPassword, $result['password'])) {
+                    $expTime = $rememberMe ? time() + (30 * 24 * 60 * 60) : time() + (60 * 60);
+                    $payload = array(
                         'iat' => time(),
-                        'exp' => time() + 3600, // Token válido por 1 hora
+                        'exp' => $rememberMe ? time() + (3 * 24 * 60 * 60) /* Token válido por 3 días */ : time() + 3600 /* Token válido por 1 hora */,
                         'sub' => $username
-                    ];
+                    );
                     
                     // Generar el JWT con la librería JWT
                     $jwt = JWT::encode($payload, $this->secretKey, 'HS256');
                     setcookie('token', $jwt, [
                         'expires' => $payload['exp'],
                         'path' => '/',
-                        'secure' => false, // https o  http
-                        'httponly' => false,
+                        'secure' => true, // https o  http
+                        'httponly' => true,
                         'samesite' => 'Strict',
                     ]);
-                    echo json_encode([
-                        'ok' => true,
-                        'pk_user_id' => $result['pk_user_id']
-                    ]);
+                    echo json_encode(array('ok' => true, 'pk_user_id' => $result['pk_user_id']));
                 }
                 else {
                     http_response_code(401);
@@ -55,6 +54,13 @@ class Login {
         }
 
         exit();
+    }
+
+    private function decryptedPassword($password) {
+        $dataBase64 = base64_decode($password);
+        $iv = substr($dataBase64, 0, 16);
+        $encrypted = substr($dataBase64, 16);
+        return openssl_decrypt($encrypted, 'AES-256-CBC', $this->secretKey, OPENSSL_RAW_DATA, $iv);
     }
 }
 ?>
