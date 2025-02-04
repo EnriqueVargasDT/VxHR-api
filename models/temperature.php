@@ -17,7 +17,7 @@ class Temperature {
             $responseLatLong = curl_exec($initLatLongWeatherAPI);
             if ($responseLatLong === false) {
                 http_response_code(500);
-                echo json_encode(array('error' => true, 'message' => 'Error al intentar obtener los datos de la ciudad de acuerdo a las coordenadas proporcionadas.'));
+                echo json_encode(array('error' => true, 'message' => 'Error al intentar obtener los datos de la ciudad de acuerdo a las coordenadas proporcionadas.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
             curl_close($initLatLongWeatherAPI);
@@ -34,7 +34,7 @@ class Temperature {
                 $responseTemperature = curl_exec($initTemperaturWeatherAPI);
                 if ($responseTemperature === false) {
                     http_response_code(500);
-                    echo json_encode(array('error' => true, 'message' => 'Error al intentar obtener la temperatura de la ciudad.'));
+                    echo json_encode(array('error' => true, 'message' => 'Error al intentar obtener la temperatura de la ciudad.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
 
                 curl_close($initTemperaturWeatherAPI);
@@ -43,7 +43,7 @@ class Temperature {
         }
         else {
             http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => 'Error al intentar obtener la temperatura: latitud/longitud no válida.'));
+            echo json_encode(array('error' => true, 'message' => 'Error al intentar obtener la temperatura: latitud/longitud no válida.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
         exit();

@@ -19,7 +19,7 @@ class User {
 
             echo json_encode($users);
         }
-        catch(error) {
+        catch(Exception $error) {
             http_response_code(500);
             echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
@@ -34,7 +34,7 @@ class User {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             echo json_encode($user);
         }
-        catch(error) {
+        catch(Exception $error) {
             http_response_code(500);
             echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }

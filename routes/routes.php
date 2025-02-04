@@ -15,7 +15,8 @@ if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'login') !== fa
                 echo $loginController->validate($body['username'], $body['password']);
             }
             else {
-                echo json_encode(['error' => true, 'message' => 'No se recibió un usuario y/o contraseña.']);
+                http_response_code(500);
+                echo json_encode(array('error' => true, 'message' => 'No se recibió un usuario y/o contraseña.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
             break;
         default:
@@ -24,7 +25,6 @@ if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'login') !== fa
     }
 }
 else if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'user') !== false) {
-    validateToken();
     $userController = new UserController();
     switch ($method) {
         case 'GET':
@@ -33,7 +33,8 @@ else if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'user') !=
                     echo $userController->getById($requestUriParts[2]);
                 }
                 else {
-                    echo json_encode(['error' => true, 'message' => 'No se recibió un id de empleado válido.']);
+                    http_response_code(500);
+                    echo json_encode(array('error' => true, 'message' => 'No se recibió un id de empleado válido.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
             }
             else {
@@ -46,18 +47,10 @@ else if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'user') !=
     }
 }
 else if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'temperature') !== false) {
-    validateToken();
     echo TemperatureController::get();
 }
 else {
-    echo json_encode(['error' => true, 'message' => 'Ruta no encontrada.']);
-}
-
-function validateToken () {
-    if (!isset($_COOKIE['token'])) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Usuario no autenticado', 'cookie' => $_COOKIE]);
-        exit();
-    }
+    http_response_code(404);
+    echo json_encode(array('error' => true, 'message' => 'Ruta no encontrada.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }
 ?>
