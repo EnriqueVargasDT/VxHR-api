@@ -24,6 +24,7 @@ if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'login') !== fa
     }
 }
 else if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'user') !== false) {
+    validateToken();
     $userController = new UserController();
     switch ($method) {
         case 'GET':
@@ -45,9 +46,18 @@ else if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'user') !=
     }
 }
 else if ($requestUriParts[0] === 'api' && strpos($requestUriParts[1], 'temperature') !== false) {
+    validateToken();
     echo TemperatureController::get();
 }
 else {
     echo json_encode(['error' => true, 'message' => 'Ruta no encontrada.']);
+}
+
+function validateToken () {
+    if (!isset($_COOKIE['token'])) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Usuario no autenticado', 'cookie' => $_COOKIE]);
+        exit();
+    }
 }
 ?>

@@ -14,7 +14,7 @@ class Login {
 
     public function validate($username, $password) {
         try {
-            $sql = "SELECT * FROM dbo.employees_auth WHERE username = '$username'";
+            $sql = "SELECT * FROM dbo.users_auth WHERE username = '$username'";
             $stmt = $this->dbConnection->query($sql);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (password_verify($password, $result['password'])) {
@@ -26,17 +26,25 @@ class Login {
                 
                 // Generar el JWT con la librería JWT
                 $jwt = JWT::encode($payload, $this->secretKey, 'HS256');
+                setcookie('token', $jwt, [
+                    "expires" => $payload['exp'],
+                    "path" => "/",
+                    "secure" => false, // https o  http
+                    "httponly" => false,
+                    "samesite" => "Strict",
+                ]);
                 echo json_encode([
-                    'token' => $jwt,
+                    'ok' => true,
                     'pk_user_id' => $result['pk_user_id']
                 ]);
             }
             else {
                 http_response_code(401);
-                echo json_encode(['error' => 'Contraseña incorrecta.']);
+                echo json_encode(['error' => true, 'message' => 'Credenciales inválidas.']);
             }
         }
         catch(error) {
+            http_response_code(500);
             echo json_encode(array('error' => true, 'message' => 'Ha ocurrido un error no conocido.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
