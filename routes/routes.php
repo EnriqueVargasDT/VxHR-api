@@ -42,7 +42,7 @@ else {
         }
     }
     else {
-        unauthorized();
+        unAuthorized();
     }
 }
 
@@ -137,7 +137,7 @@ function methodNotAllowed() {
     exit();
 }
 
-function unauthorized() {
+function unAuthorized() {
     http_response_code(401);
     echo json_encode(array('error' => true, 'message' => 'No autorizado.'));
     exit();
