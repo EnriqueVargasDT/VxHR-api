@@ -39,6 +39,7 @@ class Login {
                     echo json_encode(array('ok' => true, 'pk_user_id' => $result['pk_user_id']));
                 }
                 else {
+                    echo http_response_code();
                     http_response_code(401);
                     echo json_encode(array('error' => true, 'type' => 'password', 'message' => 'Contraseña inválida.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }

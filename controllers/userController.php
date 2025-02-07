@@ -2,18 +2,18 @@
 require_once '../models/user.php';
 
 class UserController {
+    private $user;
+
+    public function __construct() {
+        $this->user = new User();
+    }
+
     public function getAll() {
-        $user = new User();
-        $result = $user->getAll();
-        echo json_encode($result);
-        exit();
+        $this->user->getAll();
     }
 
     public function getById($pk_user_id) {
-        $user = new User();
-        $result = $user->getById($pk_user_id);
-        echo json_encode($result);
-        exit();
+        $this->user->getById($pk_user_id);
     }
 }
 ?>

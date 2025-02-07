@@ -9,21 +9,15 @@ class LoginController {
     }
 
     public function validate($username, $password, $rememberMe) {
-        $result = $this->login->validate($username, $password, $rememberMe);
-        echo json_encode($result);
-        exit();
+        $this->login->validate($username, $password, $rememberMe);
     }
 
     public function passwordRecovery($username) {
-        $result = $this->login->passwordRecovery($username);
-        echo json_encode($result);
-        exit();
+        $this->login->passwordRecovery($username);
     }
 
     public function passwordUpdate($token, $newPassword, $confirmPassword) {
-        $result = $this->login->passwordUpdate($token, $newPassword, $confirmPassword);
-        echo json_encode($result);
-        exit();
+        $this->login->passwordUpdate($token, $newPassword, $confirmPassword);
     }
 }
 ?>
