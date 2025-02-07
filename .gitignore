@@ -2,7 +2,7 @@
 
 # dependencies
 /config
-/models/email
+/models/email.php
 # testing
 
 # production
