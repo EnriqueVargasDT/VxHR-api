@@ -14,14 +14,14 @@ class Token {
     public function validate() {
         try {
             if (!isset($_COOKIE['token'])) {
-                return array('error' => true, 'message' => 'Usuario no autenticado');
+                return array('error' => true, 'message' => 'Usuario no autenticado.');
             }
             
             $decoded = JWT::decode($_COOKIE['token'], new Key($this->secretKey, 'HS256'));
-            return array('ok' => true, 'message' => 'Token válido');
+            return array('ok' => true, 'message' => 'Token válido.');
         }
         catch (Exception $error) {
-            return array('error' => true, 'message' => 'Token inválido');
+            return array('error' => true, 'message' => 'Token inválido.');
         }
     }
 }

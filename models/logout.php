@@ -10,10 +10,10 @@ class Logout {
                 'samesite' => 'Strict'
             ]);
             
-            echo json_encode(array('ok' => true, 'message' => 'Sesión cerrada.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            echo json_encode(array('ok' => true, 'message' => 'Sesión cerrada correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
         catch(Exception $error) {
-            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            echo json_encode(array('error' => true, 'message' => $error));
         }
 
         exit();

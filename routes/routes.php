@@ -14,12 +14,30 @@ if ($requestUriParts[0] === 'api') {
         $loginController = new LoginController();
         switch ($method) {
             case 'POST':
-                if (isset($body['username']) && isset($body['password'])) {
-                    echo $loginController->validate($body['username'], $body['password'], $body['rememberMe']);
+                if (isset($requestUriParts[2])) {
+                    if (is_numeric($requestUriParts[2])) {
+                        echo $userController->getById($requestUriParts[2]);
+                    }
+                    else {
+                        if (strpos($requestUriParts[2], 'password_recovery') !== false) {
+                            echo $loginController->passwordRecovery($body['username']);
+                        }
+                        else if (strpos($requestUriParts[2], 'password_update') !== false) {
+                            echo $loginController->passwordUpdate($body['token'], $body['newPassword'], $body['confirmPassword']);
+                        }
+                        else {
+                            resourceNotAllowed();
+                        }
+                    }
                 }
                 else {
-                    http_response_code(500);
-                    echo json_encode(array('error' => true, 'message' => 'No se recibió un usuario y/o contraseña.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    if (isset($body['username']) && isset($body['password'])) {
+                        echo $loginController->validate($body['username'], $body['password'], $body['rememberMe']);
+                    }
+                    else {
+                        http_response_code(500);
+                        echo json_encode(array('error' => true, 'message' => 'No se recibió un usuario y/o contraseña.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    }
                 }
                 break;
             default:
@@ -28,7 +46,6 @@ if ($requestUriParts[0] === 'api') {
         }
     }
     else {
-        
         $tokenController = new TokenController();
         $validateToken = $tokenController->validate();
 

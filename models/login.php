@@ -45,12 +45,12 @@ class Login {
             }
             else {
                 http_response_code(401);
-                echo json_encode(array('error' => true, 'type' => 'username', 'message' => 'Usuario no encontrado.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                echo json_encode(array('error' => true, 'type' => 'username', 'message' => 'Usuario no encontrado.'));
             }
         }
         catch(Exception $error) {
             http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            echo json_encode(array('error' => true, 'message' => $error));
         }
 
         exit();
@@ -61,6 +61,117 @@ class Login {
         $iv = substr($dataBase64, 0, 16);
         $encrypted = substr($dataBase64, 16);
         return openssl_decrypt($encrypted, 'AES-256-CBC', $this->secretKey, OPENSSL_RAW_DATA, $iv);
+    }
+
+    public function passwordRecovery($username) {
+        try {
+            if (trim(isset($username))) {
+                $sql1 = "SELECT UsersAuth.*, CONCAT(Users.first_name, ' ', Users.last_name_1, ' ', Users.last_name_2) AS user_full_name FROM dbo.users_auth UsersAuth JOIN dbo.users ON UsersAuth.pk_user_id = Users.pk_user_id WHERE UsersAuth.username = '$username'";
+                $stmt1 = $this->dbConnection->query($sql1);
+                $result = $stmt1->fetch(PDO::FETCH_ASSOC);
+                if (isset($result['pk_user_auth_id'])) {
+                    $sql2 = 'DELETE FROM dbo.password_resets WHERE username = :username;';
+                    $stmt2 = $this->dbConnection->prepare($sql2);
+                    $stmt2->bindParam(':username', $username, PDO::PARAM_STR);
+                    if ($stmt2->execute()) {
+                        $token = password_hash($username, PASSWORD_BCRYPT);
+                        $sql3 = 'INSERT INTO dbo.password_resets (username, token, created_at) VALUES(:username, :token, GETDATE());';
+                        $stmt3 = $this->dbConnection->prepare($sql3);
+                        $stmt3->bindParam(':username', $username, PDO::PARAM_STR);
+                        $stmt3->bindParam(':token', $token, PDO::PARAM_STR);
+                        $stmt3->execute();
+                        if ($stmt3->rowCount() > 0) {
+                            // Enviar correo de confirmación
+                            require_once '../models/email.php';
+                            $email = new Email();
+                            $subject = 'Solicitud de restablecimiento de contraseña';
+                            $template = file_get_contents("../templates/password_recovery_email.html");
+                            $template = str_replace('{{username}}', $result['user_full_name'], $template);
+                            $template = str_replace('{{email}}', $username, $template);
+                            $template = str_replace('{{reset_link}}', $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].":3000/restablecer-contraseña?token=$token", $template);
+                            $message = $template;
+                            $send = $email->send($username, $subject, $message);
+                            if ($send) {
+                                echo json_encode(array('ok' => true, 'message' => 'Correo electrónico enviado correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                            }
+                        }
+                        else {
+                            http_response_code(500);
+                            echo json_encode(array('error' => true, 'message' => 'El correo electrónico no pudo ser generado. Intentar nuevamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                        }
+                    }
+                }
+                else {
+                    http_response_code(500);
+                    echo json_encode(array('error' => true, 'message' => 'El correo electrónico proporcionado no esta registrado en la plataforma.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                }
+            }
+            else {
+                http_response_code(500);
+                echo json_encode(array('error' => true, 'message' => 'No se recibió un correo electrónico válido.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+        }
+        catch(Exception $error) {
+            http_response_code(500);
+            echo json_encode(array('error' => true, 'message' => $error));
+        }
+
+        exit();
+    }
+
+    public function passwordUpdate($token, $newPassword, $confirmPassword) {
+        try {
+            if (isset($token)) {
+                $sql1 = "SELECT TOP 1 username FROM dbo.password_resets WHERE token = '$token'";
+                $stmt1 = $this->dbConnection->query($sql1);
+                $result = $stmt1->fetch(PDO::FETCH_ASSOC);
+                if (isset($result['username'])) {
+                    if (isset($newPassword) && isset($confirmPassword)) {
+                        if ($newPassword === $confirmPassword) {
+                            $encryptedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+                            $sql2 = 'UPDATE dbo.users_auth SET password = :password WHERE username = :username';
+                            $stmt2 = $this->dbConnection->prepare($sql2);
+                            $stmt2->bindParam(':password', $encryptedPassword, PDO::PARAM_STR);
+                            $stmt2->bindParam(':username', $result['username'], PDO::PARAM_STR);
+                            $stmt2->execute();
+                            if ($stmt2->rowCount() > 0) {
+                                $sql3 = 'DELETE FROM dbo.password_resets WHERE username = :username;';
+                                $stmt3 = $this->dbConnection->prepare($sql3);
+                                $stmt3->bindParam(':username', $result['username'], PDO::PARAM_STR);
+                                $stmt3->execute();
+                                echo json_encode(array('ok' => true, 'message' => 'La contraseña ha sido actualizada correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                            }
+                            else {
+                                http_response_code(500);
+                                echo json_encode(array('error' => true, 'message' => 'No pudo ser actualizada la contraseña. Intentar nuevamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                            }
+                        }
+                        else {
+                            http_response_code(500);
+                            echo json_encode(array('error' => true, 'message' => 'La contraseña no coincide.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                        }
+                    }
+                    else {
+                        http_response_code(500);
+                        echo json_encode(array('error' => true, 'message' => 'La contraseña proporcionada no es válida.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    }
+                }
+                else {
+                    http_response_code(500);
+                    echo json_encode(array('error' => true, 'message' => 'El token ha caducado.'));
+                }
+            }
+            else {
+                http_response_code(500);
+                echo json_encode(array('error' => true, 'message' => 'El token es inválido.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+        }
+        catch(Exception $error) {
+            http_response_code(500);
+            echo json_encode(array('error' => true, 'message' => $error));          
+        }
+
+        exit();
     }
 }
 ?>
