@@ -17,11 +17,11 @@ class User {
                 $users[] = $row;
             }
 
-            echo json_encode($users);
+            echo json_encode(array('ok' => true, 'users' => $users));
         }
         catch(Exception $error) {
             http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error));
+            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
         }
 
         exit();
@@ -32,7 +32,13 @@ class User {
             $sql = "SELECT Users.*, CONCAT(Users.first_name, ' ' , Users.last_name_1, ' ', Users.last_name_2) AS full_name, MS.marital_status, RS.relationship AS emergency_relationship FROM dbo.users Users JOIN dbo.marital_status MS ON Users.pk_marital_status_id = MS.pk_marital_status_id JOIN dbo.relationships RS ON Users.pk_emergency_relationship_id = RS.pk_relationship_id WHERE Users.pk_user_id = $pk_user_id";
             $stmt = $this->dbConnection->query($sql);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            echo json_encode($user);
+            if ($user) {
+                echo json_encode(array('ok' => true, 'user' => $user));
+            }
+            else {
+                http_response_code(500);
+                echo json_encode(array('error' => true, 'message' => 'No se encontró al usuario en la plataforma'), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);    
+            }
         }
         catch(Exception $error) {
             http_response_code(500);

@@ -18,7 +18,7 @@ class Token {
             }
             
             $decoded = JWT::decode($_COOKIE['token'], new Key($this->secretKey, 'HS256'));
-            return array('ok' => true, 'message' => 'Token válido.');
+            return array('ok' => true, 'message' => 'Token válido.', 'role' => $decoded->role, );
         }
         catch (Exception $error) {
             return array('error' => true, 'message' => 'Token inválido.');

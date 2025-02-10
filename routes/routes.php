@@ -1,6 +1,7 @@
 <?php
 require_once '../controllers/tokenController.php';
 require_once '../controllers/loginController.php';
+require_once '../controllers/roleController.php';
 require_once '../controllers/logoutController.php';
 require_once '../controllers/userController.php';
 require_once '../controllers/temperatureController.php';
@@ -27,6 +28,9 @@ else {
 
     if (isset($validateToken['ok'])) {
         switch ($route) {
+            case strpos($route, 'role') !== false:
+                role($method, $subroute, $body);
+                break;
             case strpos($route, 'user') !== false:
                 user($method, $subroute, $body);
                 break;
@@ -81,6 +85,23 @@ function login($method, $subroute, $body) {
     }
 }
 
+function role($method, $subroute, $body) {
+    $roleController = new RoleController();
+    switch ($method) {
+        case 'GET':
+            if (isset($subroute)) {
+                pathNotFound();
+            }
+            else {
+                $roleController->get();
+            }
+            break;
+        default:
+            methodNotAllowed();
+            break;
+    }
+}
+
 function user($method, $subroute, $body) {
     $userController = new UserController();
     switch ($method) {
@@ -126,26 +147,24 @@ function logout($method) {
 }
 
 function pathNotFound() {
-    http_response_code(404);
-    echo json_encode(array('error' => true, 'message' => 'Ruta no encontrada.'));
-    exit();
+    sendJsonResponse(404, 'Ruta no encontrada.');
 }
 
 function methodNotAllowed() {
-    http_response_code(405);
-    echo json_encode(array('error' => true, 'message' => 'Método no permitido.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit();
+    sendJsonResponse(405, 'Método no permitido.');
 }
 
 function unAuthorized() {
-    http_response_code(401);
-    echo json_encode(array('error' => true, 'message' => 'No autorizado.'));
-    exit();
+    sendJsonResponse(401, 'No autorizado.');
 }
 
 function internalServerError($message = null) {
-    http_response_code(500);
-    echo json_encode(array('error' => true, 'message' => $message ?? 'Error interno de servidor.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    sendJsonResponse(500, $message ?? 'Error interno de servidor.');
+}
+
+function sendJsonResponse($statusCode, $message) {
+    http_response_code($statusCode);
+    echo json_encode(array('error' => true, 'message' => $message), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
     exit();
 }
 ?>

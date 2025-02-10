@@ -14,8 +14,8 @@ class Login {
 
     public function validate($username, $password, $rememberMe) {
         try {
-            $sql = "SELECT * FROM dbo.users_auth WHERE username = '$username'";
-            $stmt = $this->dbConnection->query($sql);
+            $sql1 = "SELECT TOP 1 * FROM dbo.users_auth WHERE username = '$username'";
+            $stmt = $this->dbConnection->query($sql1);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($result) {
                 $decryptedPassword = $this->decryptedPassword($password);
@@ -24,7 +24,8 @@ class Login {
                     $payload = array(
                         'iat' => time(),
                         'exp' => $rememberMe ? time() + (3 * 24 * 60 * 60) /* Token válido por 3 días */ : time() + 3600 /* Token válido por 1 hora */,
-                        'sub' => $username
+                        'sub' => $username,
+                        'role' => $result['pk_role_id'], 
                     );
                     
                     // Generar el JWT con la librería JWT
@@ -36,10 +37,21 @@ class Login {
                         'httponly' => true,
                         'samesite' => 'Strict',
                     ]);
-                    echo json_encode(array('ok' => true, 'pk_user_id' => $result['pk_user_id']));
+
+                    // Actualizar la fecha de último inicio de sesión:
+                    $sql2 = 'UPDATE [dbo].[users_auth] SET last_access_at = GETDATE() WHERE pk_user_auth_id = :pk_user_auth_id AND pk_user_id = :pk_user_id;';
+                    $stmt2 = $this->dbConnection->prepare($sql2);
+                    $stmt2->bindParam(':pk_user_auth_id', $result['pk_user_auth_id'], PDO::PARAM_INT);
+                    $stmt2->bindParam(':pk_user_id', $result['pk_user_id'], PDO::PARAM_INT);
+                    if ($stmt2->execute()) {
+                        echo json_encode(array('ok' => true, 'pk_user_id' => $result['pk_user_id'], 'pk_role_id' => $result['pk_role_id'], ));
+                    }
+                    else {
+                        http_response_code(500);
+                        echo json_encode(array('error' => true, 'message' => 'Error al intentar actualizar la fecha de inicio de sesión.'), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+                    }
                 }
                 else {
-                    echo http_response_code();
                     http_response_code(401);
                     echo json_encode(array('error' => true, 'type' => 'password', 'message' => 'Contraseña inválida.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 }
@@ -51,7 +63,7 @@ class Login {
         }
         catch(Exception $error) {
             http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error));
+            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
         }
 
         exit();
@@ -114,7 +126,7 @@ class Login {
         }
         catch(Exception $error) {
             http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error));
+            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
         }
 
         exit();
@@ -123,10 +135,10 @@ class Login {
     public function passwordUpdate($token, $newPassword, $confirmPassword) {
         try {
             if (isset($token)) {
-                $sql1 = "SELECT TOP 1 username FROM dbo.password_resets WHERE token = '$token'";
+                $sql1 = "SELECT TOP 1 * FROM dbo.password_resets WHERE token = '$token' AND DATEADD(HOUR, 1, created_at) > GETDATE()";
                 $stmt1 = $this->dbConnection->query($sql1);
                 $result = $stmt1->fetch(PDO::FETCH_ASSOC);
-                if (isset($result['username'])) {
+                if (isset($result['pk_password_reset_id'])) {
                     if (isset($newPassword) && isset($confirmPassword)) {
                         if ($newPassword === $confirmPassword) {
                             $encryptedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
@@ -169,7 +181,7 @@ class Login {
         }
         catch(Exception $error) {
             http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error));          
+            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
         }
 
         exit();
