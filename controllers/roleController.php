@@ -8,8 +8,12 @@ class RoleController {
         $this->role = new Role();
     }
 
-    public function get() {
-        $this->role->get();
+    public function getBySession() {
+        $this->role->getBySession();
+    }
+
+    public function getCatalog() {
+        $this->role->getCatalog();
     }
 }
 ?>

@@ -90,10 +90,15 @@ function role($method, $subroute, $body) {
     switch ($method) {
         case 'GET':
             if (isset($subroute)) {
-                pathNotFound();
+                if (strpos($subroute, 'catalog') !== false) {
+                    $roleController->getCatalog();    
+                }
+                else {
+                    pathNotFound();
+                }
             }
             else {
-                $roleController->get();
+                $roleController->getBySession();
             }
             break;
         default:
