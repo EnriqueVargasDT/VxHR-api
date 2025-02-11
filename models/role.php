@@ -16,7 +16,7 @@ class Role {
     public function getBySession() {
         try {
             $decoded = $this->token->validate();
-            echo json_encode(array('ok' => true, 'message' => 'Rol encontrado', 'role' => $decoded['role'], ), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+            echo json_encode(array('ok' => true, 'role' => $decoded['role'], ), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
         }
         catch (Exception $error) {
             http_response_code(500);

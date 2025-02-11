@@ -25,7 +25,7 @@ class Login {
                         'iat' => time(),
                         'exp' => $rememberMe ? time() + (3 * 24 * 60 * 60) /* Token válido por 3 días */ : time() + 3600 /* Token válido por 1 hora */,
                         'sub' => $username,
-                        'role' => $result['pk_role_id'], 
+                        'role' => $result['fk_role_id'], 
                     );
                     
                     // Generar el JWT con la librería JWT
@@ -39,12 +39,12 @@ class Login {
                     ]);
 
                     // Actualizar la fecha de último inicio de sesión:
-                    $sql2 = 'UPDATE [dbo].[users_auth] SET last_access_at = GETDATE() WHERE pk_user_auth_id = :pk_user_auth_id AND pk_user_id = :pk_user_id;';
+                    $sql2 = 'UPDATE [dbo].[users_auth] SET last_access_at = GETDATE() WHERE pk_user_auth_id = :pk_user_auth_id AND fk_user_id = :fk_user_id;';
                     $stmt2 = $this->dbConnection->prepare($sql2);
                     $stmt2->bindParam(':pk_user_auth_id', $result['pk_user_auth_id'], PDO::PARAM_INT);
-                    $stmt2->bindParam(':pk_user_id', $result['pk_user_id'], PDO::PARAM_INT);
+                    $stmt2->bindParam(':fk_user_id', $result['fk_user_id'], PDO::PARAM_INT);
                     if ($stmt2->execute()) {
-                        echo json_encode(array('ok' => true, 'pk_user_id' => $result['pk_user_id'], 'pk_role_id' => $result['pk_role_id'], ));
+                        echo json_encode(array('ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], ));
                     }
                     else {
                         http_response_code(500);
@@ -79,7 +79,7 @@ class Login {
     public function passwordRecovery($username) {
         try {
             if (trim(isset($username))) {
-                $sql1 = "SELECT UsersAuth.*, CONCAT(Users.first_name, ' ', Users.last_name_1, ' ', Users.last_name_2) AS user_full_name FROM dbo.users_auth UsersAuth JOIN dbo.users ON UsersAuth.pk_user_id = Users.pk_user_id WHERE UsersAuth.username = '$username'";
+                $sql1 = "SELECT UsersAuth.*, CONCAT(Users.first_name, ' ', Users.last_name_1, ' ', Users.last_name_2) AS user_full_name FROM dbo.users_auth UsersAuth JOIN dbo.users ON UsersAuth.fk_user_id = Users.pk_user_id WHERE UsersAuth.username = '$username'";
                 $stmt1 = $this->dbConnection->query($sql1);
                 $result = $stmt1->fetch(PDO::FETCH_ASSOC);
                 if (isset($result['pk_user_auth_id'])) {
