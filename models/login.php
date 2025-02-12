@@ -14,7 +14,7 @@ class Login {
 
     public function validate($username, $password, $rememberMe) {
         try {
-            $sql1 = "SELECT TOP 1 * FROM dbo.users_auth WHERE username = '$username'";
+            $sql1 = "SELECT TOP 1 * FROM [dbo].[users_auth] WHERE [username] = '$username'";
             $stmt = $this->dbConnection->query($sql1);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($result) {
@@ -39,7 +39,7 @@ class Login {
                     ]);
 
                     // Actualizar la fecha de último inicio de sesión:
-                    $sql2 = 'UPDATE [dbo].[users_auth] SET last_access_at = GETDATE() WHERE pk_user_auth_id = :pk_user_auth_id AND fk_user_id = :fk_user_id;';
+                    $sql2 = 'UPDATE [dbo].[users_auth] SET [last_access_at] = GETDATE() WHERE [pk_user_auth_id] = :pk_user_auth_id AND [fk_user_id] = :fk_user_id;';
                     $stmt2 = $this->dbConnection->prepare($sql2);
                     $stmt2->bindParam(':pk_user_auth_id', $result['pk_user_auth_id'], PDO::PARAM_INT);
                     $stmt2->bindParam(':fk_user_id', $result['fk_user_id'], PDO::PARAM_INT);
@@ -79,7 +79,7 @@ class Login {
     public function passwordRecovery($username) {
         try {
             if (trim(isset($username))) {
-                $sql1 = "SELECT UsersAuth.*, CONCAT(Users.first_name, ' ', Users.last_name_1, ' ', Users.last_name_2) AS user_full_name FROM dbo.users_auth UsersAuth JOIN dbo.users ON UsersAuth.fk_user_id = Users.pk_user_id WHERE UsersAuth.username = '$username'";
+                $sql1 = "SELECT UsersAuth.*, CONCAT(Users.first_name, ' ', Users.last_name_1, ' ', Users.last_name_2) AS user_full_name FROM [dbo].[users_auth] UsersAuth JOIN [dbo].[users] ON UsersAuth.fk_user_id = Users.pk_user_id WHERE UsersAuth.username = '$username'";
                 $stmt1 = $this->dbConnection->query($sql1);
                 $result = $stmt1->fetch(PDO::FETCH_ASSOC);
                 if (isset($result['pk_user_auth_id'])) {
@@ -88,7 +88,7 @@ class Login {
                     $stmt2->bindParam(':username', $username, PDO::PARAM_STR);
                     if ($stmt2->execute()) {
                         $token = password_hash($username, PASSWORD_BCRYPT);
-                        $sql3 = 'INSERT INTO dbo.password_resets (username, token, created_at) VALUES(:username, :token, GETDATE());';
+                        $sql3 = 'INSERT INTO [dbo].[password_resets] ([username], [token], [created_at]) VALUES(:username, :token, GETDATE());';
                         $stmt3 = $this->dbConnection->prepare($sql3);
                         $stmt3->bindParam(':username', $username, PDO::PARAM_STR);
                         $stmt3->bindParam(':token', $token, PDO::PARAM_STR);
@@ -135,20 +135,20 @@ class Login {
     public function passwordUpdate($token, $newPassword, $confirmPassword) {
         try {
             if (isset($token)) {
-                $sql1 = "SELECT TOP 1 * FROM dbo.password_resets WHERE token = '$token' AND DATEADD(HOUR, 1, created_at) > GETDATE()";
+                $sql1 = "SELECT TOP 1 * FROM [dbo].[password_resets] WHERE [token] = '$token' AND DATEADD(HOUR, 1, [created_at]) > GETDATE()";
                 $stmt1 = $this->dbConnection->query($sql1);
                 $result = $stmt1->fetch(PDO::FETCH_ASSOC);
                 if (isset($result['pk_password_reset_id'])) {
                     if (isset($newPassword) && isset($confirmPassword)) {
                         if ($newPassword === $confirmPassword) {
                             $encryptedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
-                            $sql2 = 'UPDATE dbo.users_auth SET password = :password WHERE username = :username';
+                            $sql2 = 'UPDATE [dbo].[users_auth] SET [password] = :password WHERE [username] = :username';
                             $stmt2 = $this->dbConnection->prepare($sql2);
                             $stmt2->bindParam(':password', $encryptedPassword, PDO::PARAM_STR);
                             $stmt2->bindParam(':username', $result['username'], PDO::PARAM_STR);
                             $stmt2->execute();
                             if ($stmt2->rowCount() > 0) {
-                                $sql3 = 'DELETE FROM dbo.password_resets WHERE username = :username;';
+                                $sql3 = 'DELETE FROM [dbo].[password_resets] WHERE [username] = :username;';
                                 $stmt3 = $this->dbConnection->prepare($sql3);
                                 $stmt3->bindParam(':username', $result['username'], PDO::PARAM_STR);
                                 $stmt3->execute();
