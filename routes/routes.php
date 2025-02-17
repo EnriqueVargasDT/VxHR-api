@@ -5,6 +5,7 @@ require_once '../controllers/roleController.php';
 require_once '../controllers/logoutController.php';
 require_once '../controllers/userController.php';
 require_once '../controllers/temperatureController.php';
+require_once '../controllers/catalogController.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUriParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
@@ -13,14 +14,16 @@ $body = json_decode(file_get_contents('php://input'), true);
 $main = $requestUriParts[0] ?? '';
 if ($main !== 'api') {
     pathNotFound();
-    exit();
 }
 
 $route = $requestUriParts[1] ?? null;
-$subroute = $requestUriParts[2] ?? null;
+$subroutes = array_slice($requestUriParts, 2);
 
-if (strpos($route, 'login') !== false) {
-    login($method, $subroute, $body);
+if (str_contains($route, 'login')) {
+    login($method, $subroutes, $body);
+}
+else if (str_contains($route, 'logout')) {
+    logout($method);
 }
 else {
     $tokenController = new TokenController();
@@ -28,17 +31,17 @@ else {
 
     if (isset($validateToken['ok'])) {
         switch ($route) {
-            case strpos($route, 'role') !== false:
-                role($method, $subroute, $body);
+            case str_contains($route, 'role'):
+                role($method, $subroutes, $body);
                 break;
-            case strpos($route, 'user') !== false:
-                user($method, $subroute, $body);
+            case str_contains($route, 'user'):
+                user($method, $subroutes, $body);
                 break;
-            case strpos($route, 'temperature') !== false:
+            case str_contains($route, 'temperature'):
                 temperature($method);
                 break;
-            case strpos($route, 'logout') !== false:
-                logout($method);
+            case str_contains($route, 'catalog'):
+                catalog($method, $subroutes, $body);
                 break;
             default:
                 pathNotFound();
@@ -50,33 +53,28 @@ else {
     }
 }
 
-function login($method, $subroute, $body) {
+function login($method, $subroutes, $body) {
     $loginController = new LoginController();
     switch ($method) {
         case 'POST':
-            if (isset($subroute)) {
-                if (is_numeric($subroute)) {
-                    $userController->getById($subroute);
-                }
-                else {
-                    if (strpos($subroute, 'password_recovery') !== false) {
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (str_contains($subroutes[0], 'password_recovery')) {
                         $loginController->passwordRecovery($body['username']);
                     }
-                    else if (strpos($subroute, 'password_update') !== false) {
+                    else if (str_contains($subroutess[0], 'password_update')) {
                         $loginController->passwordUpdate($body['token'], $body['newPassword'], $body['confirmPassword']);
                     }
-                    else {
-                        pathNotFound();
-                    }
+                    
+                    pathNotFound();
                 }
             }
             else {
                 if (isset($body['username']) && isset($body['password'])) {
                     $loginController->validate($body['username'], $body['password'], $body['rememberMe']);
                 }
-                else {
-                    internalServerError('No se recibió un usuario y/o contraseña.');
-                }
+
+                internalServerError('No se recibió un usuario y/o contraseña.');
             }
             break;
         default:
@@ -85,21 +83,21 @@ function login($method, $subroute, $body) {
     }
 }
 
-function role($method, $subroute, $body) {
+function role($method, $subroutes, $body) {
     $roleController = new RoleController();
     switch ($method) {
         case 'GET':
-            if (isset($subroute)) {
-                if (strpos($subroute, 'catalog') !== false) {
-                    $roleController->getCatalog();    
-                }
-                else {
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (str_contains($subroutes[0], 'catalog')) {
+                        $roleController->getAll();    
+                    }
+                    
                     pathNotFound();
                 }
             }
-            else {
-                $roleController->getBySession();
-            }
+
+            $roleController->getBySession();
             break;
         default:
             methodNotAllowed();
@@ -107,21 +105,21 @@ function role($method, $subroute, $body) {
     }
 }
 
-function user($method, $subroute, $body) {
+function user($method, $subroutes, $body) {
     $userController = new UserController();
     switch ($method) {
         case 'GET':
-            if (isset($subroute)) {
-                if (is_numeric($subroute)) {
-                    $userController->getById($subroute);
-                }
-                else {
-                    internalServerError('No se recibió un id de empleado válido.');
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (is_numeric($subroutes[0])) {
+                        $userController->getById($subroutes[0]);
+                    }
+                    
+                    pathNotFound();
                 }
             }
-            else {
-                $userController->getAll();
-            }
+            
+            $userController->getAll();
             break;
         default:
             methodNotAllowed();
@@ -132,7 +130,69 @@ function user($method, $subroute, $body) {
 function temperature($method) {
     switch ($method) {
         case 'GET':
-            TemperatureController::get();
+            TemperatureController::get($_GET['latitude'], $_GET['longitude']);
+            break;
+        default:
+            methodNotAllowed();
+            break;
+    }
+}
+
+function catalog($method, $subroutes, $body) {
+    $catalogController = new CatalogController();
+    switch ($method) {
+        case 'GET':
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (isset($subroutes[1])) {
+                        if (isset($_GET['id'])) {
+                            $catalogController->getItemDataById($subroutes[0], $subroutes[1], $_GET['id']);
+                        }
+                        else {
+                            $catalogController->getDataByName($subroutes[0], $subroutes[1]);
+                        }
+                    }
+                    
+                    internalServerError('No se recibió un nombre de catálogo válido.');
+                }
+            }
+            
+            pathNotFound();
+            break;
+        case 'POST':
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (isset($subroutes[1])) {
+                        if (isset($body['description'])) {
+                            $catalogController->saveNewItem($subroutes[0], $subroutes[1], $body);
+                        }
+
+                        internalServerError('No se recibió una descripción válida para crear elemento de catálogo.');    
+                    }
+                    
+                    internalServerError('No se recibió un nombre de catálogo válido.');
+                }
+            }
+            
+            pathNotFound();
+            break;
+        case 'PUT':
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (isset($subroutes[1])) {
+                        if (isset($body['id'])) {
+                            $catalogController->updateItem($subroutes[0], $subroutes[1], $body);
+                        }
+
+                        internalServerError('No se recibió el id del elemento de catálogo para actualizar.');
+                    }
+
+                    internalServerError('No se recibió un nombre de catálogo válido.');
+                }
+            }
+            else {
+                pathNotFound();
+            }
             break;
         default:
             methodNotAllowed();

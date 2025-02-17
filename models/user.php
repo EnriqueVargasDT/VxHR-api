@@ -10,7 +10,7 @@ class User {
 
     public function getAll() {
         try {
-            $sql = "SELECT * FROM [dbo].[users]";
+            $sql = 'SELECT * FROM [user].[users]';
             $stmt = $this->dbConnection->query($sql);
             $users = array();
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -29,7 +29,7 @@ class User {
 
     public function getById($pk_user_id) {
         try {
-            $sql = "SELECT Users.*, CONCAT(Users.first_name, ' ' , Users.last_name_1, ' ', Users.last_name_2) AS full_name, MS.marital_status, RS.relationship AS emergency_relationship FROM [dbo].[users] Users JOIN [dbo].[marital_status] MS ON Users.fk_marital_status_id = MS.pk_marital_status_id JOIN [dbo].[relationships] RS ON Users.fk_emergency_relationship_id = RS.pk_relationship_id WHERE Users.pk_user_id = $pk_user_id";
+            $sql = "SELECT Users.*, CONCAT(Users.first_name, ' ' , Users.last_name_1, ' ', Users.last_name_2) AS full_name, MS.marital_status, RS.relationship AS emergency_relationship FROM [user].[users] Users JOIN [user].[marital_status] MS ON Users.fk_marital_status_id = MS.pk_marital_status_id JOIN [user].[relationships] RS ON Users.fk_emergency_relationship_id = RS.pk_relationship_id WHERE Users.pk_user_id = $pk_user_id";
             $stmt = $this->dbConnection->query($sql);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($user) {

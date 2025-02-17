@@ -1,11 +1,9 @@
 <?php
 class Temperature {
     
-    public static function get() {
+    public static function get($latitude, $longitude) {
         try {
-            if (isset($_GET['latitude']) && isset($_GET['longitude'])) {
-                $latitude = $_GET['latitude']; // 25.7172319;
-                $longitude = $_GET['longitude']; // -100.5408731;
+            if (isset($latitude) && isset($longitude)) {
                 $API_URL = 'https://api.openweathermap.org/data/2.5/weather';
                 $API_KEY = 'a01406997e51be1e45c9b504a64a9552'; // Api key personal Luis Muñoz
                 $latLongURL = "$API_URL?lat=$latitude&lon=$longitude&appid=$API_KEY&lang=es";

@@ -24,9 +24,9 @@ class Role {
         }
     }
 
-    public function getCatalog() {
+    public function getAll() {
         try {
-            $sql = "SELECT * FROM dbo.roles";
+            $sql = 'SELECT * FROM [user].[roles]';
             $stmt = $this->dbConnection->query($sql);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(array('ok' => true, 'roles' => $result, ));

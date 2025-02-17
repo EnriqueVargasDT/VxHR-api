@@ -12,8 +12,8 @@ class RoleController {
         $this->role->getBySession();
     }
 
-    public function getCatalog() {
-        $this->role->getCatalog();
+    public function getAll() {
+        $this->role->getAll();
     }
 }
 ?>
