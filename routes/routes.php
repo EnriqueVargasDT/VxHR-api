@@ -6,6 +6,7 @@ require_once '../controllers/logoutController.php';
 require_once '../controllers/userController.php';
 require_once '../controllers/temperatureController.php';
 require_once '../controllers/catalogController.php';
+require_once '../controllers/jobPositionController.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUriParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
@@ -42,6 +43,9 @@ else {
                 break;
             case str_contains($route, 'catalog'):
                 catalog($method, $subroutes, $body);
+                break;
+            case str_contains($route, 'job_position'):
+                job_position($method, $subroutes, $body);
                 break;
             default:
                 pathNotFound();
@@ -149,7 +153,7 @@ function catalog($method, $subroutes, $body) {
                             $catalogController->getItemDataById($subroutes[0], $subroutes[1], $_GET['id']);
                         }
                         else {
-                            $catalogController->getDataByName($subroutes[0], $subroutes[1]);
+                            $catalogController->getAll($subroutes[0], $subroutes[1]);
                         }
                     }
                     
@@ -180,11 +184,20 @@ function catalog($method, $subroutes, $body) {
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
                     if (isset($subroutes[1])) {
-                        if (isset($body['id'])) {
-                            $catalogController->updateItem($subroutes[0], $subroutes[1], $body);
-                        }
+                        if (isset($subroutes[2])) {
+                            if (str_contains($subroutes[2], 'status')) {
+                                $catalogController->updateStatus($subroutes[0], $subroutes[1], $body);
+                            }
 
-                        internalServerError('No se recibió el id del elemento de catálogo para actualizar.');
+                            pathNotFound();
+                        }
+                        else {
+                            if (isset($body['id'])) {
+                                $catalogController->updateItem($subroutes[0], $subroutes[1], $body);
+                            }
+
+                            internalServerError('No se recibió el id del elemento de catálogo para actualizar.');
+                        }
                     }
 
                     internalServerError('No se recibió un nombre de catálogo válido.');
@@ -193,6 +206,48 @@ function catalog($method, $subroutes, $body) {
             else {
                 pathNotFound();
             }
+            break;
+        default:
+            methodNotAllowed();
+            break;
+    }
+}
+
+function job_position($method, $subroutes, $body) {
+    $jobPositionController = new JobPositionController();
+    switch ($method) {
+        case 'GET':
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (str_contains($subroutes[0], 'positions')) {
+                        if (isset($_GET['id'])) {
+                            $jobPositionController->getDataById($_GET['id']);
+                        }
+                        
+                        $jobPositionController->getAll();
+                    }
+
+                    pathNotFound();
+                }
+            }
+
+            pathNotFound();
+            break;
+        case 'POST':
+            $jobPositionController->save($body);
+            break;
+        case 'PUT':
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (is_numeric($subroutes[0])) {
+                        $jobPositionController->update($subroutes[0], $body);
+                    }
+
+                    pathNotFound();
+                }
+            }
+
+            pathNotFound();
             break;
         default:
             methodNotAllowed();

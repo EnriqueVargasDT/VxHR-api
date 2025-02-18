@@ -12,8 +12,8 @@ class CatalogController {
         $this->catalog->getRawData($schema, $catalog);
     }
 
-    public function getDataByName($schema, $catalog) {
-        $this->catalog->getDataByName($schema, $catalog);
+    public function getAll($schema, $catalog) {
+        $this->catalog->getBasicData($schema, $catalog);
     }
 
     public function getItemDataById($schema, $catalog, $id) {
@@ -26,6 +26,10 @@ class CatalogController {
 
     public function updateItem($schema, $catalog, $item) {
         $this->catalog->updateItem($schema, $catalog, $item);
+    }
+
+    public function updateStatus($schema, $catalog, $item) {
+        $this->catalog->updateStatus($schema, $catalog, $item);
     }
 }
 ?>

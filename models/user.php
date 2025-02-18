@@ -29,7 +29,25 @@ class User {
 
     public function getById($pk_user_id) {
         try {
-            $sql = "SELECT Users.*, CONCAT(Users.first_name, ' ' , Users.last_name_1, ' ', Users.last_name_2) AS full_name, MS.marital_status, RS.relationship AS emergency_relationship FROM [user].[users] Users JOIN [user].[marital_status] MS ON Users.fk_marital_status_id = MS.pk_marital_status_id JOIN [user].[relationships] RS ON Users.fk_emergency_relationship_id = RS.pk_relationship_id WHERE Users.pk_user_id = $pk_user_id";
+            $sql = "
+                SELECT u.*,
+                CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS full_name,
+                ums.marital_status,
+                urs.relationship AS emergency_relationship,
+                jpp.job_position_name,
+                jpa.job_position_area,
+                jpd.job_position_department,
+                jpo.job_position_office
+                FROM [user].[users] u
+                LEFT JOIN [user].[marital_status] ums ON u.fk_marital_status_id = ums.pk_marital_status_id
+                LEFT JOIN [user].[relationships] urs ON u.fk_emergency_relationship_id = urs.pk_relationship_id
+                LEFT JOIN [job_position].[positions] jpp ON u.fk_job_position_id = jpp.pk_job_position_id
+                LEFT JOIN [job_position].[area] jpa ON u.fk_job_position_area_id = jpa.pk_job_position_area_id
+                LEFT JOIN [job_position].[department] jpd ON u.fk_job_position_department_id = jpd.pk_job_position_department_id
+                LEFT JOIN [job_position].[office] jpo ON u.fk_job_position_office_id = jpo.pk_job_position_office_id
+                WHERE u.pk_user_id = %s
+            " . PHP_EOL;
+            $sql = sprintf($sql, $pk_user_id);
             $stmt = $this->dbConnection->query($sql);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($user) {

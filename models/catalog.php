@@ -8,13 +8,13 @@ class Catalog {
         $this->dbConnection = dbConnection();
     }
 
-    public function getDataByName($schema, $catalog) {
+    public function getAll($schema, $catalog) {
         try {
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
             $fields = $catalogMetaData['join_fields'];
             $alias = $catalogMetaData['alias'] ?? '';
             $join = $catalogMetaData['join'] ?? '';
-            $sql = sprintf('SELECT %s FROM [%s].[%s] %s %s;', $fields, $schema, $catalog, $alias, $join);
+            $sql = sprintf('SELECT %s FROM [%s].[%s] %s %s ORDER BY %s DESC;', $fields, $schema, $catalog, $alias, $join, "$alias.created_at");
             $stmt = $this->dbConnection->query($sql);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(array('ok' => true, 'data' => $result), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -125,7 +125,32 @@ class Catalog {
         }
     
         exit();
-    }    
+    }
+
+    public function updateStatus($schema, $catalog, $item) {
+        try {
+            $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
+            $sql = sprintf(
+                'UPDATE [%s].[%s] SET [status] = %s WHERE [%s] = :id;',
+                $schema,
+                $catalog,
+                $item['status'],
+                $catalogMetaData['primary_key']
+            );
+            $stmt = $this->dbConnection->prepare($sql);
+            $stmt->bindValue(':id', $item['id'], PDO::PARAM_INT);
+            $stmt->execute();
+            if ($stmt->rowCount() > 0) {
+                echo json_encode(array('ok' => true, 'message' => 'Registro actualizado correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+        }
+        catch (Exception $error) {
+            http_response_code(500);
+            echo json_encode(array('error' => true, 'message' => $error->getMessage()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+    
+        exit();
+    }
 
     private function getMetaDataByName($schema, $catalog) {
         $catalogsMetaData = $this->getAllMetaData();
@@ -145,8 +170,8 @@ class Catalog {
                     'primary_key' => 'pk_job_position_area_id',
                     'description' => 'job_position_area',
                     'foreign_key' => '',
-                    'fields' => 'pk_job_position_area_id AS id, job_position_area AS description, created_at, created_by',
-                    'join_fields' => "jpa.pk_job_position_area_id AS id, jpa.job_position_area AS description, jpa.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
+                    'fields' => 'pk_job_position_area_id AS id, job_position_area AS description, status, created_at, created_by',
+                    'join_fields' => "jpa.pk_job_position_area_id AS id, jpa.job_position_area AS description, jpa.status, jpa.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'jpa',
                     'join' => 'LEFT JOIN [user].[users] u ON jpa.[created_by] = u.[pk_user_id]',
                 ),
@@ -154,8 +179,8 @@ class Catalog {
                     'primary_key' => 'pk_job_position_department_id',
                     'description' => 'job_position_department',
                     'foreign_key' => 'fk_job_position_area_id',
-                    'fields' => 'pk_job_position_department_id AS id, job_position_department AS description, fk_job_position_area_id, created_at, created_by',
-                    'join_fields' => "jpd.pk_job_position_department_id AS id, jpd.job_position_department AS description, jpa.job_position_area AS area, jpd.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
+                    'fields' => 'pk_job_position_department_id AS id, job_position_department AS description, status, fk_job_position_area_id AS area, created_at, created_by',
+                    'join_fields' => "jpd.pk_job_position_department_id AS id, jpd.job_position_department AS description, jpd.fk_job_position_area_id AS parent_id, jpa.job_position_area AS area, jpd.status, jpd.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'jpd',
                     'join' => 'LEFT JOIN [user].[users] u ON jpd.[created_by] = u.[pk_user_id] LEFT JOIN [job_position].[area] jpa ON jpd.[fk_job_position_area_id] = jpa.[pk_job_position_area_id]',
                 ),
@@ -163,8 +188,8 @@ class Catalog {
                     'primary_key' => 'pk_job_position_office_id',
                     'description' => 'job_position_office',
                     'foreign_key' => '',
-                    'fields' => 'pk_job_position_office_id AS id, job_position_office AS description, job_position_office_address AS address, created_at, created_by',
-                    'join_fields' => "jpo.pk_job_position_office_id AS id, jpo.job_position_office AS description, jpo.job_position_office_address AS address, jpo.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
+                    'fields' => 'pk_job_position_office_id AS id, job_position_office AS description, job_position_office_address AS address, status, created_at, created_by',
+                    'join_fields' => "jpo.pk_job_position_office_id AS id, jpo.job_position_office AS description, jpo.job_position_office_address AS address, jpo.status, jpo.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'jpo',
                     'join' => 'LEFT JOIN [user].[users] u ON jpo.[created_by] = u.[pk_user_id]',
                 ),
@@ -172,8 +197,8 @@ class Catalog {
                     'primary_key' => 'pk_job_position_type_id',
                     'description' => 'job_position_type',
                     'foreign_key' => '',
-                    'fields' => 'pk_job_position_type_id AS id, job_position_type AS description, created_at, created_by',
-                    'join_fields' => "jpt.pk_job_position_type_id AS id, jpt.job_position_type AS description, jpt.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
+                    'fields' => 'pk_job_position_type_id AS id, job_position_type AS description, status, created_at, created_by',
+                    'join_fields' => "jpt.pk_job_position_type_id AS id, jpt.job_position_type AS description, jpt.status, jpt.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'jpt',
                     'join' => 'LEFT JOIN [user].[users] u ON jpt.[created_by] = u.[pk_user_id]',
                 ),
@@ -192,8 +217,8 @@ class Catalog {
                     'primary_key' => 'pk_gender_id',
                     'description' => 'gender',
                     'foreign_key' => '',
-                    'fields' => 'pk_gender_id AS id, gender AS description, created_at, created_by',
-                    'join_fields' => "ug.pk_gender_id AS id, ug.gender AS description, ug.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
+                    'fields' => 'pk_gender_id AS id, gender AS description, status, created_at, created_by',
+                    'join_fields' => "ug.pk_gender_id AS id, ug.gender AS description, ug.status, ug.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'ug',
                     'join' => 'LEFT JOIN [user].[users] u ON ug.[created_by] = u.[pk_user_id]',
                 ),
@@ -201,8 +226,8 @@ class Catalog {
                     'primary_key' => 'pk_nationality_id',
                     'description' => 'nationality',
                     'foreign_key' => '',
-                    'fields' => 'pk_nationality_id AS id, nationality AS description, created_at, created_by',
-                    'join_fields' => "un.pk_nationality_id AS id, un.nationality AS description, un.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
+                    'fields' => 'pk_nationality_id AS id, nationality AS description, status, created_at, created_by',
+                    'join_fields' => "un.pk_nationality_id AS id, un.nationality AS description, un.status, un.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'un',
                     'join' => 'LEFT JOIN [user].[users] u ON un.[created_by] = u.[pk_user_id]',
                 ),
@@ -210,8 +235,8 @@ class Catalog {
                     'primary_key' => 'pk_marital_status_id',
                     'description' => 'marital_status',
                     'foreign_key' => '',
-                    'fields' => 'pk_marital_status_id AS id, marital_status AS description, created_at, created_by',
-                    'join_fields' => "ums.pk_marital_status_id AS id, ums.marital_status AS description, ums.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
+                    'fields' => 'pk_marital_status_id AS id, marital_status AS description, status, created_at, created_by',
+                    'join_fields' => "ums.pk_marital_status_id AS id, ums.marital_status AS description, ums.status, ums.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'ums',
                     'join' => 'LEFT JOIN [user].[users] u ON ums.[created_by] = u.[pk_user_id]',
                 ),
@@ -219,8 +244,8 @@ class Catalog {
                     'primary_key' => 'pk_relationship_id',
                     'description' => 'relationship',
                     'foreign_key' => '',
-                    'fields' => 'pk_relationship_id AS id, relationship AS description, created_at, created_by',
-                    'join_fields' => "urs.pk_relationship_id AS id, urs.relationship AS description, urs.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
+                    'fields' => 'pk_relationship_id AS id, relationship AS description, status, created_at, created_by',
+                    'join_fields' => "urs.pk_relationship_id AS id, urs.relationship AS description, urs.status, urs.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'urs',
                     'join' => 'LEFT JOIN [user].[users] u ON urs.[created_by] = u.[pk_user_id]',
                 ),
@@ -228,8 +253,8 @@ class Catalog {
                     'primary_key' => 'pk_role_id',
                     'description' => 'role',
                     'foreign_key' => '',
-                    'fields' => 'pk_role_id AS id, role AS description, created_at, created_by',
-                    'join_fields' => "ur.pk_role_id AS id, ur.role AS description, ur.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
+                    'fields' => 'pk_role_id AS id, role AS description, status, created_at, created_by',
+                    'join_fields' => "ur.pk_role_id AS id, ur.role AS description, ur.status, ur.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'ur',
                     'join' => 'LEFT JOIN [user].[users] u ON ur.[created_by] = u.[pk_user_id]',
                 ),
