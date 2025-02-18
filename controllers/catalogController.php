@@ -13,7 +13,7 @@ class CatalogController {
     }
 
     public function getAll($schema, $catalog) {
-        $this->catalog->getBasicData($schema, $catalog);
+        $this->catalog->getAll($schema, $catalog);
     }
 
     public function getItemDataById($schema, $catalog, $id) {
