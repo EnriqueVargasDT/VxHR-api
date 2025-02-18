@@ -127,7 +127,7 @@ class Catalog {
         exit();
     }
 
-    public function updateStatus($schema, $catalog, $item) {
+    public function updateItemStatus($schema, $catalog, $item) {
         try {
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
             $sql = sprintf(

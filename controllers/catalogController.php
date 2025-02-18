@@ -28,8 +28,8 @@ class CatalogController {
         $this->catalog->updateItem($schema, $catalog, $item);
     }
 
-    public function updateStatus($schema, $catalog, $item) {
-        $this->catalog->updateStatus($schema, $catalog, $item);
+    public function updateItemStatus($schema, $catalog, $item) {
+        $this->catalog->updateItemStatus($schema, $catalog, $item);
     }
 }
 ?>
