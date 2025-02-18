@@ -186,7 +186,7 @@ function catalog($method, $subroutes, $body) {
                     if (isset($subroutes[1])) {
                         if (isset($subroutes[2])) {
                             if (str_contains($subroutes[2], 'status')) {
-                                $catalogController->updateStatus($subroutes[0], $subroutes[1], $body);
+                                $catalogController->updateItemStatus($subroutes[0], $subroutes[1], $body);
                             }
 
                             pathNotFound();
