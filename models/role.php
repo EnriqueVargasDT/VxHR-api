@@ -16,11 +16,10 @@ class Role {
     public function getBySession() {
         try {
             $decoded = $this->token->validate();
-            echo json_encode(array('ok' => true, 'role' => $decoded['role'], ), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+            sendJsonResponse(200, array('ok' => true, 'role' => $decoded['role'], ));
         }
         catch (Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
     }
 
@@ -29,11 +28,10 @@ class Role {
             $sql = 'SELECT * FROM [user].[roles]';
             $stmt = $this->dbConnection->query($sql);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode(array('ok' => true, 'roles' => $result, ));
+            sendJsonResponse(200, array('ok' => true, 'roles' => $result, ));
         }
         catch (Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
     }
 }

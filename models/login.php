@@ -44,26 +44,23 @@ class Login {
                     $stmt2->bindParam(':pk_user_auth_id', $result['pk_user_auth_id'], PDO::PARAM_INT);
                     $stmt2->bindParam(':fk_user_id', $result['fk_user_id'], PDO::PARAM_INT);
                     if ($stmt2->execute()) {
-                        echo json_encode(array('ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], ));
+                        $_SESSION['pk_user_id'] = $result['fk_user_id'];
+                        sendJsonResponse(200, array('ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], ));
                     }
                     else {
-                        http_response_code(500);
-                        echo json_encode(array('error' => true, 'message' => 'Error al intentar actualizar la fecha de inicio de sesión.'), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+                        handleError(500, 'Error al intentar actualizar la fecha de inicio de sesión.');
                     }
                 }
                 else {
-                    http_response_code(401);
-                    echo json_encode(array('error' => true, 'type' => 'password', 'message' => 'Contraseña inválida.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    handleError(401, array('error' => true, 'type' => 'password', 'message' => 'Contraseña inválida.'));
                 }
             }
             else {
-                http_response_code(401);
-                echo json_encode(array('error' => true, 'type' => 'username', 'message' => 'Usuario no encontrado.'));
+                handleError(401, array('error' => true, 'type' => 'username', 'message' => 'Usuario no encontrado.'));
             }
         }
         catch(Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
 
         exit();
@@ -105,28 +102,24 @@ class Login {
                             $message = $template;
                             $send = $email->send($username, $subject, $message);
                             if ($send) {
-                                echo json_encode(array('ok' => true, 'message' => 'Correo electrónico enviado correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                                sendJsonResponse(200, array('ok' => true, 'message' => 'Correo electrónico enviado correctamente.'));
                             }
                         }
                         else {
-                            http_response_code(500);
-                            echo json_encode(array('error' => true, 'message' => 'El correo electrónico no pudo ser generado. Intentar nuevamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                            handleError(500, 'El correo electrónico no pudo ser generado. Intentar nuevamente.');
                         }
                     }
                 }
                 else {
-                    http_response_code(500);
-                    echo json_encode(array('error' => true, 'message' => 'El correo electrónico proporcionado no esta registrado en la plataforma.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    handleError(500, 'El correo electrónico proporcionado no esta registrado en la plataforma.');
                 }
             }
             else {
-                http_response_code(500);
-                echo json_encode(array('error' => true, 'message' => 'No se recibió un correo electrónico válido.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                handleError(500, 'No se recibió un correo electrónico válido.');
             }
         }
         catch(Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
 
         exit();
@@ -152,36 +145,30 @@ class Login {
                                 $stmt3 = $this->dbConnection->prepare($sql3);
                                 $stmt3->bindParam(':username', $result['username'], PDO::PARAM_STR);
                                 $stmt3->execute();
-                                echo json_encode(array('ok' => true, 'message' => 'La contraseña ha sido actualizada correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                                sendJsonResponse(200, array('ok' => true, 'message' => 'La contraseña ha sido actualizada correctamente.'));
                             }
                             else {
-                                http_response_code(500);
-                                echo json_encode(array('error' => true, 'message' => 'No pudo ser actualizada la contraseña. Intentar nuevamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                                handleError(500, 'No pudo ser actualizada la contraseña. Intentar nuevamente.');
                             }
                         }
                         else {
-                            http_response_code(500);
-                            echo json_encode(array('error' => true, 'message' => 'La contraseña no coincide.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                            handleError(500, 'La contraseña no coincide.');
                         }
                     }
                     else {
-                        http_response_code(500);
-                        echo json_encode(array('error' => true, 'message' => 'La contraseña proporcionada no es válida.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                        handleError(500, 'La contraseña proporcionada no es válida.');
                     }
                 }
                 else {
-                    http_response_code(500);
-                    echo json_encode(array('error' => true, 'message' => 'El token ha caducado.'));
+                    handleError(500, 'El token ha caducado.');
                 }
             }
             else {
-                http_response_code(500);
-                echo json_encode(array('error' => true, 'message' => 'El token es inválido.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                handleError(500, 'El token es inválido.');
             }
         }
         catch(Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
 
         exit();

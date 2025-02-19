@@ -17,11 +17,10 @@ class User {
                 $users[] = $row;
             }
 
-            echo json_encode(array('ok' => true, 'users' => $users));
+            sendJsonResponse(200, array('ok' => true, 'users' => $users));
         }
         catch(Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
 
         exit();
@@ -51,16 +50,14 @@ class User {
             $stmt = $this->dbConnection->query($sql);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($user) {
-                echo json_encode(array('ok' => true, 'user' => $user));
+                sendJsonResponse(200, array('ok' => true, 'user' => $user));
             }
             else {
-                http_response_code(500);
-                echo json_encode(array('error' => true, 'message' => 'No se encontró al usuario en la plataforma'), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);    
+                handleError(500, 'No se encontró al usuario en la plataforma');
             }
         }
         catch(Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error));
+            handleExceptionError($error);
         }
 
         exit();

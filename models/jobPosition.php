@@ -10,7 +10,7 @@ class JobPosition {
 
     public function getAll() {
         try {
-            $sql = '
+            $sql = "
                 SELECT
                     jpp.pk_job_position_id AS id,
                     jpp.job_position_name AS description,
@@ -22,7 +22,8 @@ class JobPosition {
                     jps.job_position_status,
                     jpp.fk_job_position_status_id AS job_position_status_id,
                     jpp.publish_date,
-                    jpp.fk_job_position_area_id AS parent_id
+                    jpp.fk_job_position_area_id AS parent_id,
+                    CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by
                 FROM [job_position].[positions] jpp
                 LEFT JOIN [job_position].[area] jpa ON jpp.fk_job_position_area_id = jpa.pk_job_position_area_id
                 LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
@@ -30,16 +31,16 @@ class JobPosition {
                 LEFT JOIN [job_position].[type] jpt ON jpp.fk_job_position_type_id = jpt.pk_job_position_type_id
                 LEFT JOIN [job_position].[status] jps ON jpp.fk_job_position_status_id = jps.pk_job_position_status_id
                 LEFT JOIN [user].[roles] ur ON jpp.fk_role_id = ur.pk_role_id
+                LEFT JOIN [user].[users] u ON jpp.created_by = u.pk_user_id
                 WHERE jpp.publish_date <= GETDATE()
-                ORDER BY jpp.created_at ASC
-            ;' . PHP_EOL;
+                ORDER BY jpp.created_at DESC
+            ;" . PHP_EOL;
             $stmt = $this->dbConnection->query($sql);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode(array('ok' => true, 'data' => $result), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            sendJsonResponse(200, array('ok' => true, 'data' => $result));
         }
         catch (Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error->getMessage()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
 
         exit();
@@ -65,11 +66,10 @@ class JobPosition {
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode(array('ok' => true, 'data' => $result), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            sendJsonResponse(200, array('ok' => true, 'data' => $result));
         }
         catch (Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error->getMessage()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
 
         exit();
@@ -77,8 +77,8 @@ class JobPosition {
 
     public function save($data) {
         try {
-            $fields = '[job_position_name], [fk_job_position_area_id], [fk_job_position_department_id], [fk_job_position_office_id], [fk_job_position_type_id], [fk_job_position_status_id], [fk_role_id], [job_position_parent_id], [publish_date]';
-            $values = ':job_position_name, :job_position_area_id, :job_position_department_id, :job_position_office_id, :job_position_type_id, :job_position_status_id, :user_role_id, :job_position_parent_id, :publish_date';
+            $fields = '[job_position_name], [fk_job_position_area_id], [fk_job_position_department_id], [fk_job_position_office_id], [fk_job_position_type_id], [fk_job_position_status_id], [fk_role_id], [job_position_parent_id], [publish_date], [created_by]';
+            $values = ':job_position_name, :job_position_area_id, :job_position_department_id, :job_position_office_id, :job_position_type_id, :job_position_status_id, :user_role_id, :job_position_parent_id, :publish_date, :created_by';
             $sql = sprintf('INSERT INTO [job_position].[positions] (%s) VALUES(%s)', $fields, $values);
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':job_position_name', $data['job_position_name'], PDO::PARAM_STR);
@@ -90,14 +90,17 @@ class JobPosition {
             $stmt->bindParam(':user_role_id', $data['user_role_id'], PDO::PARAM_INT);
             $stmt->bindParam(':job_position_parent_id', $data['job_position_parent_id'], PDO::PARAM_INT);
             $stmt->bindParam(':publish_date', $data['publish_date'], PDO::PARAM_STR);
+            $stmt->bindParam(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             $stmt->execute();
             if ($stmt->rowCount() > 0) {
-                echo json_encode(array('ok' => true, 'message' => 'Registro agregado correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro agregado correctamente.'));
+            }
+            else {
+                handleError(500, 'No se realizo la creación del registro.');
             }
         }
         catch (Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error->getMessage()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
 
         exit();
@@ -133,15 +136,14 @@ class JobPosition {
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
             if ($stmt->rowCount() > 0) {
-                echo json_encode(array('ok' => true, 'message' => 'Registro actualizado correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
             }
             else {
-                echo json_encode(array('ok' => false, 'message' => 'No se realizaron cambios en el registro.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                handleError(500, 'No se realizaron cambios en el registro.');
             }
         } 
         catch (Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error->getMessage()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
     
         exit();

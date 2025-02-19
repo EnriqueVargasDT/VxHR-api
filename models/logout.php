@@ -9,11 +9,11 @@ class Logout {
                 'httponly' => true,
                 'samesite' => 'Strict'
             ]);
-            
-            echo json_encode(array('ok' => true, 'message' => 'Sesión cerrada correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            session_destroy();
+            sendJsonResponse(200, array('ok' => true, 'message' => 'Sesión cerrada correctamente.'));
         }
         catch(Exception $error) {
-            echo json_encode(array('error' => true, 'message' => $error), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
 
         exit();

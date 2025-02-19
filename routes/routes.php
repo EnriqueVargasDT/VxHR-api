@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once '../controllers/tokenController.php';
 require_once '../controllers/loginController.php';
 require_once '../controllers/roleController.php';
@@ -7,6 +8,7 @@ require_once '../controllers/userController.php';
 require_once '../controllers/temperatureController.php';
 require_once '../controllers/catalogController.php';
 require_once '../controllers/jobPositionController.php';
+require_once '../utils/response.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUriParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
@@ -39,7 +41,7 @@ else {
                 user($method, $subroutes, $body);
                 break;
             case str_contains($route, 'temperature'):
-                temperature($method);
+                temperature($method, $subroutes);
                 break;
             case str_contains($route, 'catalog'):
                 catalog($method, $subroutes, $body);
@@ -131,7 +133,7 @@ function user($method, $subroutes, $body) {
     }
 }
 
-function temperature($method) {
+function temperature($method, $subroutes) {
     switch ($method) {
         case 'GET':
             TemperatureController::get($_GET['latitude'], $_GET['longitude']);
@@ -223,7 +225,7 @@ function job_position($method, $subroutes, $body) {
                         if (isset($_GET['id'])) {
                             $jobPositionController->getDataById($_GET['id']);
                         }
-                        
+
                         $jobPositionController->getAll();
                     }
 
@@ -267,24 +269,22 @@ function logout($method) {
 }
 
 function pathNotFound() {
-    sendJsonResponse(404, 'Ruta no encontrada.');
+    handleError(404, 'Ruta no encontrada.');
+    exit();
 }
 
 function methodNotAllowed() {
-    sendJsonResponse(405, 'Método no permitido.');
+    handleError(405, 'Método no permitido.');
+    exit();
 }
 
 function unAuthorized() {
-    sendJsonResponse(401, 'No autorizado.');
+    handleError(401, 'No autorizado.');
+    exit();
 }
 
 function internalServerError($message = null) {
-    sendJsonResponse(500, $message ?? 'Error interno de servidor.');
-}
-
-function sendJsonResponse($statusCode, $message) {
-    http_response_code($statusCode);
-    echo json_encode(array('error' => true, 'message' => $message), JSON_UNESCAPED_UNICODE, JSON_UNESCAPED_SLASHES);
+    handleError(500, $message ?? 'Error interno de servidor.');
     exit();
 }
 ?>

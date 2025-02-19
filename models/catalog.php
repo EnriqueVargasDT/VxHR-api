@@ -17,11 +17,10 @@ class Catalog {
             $sql = sprintf('SELECT %s FROM [%s].[%s] %s %s ORDER BY %s DESC;', $columns, $schema, $catalog, $alias, $join, "$alias.created_at");
             $stmt = $this->dbConnection->query($sql);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode(array('ok' => true, 'data' => $result), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            sendJsonResponse(200, array('ok' => true, 'data' => $result));
         }
         catch (Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error->getMessage()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
     
         exit();
@@ -36,16 +35,14 @@ class Catalog {
                 $sql = sprintf('SELECT TOP 1 %s FROM [%s].[%s] WHERE %s = %s', $columns, $schema, $catalog, $primaryKey, $id);
                 $stmt = $this->dbConnection->query($sql);
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
-                echo json_encode(array('ok' => true, 'data' => $result), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                sendJsonResponse(200, array('ok' => true, 'data' => $result));
             }
             else {
-                http_response_code(500);
-                echo json_encode(array('error' => true, 'message' => 'Error al intentar obtener el registro: id no válida.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                sendJsonResponse(401, array('error' => true, 'message' => 'Error al intentar obtener el registro: id de catálogo no válido.'));
             }
         }
         catch (Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error->getMessage()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
     
         exit();
@@ -66,6 +63,8 @@ class Catalog {
                     $params[':address'] = $item['address'];
                 }
             }
+            $fields['created_by'] = ':created_by';
+            $params[':created_by'] = isset($_SESSION['pk_user_id']) ?? 0;
     
             $columns = implode(',', array_keys($fields));
             $placeholders = implode(',', array_values($fields));
@@ -77,12 +76,14 @@ class Catalog {
     
             $stmt->execute();
             if ($stmt->rowCount() > 0) {
-                echo json_encode(array('ok' => true, 'message' => 'Registro agregado correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro agregado correctamente.'));
+            }
+            else {
+                handleError(500, 'No se realizo la creación del registro.');
             }
         }
         catch (Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error->getMessage()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
     
         exit();
@@ -116,12 +117,14 @@ class Catalog {
     
             $stmt->execute();
             if ($stmt->rowCount() > 0) {
-                echo json_encode(array('ok' => true, 'message' => 'Registro actualizado correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+            }
+            else {
+                handleError(500, 'No se realizaron cambios en el registro.');
             }
         }
         catch (Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error->getMessage()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
     
         exit();
@@ -141,12 +144,14 @@ class Catalog {
             $stmt->bindValue(':id', $item['id'], PDO::PARAM_INT);
             $stmt->execute();
             if ($stmt->rowCount() > 0) {
-                echo json_encode(array('ok' => true, 'message' => 'Registro actualizado correctamente.'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+            }
+            else {
+                handleError(500, 'No se realizaron cambios en el registro.');
             }
         }
         catch (Exception $error) {
-            http_response_code(500);
-            echo json_encode(array('error' => true, 'message' => $error->getMessage()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            handleExceptionError($error);
         }
     
         exit();
@@ -206,8 +211,8 @@ class Catalog {
                     'primary_key' => 'pk_job_position_status_id',
                     'description' => 'job_position_status',
                     'foreign_key' => '',
-                    'columns' => 'pk_job_position_status_id AS id, job_position_status AS description, created_at, created_by',
-                    'join_columns' => "jps.pk_job_position_status_id AS id, jps.job_position_status AS description, jps.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
+                    'columns' => 'pk_job_position_status_id AS id, job_position_status AS description, status, created_at, created_by',
+                    'join_columns' => "jps.pk_job_position_status_id AS id, jps.job_position_status AS description, jps.status, jps.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'jps',
                     'join' => 'LEFT JOIN [user].[users] u ON jps.[created_by] = u.[pk_user_id]',
                 ),
@@ -262,8 +267,8 @@ class Catalog {
                     'primary_key' => 'pk_user_status_id',
                     'description' => 'user_status',
                     'foreign_key' => '',
-                    'columns' => 'pk_user_status_id AS id, user_status AS description, created_at, created_by',
-                    'join_columns' => "us.pk_user_status_id AS id, us.user_status AS description, us.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
+                    'columns' => 'pk_user_status_id AS id, user_status AS description, status, created_at, created_by',
+                    'join_columns' => "us.pk_user_status_id AS id, us.user_status AS description, us.status, us.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'us',
                     'join' => 'LEFT JOIN [user].[users] u ON us.[created_by] = u.[pk_user_id]',
                 ),
