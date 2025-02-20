@@ -1,14 +1,13 @@
 <?php
 session_start();
-require_once '../controllers/tokenController.php';
-require_once '../controllers/loginController.php';
-require_once '../controllers/roleController.php';
-require_once '../controllers/logoutController.php';
-require_once '../controllers/userController.php';
-require_once '../controllers/temperatureController.php';
-require_once '../controllers/catalogController.php';
-require_once '../controllers/jobPositionController.php';
 require_once '../utils/response.php';
+spl_autoload_register(function ($className) {
+    $controllerPath = __DIR__ . '/../controllers/' . $className . '.php';
+    if (file_exists($controllerPath)) {
+        require_once $controllerPath;
+    }
+});
+
 
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUriParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
@@ -68,7 +67,7 @@ function login($method, $subroutes, $body) {
                     if (str_contains($subroutes[0], 'password_recovery')) {
                         $loginController->passwordRecovery($body['username']);
                     }
-                    else if (str_contains($subroutess[0], 'password_update')) {
+                    else if (str_contains($subroutes[0], 'password_update')) {
                         $loginController->passwordUpdate($body['token'], $body['newPassword'], $body['confirmPassword']);
                     }
                     
