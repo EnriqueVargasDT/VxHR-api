@@ -11,13 +11,22 @@ class Catalog {
     public function getAll($schema, $catalog) {
         try {
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
-            $columns = $catalogMetaData['join_columns'];
-            $alias = $catalogMetaData['alias'] ?? '';
-            $join = $catalogMetaData['join'] ?? '';
-            $sql = sprintf('SELECT %s FROM [%s].[%s] %s %s ORDER BY %s DESC;', $columns, $schema, $catalog, $alias, $join, "$alias.created_at");
-            $stmt = $this->dbConnection->query($sql);
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            sendJsonResponse(200, array('ok' => true, 'data' => $result));
+            if ($schema === 'global') {
+                $columns = $catalogMetaData['columns'];
+                $sql = sprintf('SELECT %s FROM [%s].[%s] ORDER BY %s DESC;', $columns, 'dbo', $catalog, 'created_at');
+                $stmt = $this->dbConnection->query($sql);
+                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                sendJsonResponse(200, array('ok' => true, 'data' => $result));
+            }
+            else {
+                $columns = $catalogMetaData['join_columns'];
+                $alias = $catalogMetaData['alias'] ?? '';
+                $join = $catalogMetaData['join'] ?? '';
+                $sql = sprintf('SELECT %s FROM [%s].[%s] %s %s ORDER BY %s DESC;', $columns, $schema, $catalog, $alias, $join, "$alias.created_at");
+                $stmt = $this->dbConnection->query($sql);
+                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                sendJsonResponse(200, array('ok' => true, 'data' => $result));
+            }
         }
         catch (Exception $error) {
             handleExceptionError($error);
@@ -159,8 +168,8 @@ class Catalog {
 
     private function getMetaDataByName($schema, $catalog) {
         $catalogsMetaData = $this->getAllMetaData();
-        if ($catalogsMetaData[$schema]) {
-            if ($catalogsMetaData[$schema][$catalog]) {
+        if (isset($catalogsMetaData[$schema])) {
+            if (isset($catalogsMetaData[$schema][$catalog])) {
                 return $catalogsMetaData[$schema][$catalog];
             }
         }
@@ -271,6 +280,20 @@ class Catalog {
                     'join_columns' => "us.pk_user_status_id AS id, us.user_status AS description, us.status, us.created_at, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by",
                     'alias' => 'us',
                     'join' => 'LEFT JOIN [user].[users] u ON us.[created_by] = u.[pk_user_id]',
+                ),
+            ),
+            'global' => array(
+                'states' => array(
+                    'primary_key' => 'pk_state_id',
+                    'description' => 'state_name',
+                    'foreign_key' => 'fk_country_id',
+                    'columns' => 'pk_state_id AS id, state_name AS description, state_code, created_at',
+                ),
+                'countries' => array(
+                    'primary_key' => 'pk_country_id',
+                    'description' => 'country_name',
+                    'foreign_key' => '',
+                    'columns' => 'pk_country_id AS id, country_name AS description, country_code, created_at',
                 ),
             ),
         );

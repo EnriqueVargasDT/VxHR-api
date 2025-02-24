@@ -90,7 +90,7 @@ class JobPosition {
             $stmt->bindParam(':user_role_id', $data['user_role_id'], PDO::PARAM_INT);
             $stmt->bindParam(':job_position_parent_id', $data['job_position_parent_id'], PDO::PARAM_INT);
             $stmt->bindParam(':publish_date', $data['publish_date'], PDO::PARAM_STR);
-            $stmt->bindParam(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
+            $stmt->bindValue(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             $stmt->execute();
             if ($stmt->rowCount() > 0) {
                 sendJsonResponse(200, array('ok' => true, 'message' => 'Registro agregado correctamente.'));

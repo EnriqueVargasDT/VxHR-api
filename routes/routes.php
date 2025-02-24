@@ -114,17 +114,32 @@ function user($method, $subroutes, $body) {
     $userController = new UserController();
     switch ($method) {
         case 'GET':
+            if (isset($_GET['id'])) {
+                $userController->getById($_GET['id']);
+            }
+
+            $userController->getAll();
+            break;
+        case 'POST':
+            $userController->save($body);
+            break;
+        case 'PUT':
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
-                    if (is_numeric($subroutes[0])) {
-                        $userController->getById($subroutes[0]);
+                    if (str_contains($subroutes[0], 'status')) {
+                        $userController->updateStatus($body['id'], $body['status']);
                     }
-                    
+                    else {
+                        if (is_numeric($subroutes[0])) {
+                            $userController->update($subroutes[0], $body);
+                        }
+                    }
+
                     pathNotFound();
                 }
             }
-            
-            $userController->getAll();
+
+            pathNotFound();
             break;
         default:
             methodNotAllowed();
