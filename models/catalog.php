@@ -8,6 +8,33 @@ class Catalog {
         $this->dbConnection = dbConnection();
     }
 
+    private function getMetaDataByName($schema, $catalog) {
+        $catalogsMetaData = $this->getAllMetaData();
+        if (isset($catalogsMetaData[$schema])) {
+            if (isset($catalogsMetaData[$schema][$catalog])) {
+                return $catalogsMetaData[$schema][$catalog];
+            }
+        }
+        
+        return array();
+    }
+
+    public function getBasicFields() {
+        $fields = array();
+        $catalogsMetaData = $this->getAllMetaData();
+        foreach ($catalogsMetaData as $schema => $catalog) {
+            foreach ($catalog as $catalogName => $data) {
+                $fields[$schema][$catalogName] = array(
+                    'id' => $data['primary_key'],
+                    'description' => $data['description'],
+                );
+            }
+        }
+        
+        sendJsonResponse(200, array('ok' => true, 'data' => $fields));
+        exit();
+    }
+
     public function getAll($schema, $catalog) {
         try {
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
@@ -36,7 +63,7 @@ class Catalog {
         exit();
     }
 
-    public function getItemDataById($schema, $catalog, $id) {
+    public function getItemById($schema, $catalog, $id) {
         try {
             if (isset($id)) {
                 $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
@@ -166,17 +193,6 @@ class Catalog {
     
         exit();
     }
-
-    private function getMetaDataByName($schema, $catalog) {
-        $catalogsMetaData = $this->getAllMetaData();
-        if (isset($catalogsMetaData[$schema])) {
-            if (isset($catalogsMetaData[$schema][$catalog])) {
-                return $catalogsMetaData[$schema][$catalog];
-            }
-        }
-        
-        return array();
-    }
     
     private function getAllMetaData() {
         return array(
@@ -194,7 +210,7 @@ class Catalog {
                     'primary_key' => 'pk_job_position_department_id',
                     'description' => 'job_position_department',
                     'foreign_key' => 'fk_job_position_area_id',
-                    'columns' => '[pk_job_position_department_id], [job_position_department], [status], [fk_job_position_area_id], [created_at], [created_by]',
+                    'columns' => '[pk_job_position_department_id], [job_position_department], [fk_job_position_area_id], [status], [created_at], [created_by]',
                     'join_columns' => "jpd.pk_job_position_department_id, jpd.job_position_department, jpd.fk_job_position_area_id, jpa.job_position_area, jpd.status, jpd.created_at, jpd.created_by, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name",
                     'alias' => 'jpd',
                     'join' => 'LEFT JOIN [user].[users] u ON jpd.[created_by] = u.[pk_user_id] LEFT JOIN [job_position].[area] jpa ON jpd.[fk_job_position_area_id] = jpa.[pk_job_position_area_id]',
@@ -288,7 +304,7 @@ class Catalog {
                     'primary_key' => 'pk_state_id',
                     'description' => 'state_name',
                     'foreign_key' => 'fk_country_id',
-                    'columns' => '[pk_state_id], [state_name], [state_code], [created_at]',
+                    'columns' => '[pk_state_id], [state_name], [state_code], [fk_country_id], [created_at]',
                 ),
                 'countries' => array(
                     'primary_key' => 'pk_country_id',

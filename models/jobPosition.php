@@ -13,9 +13,12 @@ class JobPosition {
             $sql = "
                 SELECT
                     jpp.pk_job_position_id,
-                    jpp.job_position_name,
+                    jpp.job_position,
+                    jpp.fk_job_position_area_id,
                     jpa.job_position_area,
+                    jpp.fk_job_position_department_id,
                     jpd.job_position_department,
+                    jpp.fk_job_position_office_id,
                     jpo.job_position_office,
                     ur.role,
                     jpt.job_position_type,
@@ -51,7 +54,7 @@ class JobPosition {
         try {
             $sql = '
                 SELECT
-                    job_position_name,
+                    job_position,
                     fk_job_position_area_id AS job_position_area_id,
                     fk_job_position_department_id AS job_position_department_id,
                     fk_job_position_office_id AS job_position_office_id,
@@ -78,11 +81,11 @@ class JobPosition {
 
     public function save($data) {
         try {
-            $fields = '[job_position_name], [fk_job_position_area_id], [fk_job_position_department_id], [fk_job_position_office_id], [fk_job_position_type_id], [fk_job_position_status_id], [fk_role_id], [job_position_parent_id], [publish_date], [created_by]';
-            $values = ':job_position_name, :job_position_area_id, :job_position_department_id, :job_position_office_id, :job_position_type_id, :job_position_status_id, :user_role_id, :job_position_parent_id, :publish_date, :created_by';
+            $fields = '[job_position], [fk_job_position_area_id], [fk_job_position_department_id], [fk_job_position_office_id], [fk_job_position_type_id], [fk_job_position_status_id], [fk_role_id], [job_position_parent_id], [publish_date], [created_by]';
+            $values = ':job_position, :job_position_area_id, :job_position_department_id, :job_position_office_id, :job_position_type_id, :job_position_status_id, :user_role_id, :job_position_parent_id, :publish_date, :created_by';
             $sql = sprintf('INSERT INTO [job_position].[positions] (%s) VALUES(%s)', $fields, $values);
             $stmt = $this->dbConnection->prepare($sql);
-            $stmt->bindParam(':job_position_name', $data['job_position_name'], PDO::PARAM_STR);
+            $stmt->bindParam(':job_position', $data['job_position'], PDO::PARAM_STR);
             $stmt->bindParam(':job_position_area_id', $data['job_position_area_id'], PDO::PARAM_INT);
             $stmt->bindParam(':job_position_department_id', $data['job_position_department_id'], PDO::PARAM_INT);
             $stmt->bindParam(':job_position_office_id', $data['job_position_office_id'], PDO::PARAM_INT);
@@ -112,7 +115,7 @@ class JobPosition {
             $sql = '
                 UPDATE [job_position].[positions]
                 SET 
-                    [job_position_name] = :job_position_name,
+                    [job_position] = :job_position,
                     [fk_job_position_area_id] = :job_position_area_id,
                     [fk_job_position_department_id] = :job_position_department_id,
                     [fk_job_position_office_id] = :job_position_office_id,
@@ -125,7 +128,7 @@ class JobPosition {
             ';
     
             $stmt = $this->dbConnection->prepare($sql);
-            $stmt->bindParam(':job_position_name', $data['job_position_name'], PDO::PARAM_STR);
+            $stmt->bindParam(':job_position', $data['job_position'], PDO::PARAM_STR);
             $stmt->bindParam(':job_position_area_id', $data['job_position_area_id'], PDO::PARAM_INT);
             $stmt->bindParam(':job_position_department_id', $data['job_position_department_id'], PDO::PARAM_INT);
             $stmt->bindParam(':job_position_office_id', $data['job_position_office_id'], PDO::PARAM_INT);

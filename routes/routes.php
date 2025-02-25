@@ -166,11 +166,10 @@ function catalog($method, $subroutes, $body) {
                 if (isset($subroutes[0])) {
                     if (isset($subroutes[1])) {
                         if (isset($_GET['id'])) {
-                            $catalogController->getItemDataById($subroutes[0], $subroutes[1], $_GET['id']);
+                            $catalogController->getItemById($subroutes[0], $subroutes[1], $_GET['id']);
                         }
-                        else {
-                            $catalogController->getAll($subroutes[0], $subroutes[1]);
-                        }
+
+                        $catalogController->getAll($subroutes[0], $subroutes[1]);
                     }
                     
                     internalServerError('No se recibió un nombre de catálogo válido.');

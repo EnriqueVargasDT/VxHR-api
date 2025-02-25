@@ -8,16 +8,16 @@ class CatalogController {
         $this->catalog = new Catalog();
     }
 
-    public function getRawData($schema, $catalog) {
-        $this->catalog->getRawData($schema, $catalog);
+    public function getBasicFields() {
+        $this->catalog->getBasicFields();
     }
 
     public function getAll($schema, $catalog) {
         $this->catalog->getAll($schema, $catalog);
     }
 
-    public function getItemDataById($schema, $catalog, $id) {
-        $this->catalog->getItemDataById($schema, $catalog, $id);
+    public function getItemById($schema, $catalog, $id) {
+        $this->catalog->getItemById($schema, $catalog, $id);
     }
 
     public function saveNewItem($schema, $catalog, $item) {
