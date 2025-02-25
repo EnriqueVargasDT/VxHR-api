@@ -14,7 +14,7 @@ class Login {
 
     public function validate($username, $password, $rememberMe) {
         try {
-            $sql1 = "SELECT TOP 1 * FROM [user].[users_auth] WHERE [username] = '$username'";
+            $sql1 = "SELECT TOP 1 UA.* FROM [user].[users_auth] UA JOIN [user].[users] U ON UA.[fk_user_id] = U.[pk_user_id] WHERE UA.[username] = '$username' AND U.[is_active] = 1";
             $stmt = $this->dbConnection->query($sql1);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($result) {
