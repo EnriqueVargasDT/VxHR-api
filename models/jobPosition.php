@@ -12,18 +12,19 @@ class JobPosition {
         try {
             $sql = "
                 SELECT
-                    jpp.pk_job_position_id AS id,
-                    jpp.job_position_name AS description,
-                    jpa.job_position_area AS area,
-                    jpd.job_position_department AS department,
-                    jpo.job_position_office AS office,
+                    jpp.pk_job_position_id,
+                    jpp.job_position_name,
+                    jpa.job_position_area,
+                    jpd.job_position_department,
+                    jpo.job_position_office,
                     ur.role,
                     jpt.job_position_type,
                     jps.job_position_status,
-                    jpp.fk_job_position_status_id AS job_position_status_id,
+                    jpp.fk_job_position_status_id,
                     jpp.publish_date,
                     jpp.fk_job_position_area_id AS parent_id,
-                    CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by
+                    jpp.created_by,
+                    CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name
                 FROM [job_position].[positions] jpp
                 LEFT JOIN [job_position].[area] jpa ON jpp.fk_job_position_area_id = jpa.pk_job_position_area_id
                 LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
