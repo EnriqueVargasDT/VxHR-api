@@ -81,8 +81,9 @@ class JobPosition {
 
     public function save($data) {
         try {
-            $fields = '[job_position], [fk_job_position_area_id], [fk_job_position_department_id], [fk_job_position_office_id], [fk_job_position_type_id], [fk_job_position_status_id], [fk_role_id], [job_position_parent_id], [publish_date], [created_by]';
-            $values = ':job_position, :job_position_area_id, :job_position_department_id, :job_position_office_id, :job_position_type_id, :job_position_status_id, :user_role_id, :job_position_parent_id, :publish_date, :created_by';
+            $fields = '[job_position], [fk_job_position_area_id], [fk_job_position_department_id], [fk_job_position_office_id], [fk_job_position_type_id], [fk_job_position_status_id], [fk_job_position_admin_status_id], [fk_role_id], [job_position_parent_id], [publish_date], [created_by]';
+            $values = ':job_position, :job_position_area_id, :job_position_department_id, :job_position_office_id, :job_position_type_id, :job_position_status_id, :job_position_admin_status_id, :user_role_id, :job_position_parent_id, :publish_date, :created_by';
+            $initJobPositionStatusId = 1;
             $sql = sprintf('INSERT INTO [job_position].[positions] (%s) VALUES(%s)', $fields, $values);
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':job_position', $data['job_position'], PDO::PARAM_STR);
@@ -91,6 +92,7 @@ class JobPosition {
             $stmt->bindParam(':job_position_office_id', $data['job_position_office_id'], PDO::PARAM_INT);
             $stmt->bindParam(':job_position_type_id', $data['job_position_type_id'], PDO::PARAM_INT);
             $stmt->bindParam(':job_position_status_id', $data['job_position_status_id'], PDO::PARAM_INT);
+            $stmt->bindParam(':job_position_admin_status_id', $initJobPositionStatusId, PDO::PARAM_INT);
             $stmt->bindParam(':user_role_id', $data['user_role_id'], PDO::PARAM_INT);
             $stmt->bindParam(':job_position_parent_id', $data['job_position_parent_id'], PDO::PARAM_INT);
             $stmt->bindParam(':publish_date', $data['publish_date'], PDO::PARAM_STR);
