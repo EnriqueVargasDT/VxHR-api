@@ -98,6 +98,9 @@ class Catalog {
                 elseif ($catalog === 'office') {
                     $fields['job_position_office_address'] = ':address';
                     $params[':address'] = $item['address'];
+
+                    $fields['job_position_office_short'] = ':shortname';
+                    $params[':shortname'] = $item['shortname'];
                 }
             }
             $fields['created_by'] = ':created_by';
@@ -137,6 +140,9 @@ class Catalog {
             if ($schema === 'job_position' && $catalog === 'office') {
                 $columns[$catalogMetaData['description'] . '_address'] = ':address';
                 $params[':address'] = $item['address'];
+
+                $columns[$catalogMetaData['description'] . '_short'] = ':shortname';
+                $params[':shortname'] = $item['shortname'];
             }
 
             $setClause = implode(', ', array_map(fn($field, $placeholder) => "[$field] = $placeholder", array_keys($columns), $columns));
@@ -219,8 +225,8 @@ class Catalog {
                     'primary_key' => 'pk_job_position_office_id',
                     'description' => 'job_position_office',
                     'foreign_key' => '',
-                    'columns' => '[pk_job_position_office_id], [job_position_office], [job_position_office_address], [status], [created_at], created_by',
-                    'join_columns' => "jpo.pk_job_position_office_id, jpo.job_position_office, jpo.job_position_office_address, jpo.status, jpo.created_at, jpo.created_by, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name",
+                    'columns' => '[pk_job_position_office_id], [job_position_office], [job_position_office_short], [job_position_office_address], [status], [created_at], created_by',
+                    'join_columns' => "jpo.pk_job_position_office_id, jpo.job_position_office, jpo.job_position_office_short, jpo.job_position_office_address, jpo.status, jpo.created_at, jpo.created_by, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name",
                     'alias' => 'jpo',
                     'join' => 'LEFT JOIN [user].[users] u ON jpo.[created_by] = u.[pk_user_id]',
                 ),
