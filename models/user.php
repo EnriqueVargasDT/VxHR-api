@@ -89,22 +89,35 @@ class User {
     }
 
     private function validateExistence($curp, $rfc, $imss, $infonavit, $institutionalEmail) {
-        $sql = 'SELECT COUNT(*) FROM [user].[users] WHERE curp = :curp OR rfc = :rfc OR imss = :imss OR infonavit = :infonavit OR institutional_email = :institutional_email;';
+        $conditions = ['curp = :curp', 'rfc = :rfc', 'imss = :imss', 'institutional_email = :institutional_email'];
+        $params = [
+            ':curp' => $curp,
+            ':rfc' => $rfc,
+            ':imss' => $imss,
+            ':institutional_email' => $institutionalEmail
+        ];
+    
+        if (!empty($infonavit)) {
+            $conditions[] = 'infonavit = :infonavit';
+            $params[':infonavit'] = $infonavit;
+        }
+    
+        $sql = 'SELECT COUNT(*) FROM [user].[users] WHERE ' . implode(' OR ', $conditions);
         $stmt = $this->dbConnection->prepare($sql);
-        $stmt->bindParam(':curp', $curp, PDO::PARAM_STR);
-        $stmt->bindParam(':rfc', $rfc, PDO::PARAM_STR);
-        $stmt->bindParam(':imss', $imss, PDO::PARAM_STR);
-        $stmt->bindParam(':infonavit', $infonavit, PDO::PARAM_STR);
-        $stmt->bindParam(':institutional_email', $institutionalEmail, PDO::PARAM_STR);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindParam($key, $value, PDO::PARAM_STR);
+        }
+    
         $stmt->execute();
-        $exists = $stmt->fetchColumn();
-        return $exists > 0;
+        return $stmt->fetchColumn() > 0;
     }
 
     public function save($data) {
         try {
             if ($this->validateExistence($data['curp'], $data['rfc'], $data['imss'], $data['infonavit'], $data['institutional_email'])) {
-                throw new Exception('Error: El CURP, RFC, IMSS, INFONAVIT o Correo Institucional ya existe en la base de datos.');
+                $error = (isset($data['infonavit'])) ? 'Error: El CURP, RFC, IMSS, INFONAVIT o Correo Institucional ya existe en la base de datos.' : 'Error: El CURP, RFC, IMSS o Correo Institucional ya existe en la base de datos.';
+                throw new Exception($error);
             }
 
             $this->dbConnection->beginTransaction();
