@@ -39,27 +39,37 @@ class Login {
                     ]);
 
                     // Actualizar la fecha de último inicio de sesión:
+                    $this->dbConnection->beginTransaction();
                     $sql2 = 'UPDATE [user].[users_auth] SET [last_access_at] = GETDATE() WHERE [pk_user_auth_id] = :pk_user_auth_id AND [fk_user_id] = :fk_user_id;';
                     $stmt2 = $this->dbConnection->prepare($sql2);
                     $stmt2->bindParam(':pk_user_auth_id', $result['pk_user_auth_id'], PDO::PARAM_INT);
                     $stmt2->bindParam(':fk_user_id', $result['fk_user_id'], PDO::PARAM_INT);
                     if ($stmt2->execute()) {
-                        $_SESSION['pk_user_id'] = $result['fk_user_id'];
-                        sendJsonResponse(200, array('ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], ));
+                        if ($stmt2->rowCount() > 0) {
+                            $this->dbConnection->commit();
+                            $_SESSION['pk_user_id'] = $result['fk_user_id'];
+                            sendJsonResponse(200, array('ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], 'message' => 'Registro actualizado correctamente.', ));
+                        }
+                        else {
+                            throw new Exception('Error: No se realizaron cambios en el registro.');
+                        }
                     }
                     else {
-                        handleError(500, 'Error al intentar actualizar la fecha de inicio de sesión.');
+                        throw new Exception('Error: Falló la instrucción de actualización del registro.');
                     }
                 }
                 else {
-                    handleError(401, array('error' => true, 'type' => 'password', 'message' => 'Contraseña inválida.'));
+                    handleError(401, array('error' => true, 'type' => 'password', 'message' => 'Error: Contraseña inválida.'));
                 }
             }
             else {
-                handleError(401, array('error' => true, 'type' => 'username', 'message' => 'Usuario no encontrado.'));
+                handleError(401, array('error' => true, 'type' => 'username', 'message' => 'Error: Usuario no encontrado.'));
             }
         }
         catch(Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
             handleExceptionError($error);
         }
 
@@ -84,30 +94,42 @@ class Login {
                     $stmt2 = $this->dbConnection->prepare($sql2);
                     $stmt2->bindParam(':username', $username, PDO::PARAM_STR);
                     if ($stmt2->execute()) {
+                        $this->dbConnection->beginTransaction();
                         $token = password_hash($username, PASSWORD_BCRYPT);
                         $sql3 = 'INSERT INTO [user].[password_resets] ([username], [token], [created_at]) VALUES(:username, :token, GETDATE());';
                         $stmt3 = $this->dbConnection->prepare($sql3);
                         $stmt3->bindParam(':username', $username, PDO::PARAM_STR);
                         $stmt3->bindParam(':token', $token, PDO::PARAM_STR);
-                        $stmt3->execute();
-                        if ($stmt3->rowCount() > 0) {
-                            // Enviar correo de confirmación
-                            require_once '../models/email.php';
-                            $email = new Email();
-                            $subject = 'Solicitud de restablecimiento de contraseña';
-                            $template = file_get_contents('../templates/password_recovery_email.html');
-                            $template = str_replace('{{username}}', $result['user_full_name'], $template);
-                            $template = str_replace('{{email}}', $username, $template);
-                            $template = str_replace('{{reset_link}}', $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].":3000/restablecer-contraseña?token=$token", $template);
-                            $message = $template;
-                            $send = $email->send($username, $subject, $message);
-                            if ($send) {
-                                sendJsonResponse(200, array('ok' => true, 'message' => 'Correo electrónico enviado correctamente.'));
+                        if ($stmt3->execute()) {
+                            if ($stmt3->rowCount() > 0) {
+                                // Enviar correo de recuperación de contraseña
+                                require_once '../models/email.php';
+                                $email = new Email();
+                                $subject = 'Solicitud de restablecimiento de contraseña';
+                                $template = file_get_contents('../templates/password_recovery_email.html');
+                                $template = str_replace('{{username}}', $result['user_full_name'], $template);
+                                $template = str_replace('{{email}}', $username, $template);
+                                $template = str_replace('{{reset_link}}', $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].":3000/restablecer-contraseña?token=$token", $template);
+                                $message = $template;
+                                $send = $email->send($username, $subject, $message);
+                                if ($send) {
+                                    $this->dbConnection->commit();
+                                    sendJsonResponse(200, array('ok' => true, 'message' => 'Correo electrónico enviado correctamente.'));
+                                }
+                                else {
+                                    throw new Exception('Error: No se realizó el envío del correo electrónico.');
+                                }
+                            }
+                            else {
+                                throw new Exception('Error: No se pudo crear el registro.');
                             }
                         }
                         else {
-                            handleError(500, 'El correo electrónico no pudo ser generado. Intentar nuevamente.');
+                            throw new Exception('Error: Falló la instrucción de creación del registro.');
                         }
+                    }
+                    else {
+                        throw new Exception('Error: Falló la instrucción de eliminación de registros.');
                     }
                 }
                 else {
@@ -119,6 +141,9 @@ class Login {
             }
         }
         catch(Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
             handleExceptionError($error);
         }
 
@@ -134,21 +159,31 @@ class Login {
                 if (isset($result['pk_password_reset_id'])) {
                     if (isset($newPassword) && isset($confirmPassword)) {
                         if ($newPassword === $confirmPassword) {
+                            $this->dbConnection->beginTransaction();
                             $encryptedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
                             $sql2 = 'UPDATE [user].[users_auth] SET [password] = :password WHERE [username] = :username';
                             $stmt2 = $this->dbConnection->prepare($sql2);
                             $stmt2->bindParam(':password', $encryptedPassword, PDO::PARAM_STR);
                             $stmt2->bindParam(':username', $result['username'], PDO::PARAM_STR);
-                            $stmt2->execute();
-                            if ($stmt2->rowCount() > 0) {
-                                $sql3 = 'DELETE FROM [user].[password_resets] WHERE [username] = :username;';
-                                $stmt3 = $this->dbConnection->prepare($sql3);
-                                $stmt3->bindParam(':username', $result['username'], PDO::PARAM_STR);
-                                $stmt3->execute();
-                                sendJsonResponse(200, array('ok' => true, 'message' => 'La contraseña ha sido actualizada correctamente.'));
+                            if ($stmt2->execute()) {
+                                if ($stmt2->rowCount() > 0) {
+                                    $this->dbConnection->commit();
+                                    $sql3 = 'DELETE FROM [user].[password_resets] WHERE [username] = :username;';
+                                    $stmt3 = $this->dbConnection->prepare($sql3);
+                                    $stmt3->bindParam(':username', $result['username'], PDO::PARAM_STR);
+                                    if ($stmt3->execute()) {
+                                        sendJsonResponse(200, array('ok' => true, 'message' => 'La contraseña ha sido actualizada correctamente.'));
+                                    }
+                                    else {
+                                        throw new Exception('Error: Falló la instrucción de eliminación de registro.');
+                                    }
+                                }
+                                else {
+                                    throw new Exception('Error: No se realizaron cambios en el registro.');
+                                }
                             }
                             else {
-                                handleError(500, 'No pudo ser actualizada la contraseña. Intentar nuevamente.');
+                                throw new Exception('Error: Falló la instrucción de actualización del registro.');
                             }
                         }
                         else {
@@ -168,6 +203,9 @@ class Login {
             }
         }
         catch(Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
             handleExceptionError($error);
         }
 

@@ -20,8 +20,8 @@ class CatalogController {
         $this->catalog->getItemById($schema, $catalog, $id);
     }
 
-    public function saveNewItem($schema, $catalog, $item) {
-        $this->catalog->saveNewItem($schema, $catalog, $item);
+    public function saveItem($schema, $catalog, $item) {
+        $this->catalog->saveItem($schema, $catalog, $item);
     }
 
     public function updateItem($schema, $catalog, $item) {

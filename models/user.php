@@ -1,5 +1,6 @@
 <?php
 require_once '../config/config.php';
+require_once 'jobPosition.php';
 require_once 'email.php';
 
 class User {
@@ -87,8 +88,26 @@ class User {
         exit();
     }
 
+    private function validateExistence($curp, $rfc, $imss, $infonavit, $institutionalEmail) {
+        $sql = 'SELECT COUNT(*) FROM [user].[users] WHERE curp = :curp OR rfc = :rfc OR imss = :imss OR infonavit = :infonavit OR institutional_email = :institutional_email;';
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bindParam(':curp', $curp, PDO::PARAM_STR);
+        $stmt->bindParam(':rfc', $rfc, PDO::PARAM_STR);
+        $stmt->bindParam(':imss', $imss, PDO::PARAM_STR);
+        $stmt->bindParam(':infonavit', $infonavit, PDO::PARAM_STR);
+        $stmt->bindParam(':institutional_email', $institutionalEmail, PDO::PARAM_STR);
+        $stmt->execute();
+        $exists = $stmt->fetchColumn();
+        return $exists > 0;
+    }
+
     public function save($data) {
         try {
+            if ($this->validateExistence($data['curp'], $data['rfc'], $data['imss'], $data['infonavit'], $data['institutional_email'])) {
+                throw new Exception('Error: El CURP, RFC, IMSS, INFONAVIT o Correo Institucional ya existe en la base de datos.');
+            }
+
+            $this->dbConnection->beginTransaction();
             $columns = $this->getColumns();
 
             // Excluir columnas de valores por defecto
@@ -112,48 +131,71 @@ class User {
                 $stmt1->bindValue($placeholder, $columnValue, $pdoParam);
             }
             $stmt1->bindValue(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
-
             if ($stmt1->execute()) {
-                $newUserId = $this->dbConnection->lastInsertId();
-                if ($newUserId) {
-                    $sql2 = 'INSERT INTO [user].[users_auth] ([username], [password], [fk_user_id], [fk_role_id]) VALUES(:username, :password, :user_id, :role_id);';
-                    $stmt2 = $this->dbConnection->prepare($sql2);
-                    $password = password_hash($data['password'], PASSWORD_BCRYPT);
-                    $stmt2->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
-                    $stmt2->bindParam(':password', $password, PDO::PARAM_STR);
-                    $stmt2->bindParam(':user_id', $newUserId, PDO::PARAM_INT);
-                    $stmt2->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
-                    if ($stmt2->execute()) {
-                        $newUserAuthId = $this->dbConnection->lastInsertId();
-                        $to = $data['institutional_email'];
-                        $subject = '¡Bienvenido a nuestra plataforma digital! VxHR';
-                        $template = file_get_contents('../templates/platform_welcome_email.html');
-                        $template = str_replace('{{username}}', $data['first_name'].' '.$data['last_name_1'].' '.$data['last_name_2'] , $template);
-                        $template = str_replace('{{email}}', $data['institutional_email'], $template);
-                        $template = str_replace('{{password}}', $data['password'], $template);
-                        $template = str_replace('{{login_link}}', $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].':3000/login', $template);
-                        $message = $template;
-                        
-                        if ($this->email->send($to, $subject, $message)) {
-                            sendJsonResponse(200, array('ok' => true, 'message' => 'Usuario creado correctamente.'));
+                if ($stmt1->rowCount() > 0) {
+                    $this->dbConnection->commit();
+                    $newUserId = $this->dbConnection->lastInsertId();
+                    if ($newUserId) {
+                        if (isset($data['fk_job_position_id'])) {
+                            $sql2 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
+                            $stmt2 = $this->dbConnection->prepare($sql2);
+                            $fkJobPositionId = $data['fk_job_position_id'];
+                            $JOB_POSITION_STATUS_BUSY = JobPosition::STATUS_BUSY;
+                            $JOB_POSITION_ADMIN_STATUS_BUSY = JobPosition::ADMIN_STATUS_BUSY;
+                            $stmt2->bindParam(':pk_job_position_id', $fkJobPositionId, PDO::PARAM_INT);
+                            $stmt2->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_BUSY, PDO::PARAM_INT);
+                            $stmt2->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_BUSY, PDO::PARAM_INT);
+                            if (!$stmt2->execute()) {
+                                handleError(500, 'No se pudo modificar el estatus de la vacante asignada al usuario.');
+                                exit();
+                            }
+                        }
+
+                        $sql3 = 'INSERT INTO [user].[users_auth] ([username], [password], [fk_user_id], [fk_role_id]) VALUES(:username, :password, :user_id, :role_id);';
+                        $stmt3 = $this->dbConnection->prepare($sql3);
+                        $password = password_hash($data['password'], PASSWORD_BCRYPT);
+                        $stmt3->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
+                        $stmt3->bindParam(':password', $password, PDO::PARAM_STR);
+                        $stmt3->bindParam(':user_id', $newUserId, PDO::PARAM_INT);
+                        $stmt3->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
+                        if ($stmt3->execute()) {
+                            $newUserAuthId = $this->dbConnection->lastInsertId();
+                            $to = $data['institutional_email'];
+                            $subject = '¡Bienvenido a nuestra plataforma digital! VxHR';
+                            $template = file_get_contents('../templates/platform_welcome_email.html');
+                            $template = str_replace('{{username}}', $data['first_name'].' '.$data['last_name_1'].' '.$data['last_name_2'] , $template);
+                            $template = str_replace('{{email}}', $data['institutional_email'], $template);
+                            $template = str_replace('{{password}}', $data['password'], $template);
+                            $template = str_replace('{{login_link}}', $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].':3000/login', $template);
+                            $message = $template;
+                            
+                            if ($this->email->send($to, $subject, $message)) {
+                                sendJsonResponse(200, array('ok' => true, 'message' => 'Usuario creado correctamente.'));
+                            }
+                            else {
+                                handleError(500, 'No se pudo enviar el correo de bienvenida a plataforma.');
+                            }
                         }
                         else {
-                            handleError(500, 'No se pudo enviar el correo de bienvenida a plataforma.');
+                            handleError(500, 'No se pudo crear los accesos a plataforma para el usuario.');
                         }
                     }
                     else {
-                        handleError(500, 'No se pudo crear los accesos a plataforma para el usuario.');
+                        handleError(500, 'No se pudo crear el usuario. Favor de intentar nuevamente.');
                     }
                 }
                 else {
-                    handleError(500, 'No se pudo crear el usuario. Favor de intentar nuevamente.');
+                    throw new Exception('Error: No se pudo crear el registro.');
                 }
             }
             else {
-                handleError(500, 'Falló el proceso de creación de usuario.');
+                throw new Exception('Error: Falló la instrucción de creación del registro.');
             }
         }
         catch(Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
             handleExceptionError($error);
         }
 
@@ -162,6 +204,7 @@ class User {
 
     public function update($id, $data) {
         try {
+            $this->dbConnection->beginTransaction();
             $SET = array();
             $columns = $this->getColumns();
             foreach ($columns as $field => $pdoParam) {
@@ -180,13 +223,22 @@ class User {
             }
             $stmt->bindValue(':pk_user_id', $id, PDO::PARAM_INT);
             if ($stmt->execute()) {
-                sendJsonResponse(200, array('ok' => true, 'message' => 'Usuario actualizado correctamente.'));
+                if ($stmt->rowCount() > 0) {
+                    $this->dbConnection->commit();
+                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+                }
+                else {
+                    throw new Exception('Error: No se realizaron cambios en el registro.');
+                }
             }
             else {
-                handleError(500, 'No se pudo actualizar los datos del usuario.');
+                throw new Exception('Error: Falló la instrucción de actualización del registro.');
             }
         }
         catch(Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
             handleExceptionError($error);
         }
 
@@ -200,14 +252,23 @@ class User {
             $stmt->bindParam(':is_active', $status, PDO::PARAM_INT);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
-            if ($stmt->rowCount() > 0) {
-                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+            if ($stmt->execute()) {
+                if ($stmt->rowCount() > 0) {
+                    $this->dbConnection->commit();
+                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+                }
+                else {
+                    throw new Exception('Error: No se realizaron cambios en el registro.');
+                }
             }
             else {
-                handleError(500, 'No se realizaron cambios en el registro.');
+                throw new Exception('Error: Falló la instrucción de actualización del registro.');
             }
         }
         catch(Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
             handleExceptionError($error);
         }
 

@@ -183,7 +183,7 @@ function catalog($method, $subroutes, $body) {
                 if (isset($subroutes[0])) {
                     if (isset($subroutes[1])) {
                         if (isset($body['description'])) {
-                            $catalogController->saveNewItem($subroutes[0], $subroutes[1], $body);
+                            $catalogController->saveItem($subroutes[0], $subroutes[1], $body);
                         }
 
                         internalServerError('No se recibió una descripción válida para crear elemento de catálogo.');    

@@ -75,7 +75,7 @@ class Catalog {
                 sendJsonResponse(200, array('ok' => true, 'data' => $result));
             }
             else {
-                sendJsonResponse(401, array('error' => true, 'message' => 'Error al intentar obtener el registro: id de catálogo no válido.'));
+                sendJsonResponse(401, array('error' => true, 'message' => 'Error: id de catálogo no válido.'));
             }
         }
         catch (Exception $error) {
@@ -85,8 +85,9 @@ class Catalog {
         exit();
     }
     
-    public function saveNewItem($schema, $catalog, $item) {
+    public function saveItem($schema, $catalog, $item) {
         try {
+            $this->dbConnection->beginTransaction();
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
             $fields = array($catalogMetaData['description'] => ':description');
             $params = array(':description' => $item['description']);
@@ -113,16 +114,23 @@ class Catalog {
             foreach ($params as $key => $value) {
                 $stmt->bindValue($key, $value, PDO::PARAM_STR);
             }
-    
-            $stmt->execute();
-            if ($stmt->rowCount() > 0) {
-                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro agregado correctamente.'));
+            if ($stmt->execute()) {
+                if ($stmt->rowCount() > 0) {
+                    $this->dbConnection->commit();
+                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro creado correctamente.'));
+                }
+                else {
+                    throw new Exception('Error: No se pudo crear el registro.');
+                }
             }
             else {
-                handleError(500, 'No se realizo la creación del registro.');
+                throw new Exception('Error: Falló la instrucción de creación del registro.');
             }
         }
         catch (Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
             handleExceptionError($error);
         }
     
@@ -131,6 +139,7 @@ class Catalog {
 
     public function updateItem($schema, $catalog, $item) {
         try {
+            $this->dbConnection->beginTransaction();
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
             $columns = array($catalogMetaData['description'] => ':description');
             $params = array(
@@ -157,16 +166,23 @@ class Catalog {
             foreach ($params as $key => $value) {
                 $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
             }
-    
-            $stmt->execute();
-            if ($stmt->rowCount() > 0) {
-                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+            if ($stmt->execute()) {
+                if ($stmt->rowCount() > 0) {
+                    $this->dbConnection->commit();
+                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+                }
+                else {
+                    throw new Exception('Error: No se realizaron cambios en el registro.');
+                }
             }
             else {
-                handleError(500, 'No se realizaron cambios en el registro.');
+                throw new Exception('Error: Falló la instrucción de actualización del registro.');
             }
         }
         catch (Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
             handleExceptionError($error);
         }
     
@@ -175,6 +191,7 @@ class Catalog {
 
     public function updateItemStatus($schema, $catalog, $item) {
         try {
+            $this->dbConnection->beginTransaction();
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
             $sql = sprintf(
                 'UPDATE [%s].[%s] SET [status] = %s WHERE [%s] = :id;',
@@ -185,15 +202,23 @@ class Catalog {
             );
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindValue(':id', $item['id'], PDO::PARAM_INT);
-            $stmt->execute();
-            if ($stmt->rowCount() > 0) {
-                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+            if ($stmt->execute()) {
+                if ($stmt->rowCount() > 0) {
+                    $this->dbConnection->commit();
+                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+                }
+                else {
+                    throw new Exception('Error: No se realizaron cambios en el registro.');
+                }
             }
             else {
-                handleError(500, 'No se realizaron cambios en el registro.');
+                throw new Exception('Error: Falló la instrucción de actualización del registro.');
             }
         }
         catch (Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
             handleExceptionError($error);
         }
     
@@ -247,6 +272,15 @@ class Catalog {
                     'join_columns' => "jps.pk_job_position_status_id, jps.job_position_status, jps.status, jps.created_at, jps.created_by, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name",
                     'alias' => 'jps',
                     'join' => 'LEFT JOIN [user].[users] u ON jps.[created_by] = u.[pk_user_id]',
+                ),
+                'admin_status' => array(
+                    'primary_key' => 'pk_job_position_admin_status_id',
+                    'description' => 'job_position_admin_status',
+                    'foreign_key' => '',
+                    'columns' => '[pk_job_position_admin_status_id], [job_position_admin_status], [status], [created_at], [created_by]',
+                    'join_columns' => "jpas.pk_job_position_admin_status_id, jpas.job_position_admin_status, jpas.status, jpas.created_at, jpas.created_by, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name",
+                    'alias' => 'jpas',
+                    'join' => 'LEFT JOIN [user].[users] u ON jpas.[created_by] = u.[pk_user_id]',
                 ),
             ),
             'user' => array(
