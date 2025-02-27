@@ -40,13 +40,16 @@ else {
                 user($method, $subroutes, $body);
                 break;
             case str_contains($route, 'temperature'):
-                temperature($method, $subroutes);
+                temperature($method);
                 break;
             case str_contains($route, 'catalog'):
                 catalog($method, $subroutes, $body);
                 break;
             case str_contains($route, 'job_position'):
                 job_position($method, $subroutes, $body);
+                break;
+            case str_contains($route, 'organization'):
+                organization($method);
                 break;
             default:
                 pathNotFound();
@@ -147,7 +150,7 @@ function user($method, $subroutes, $body) {
     }
 }
 
-function temperature($method, $subroutes) {
+function temperature($method) {
     switch ($method) {
         case 'GET':
             TemperatureController::get($_GET['latitude'], $_GET['longitude']);
@@ -263,6 +266,18 @@ function job_position($method, $subroutes, $body) {
             }
 
             pathNotFound();
+            break;
+        default:
+            methodNotAllowed();
+            break;
+    }
+}
+
+function organization($method) {
+    $organizationController = new OrganizationController();
+    switch ($method) {
+        case 'GET':
+            $organizationController->getData();
             break;
         default:
             methodNotAllowed();
