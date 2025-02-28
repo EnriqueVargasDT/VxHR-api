@@ -96,10 +96,10 @@ class JobPosition {
 
     public function save($data) {
         try {
-            $this->dbConnection->beginTransaction();
             $fields = '[job_position], [fk_job_position_area_id], [fk_job_position_department_id], [fk_job_position_office_id], [fk_job_position_type_id], [fk_job_position_status_id], [fk_job_position_admin_status_id], [fk_role_id], [job_position_parent_id], [publish_date], [created_by]';
             $values = ':job_position, :job_position_area_id, :job_position_department_id, :job_position_office_id, :job_position_type_id, :job_position_status_id, :job_position_admin_status_id, :user_role_id, :job_position_parent_id, :publish_date, :created_by';
             $sql = sprintf('INSERT INTO [job_position].[positions] (%s) VALUES(%s)', $fields, $values);
+            $this->dbConnection->beginTransaction();
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':job_position', $data['job_position'], PDO::PARAM_STR);
             $stmt->bindParam(':job_position_area_id', $data['job_position_area_id'], PDO::PARAM_INT);
@@ -137,8 +137,7 @@ class JobPosition {
 
     public function update($id, $data) {
         try {
-            $this->dbConnection->beginTransaction();
-            $sql = '
+            $sql = "
                 UPDATE [job_position].[positions]
                 SET 
                     [job_position] = :job_position,
@@ -151,7 +150,8 @@ class JobPosition {
                     [job_position_parent_id] = :job_position_parent_id,
                     [publish_date] = :publish_date
                 WHERE [pk_job_position_id] = :id
-            ' . PHP_EOL;
+            ";
+            $this->dbConnection->beginTransaction();
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':job_position', $data['job_position'], PDO::PARAM_STR);
             $stmt->bindParam(':job_position_area_id', $data['job_position_area_id'], PDO::PARAM_INT);

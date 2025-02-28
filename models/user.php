@@ -33,7 +33,7 @@ class User {
                 LEFT JOIN [job_position].[area] jpa ON u.fk_job_position_area_id = jpa.pk_job_position_area_id
                 LEFT JOIN [job_position].[department] jpd ON u.fk_job_position_department_id = jpd.pk_job_position_department_id
                 LEFT JOIN [job_position].[office] jpo ON u.fk_job_position_office_id = jpo.pk_job_position_office_id
-            " . PHP_EOL;
+            ";
             $stmt = $this->dbConnection->query($sql);
             $users = array();
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -70,7 +70,7 @@ class User {
                 LEFT JOIN [job_position].[department] jpd ON u.fk_job_position_department_id = jpd.pk_job_position_department_id
                 LEFT JOIN [job_position].[office] jpo ON u.fk_job_position_office_id = jpo.pk_job_position_office_id
                 WHERE u.pk_user_id = %s
-            " . PHP_EOL;
+            ";
             $sql = sprintf($sql, $pk_user_id);
             $stmt = $this->dbConnection->query($sql);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -120,7 +120,6 @@ class User {
                 throw new Exception($error);
             }
 
-            $this->dbConnection->beginTransaction();
             $columns = $this->getColumns();
 
             // Excluir columnas de valores por defecto
@@ -137,6 +136,7 @@ class User {
             }
 
             $sql1 = sprintf("$insert VALUES(%s)", implode(',', array_merge(array_keys($values), array(':created_by',))));
+            $this->dbConnection->beginTransaction();
             $stmt1 = $this->dbConnection->prepare($sql1);
             foreach ($values as $placeholder => $pdoParam) {
                 $columnName = ltrim($placeholder, ':');
@@ -151,6 +151,7 @@ class User {
                     if ($newUserId) {
                         if (isset($data['fk_job_position_id'])) {
                             $sql2 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
+                            $this->dbConnection->beginTransaction();
                             $stmt2 = $this->dbConnection->prepare($sql2);
                             $fkJobPositionId = $data['fk_job_position_id'];
                             $JOB_POSITION_STATUS_BUSY = JobPosition::STATUS_BUSY;
@@ -158,13 +159,21 @@ class User {
                             $stmt2->bindParam(':pk_job_position_id', $fkJobPositionId, PDO::PARAM_INT);
                             $stmt2->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_BUSY, PDO::PARAM_INT);
                             $stmt2->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_BUSY, PDO::PARAM_INT);
-                            if (!$stmt2->execute()) {
-                                handleError(500, 'No se pudo modificar el estatus de la vacante asignada al usuario.');
-                                exit();
+                            if ($stmt2->execute()) {
+                                if ($stmt2->rowCount() > 0) {
+                                    $this->dbConnection->commit();
+                                }
+                                else {
+                                    throw new Exception('Error: No se realizaron cambios en el registro.');
+                                }
+                            }
+                            else {
+                                throw new Exception('Error: Falló la instrucción de actualización del registro.');
                             }
                         }
 
                         $sql3 = 'INSERT INTO [user].[users_auth] ([username], [password], [fk_user_id], [fk_role_id]) VALUES(:username, :password, :user_id, :role_id);';
+                        $this->dbConnection->beginTransaction();
                         $stmt3 = $this->dbConnection->prepare($sql3);
                         $password = password_hash($data['password'], PASSWORD_BCRYPT);
                         $stmt3->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
@@ -172,25 +181,31 @@ class User {
                         $stmt3->bindParam(':user_id', $newUserId, PDO::PARAM_INT);
                         $stmt3->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
                         if ($stmt3->execute()) {
-                            $newUserAuthId = $this->dbConnection->lastInsertId();
-                            $to = $data['institutional_email'];
-                            $subject = '¡Bienvenido a nuestra plataforma digital! VxHR';
-                            $template = file_get_contents('../templates/platform_welcome_email.html');
-                            $template = str_replace('{{username}}', $data['first_name'].' '.$data['last_name_1'].' '.$data['last_name_2'] , $template);
-                            $template = str_replace('{{email}}', $data['institutional_email'], $template);
-                            $template = str_replace('{{password}}', $data['password'], $template);
-                            $template = str_replace('{{login_link}}', $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].':3000/login', $template);
-                            $message = $template;
-                            
-                            if ($this->email->send($to, $subject, $message)) {
-                                sendJsonResponse(200, array('ok' => true, 'message' => 'Usuario creado correctamente.'));
+                            if ($stmt3->rowCount() > 0) {
+                                $this->dbConnection->commit();
+                                $newUserAuthId = $this->dbConnection->lastInsertId();
+                                $to = $data['institutional_email'];
+                                $subject = '¡Bienvenido a nuestra plataforma digital! VxHR';
+                                $template = file_get_contents('../templates/platform_welcome_email.html');
+                                $template = str_replace('{{username}}', $data['first_name'].' '.$data['last_name_1'].' '.$data['last_name_2'] , $template);
+                                $template = str_replace('{{email}}', $data['institutional_email'], $template);
+                                $template = str_replace('{{password}}', $data['password'], $template);
+                                $template = str_replace('{{login_link}}', $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].':3000/login', $template);
+                                $message = $template;
+                                $send = $this->email->send($to, $subject, $message);
+                                if ($send) {
+                                    sendJsonResponse(200, array('ok' => true, 'message' => 'Usuario creado correctamente.'));
+                                }
+                                else {
+                                    handleError(500, 'No se pudo enviar el correo de bienvenida a plataforma.');
+                                }
                             }
                             else {
-                                handleError(500, 'No se pudo enviar el correo de bienvenida a plataforma.');
+                                throw new Exception('Error: No se pudo crear el registro.');
                             }
                         }
                         else {
-                            handleError(500, 'No se pudo crear los accesos a plataforma para el usuario.');
+                            throw new Exception('Error: Falló la instrucción de creación del registro.');
                         }
                     }
                     else {
@@ -217,7 +232,6 @@ class User {
 
     public function update($id, $data) {
         try {
-            $this->dbConnection->beginTransaction();
             $SET = array();
             $columns = $this->getColumns();
             foreach ($columns as $field => $pdoParam) {
@@ -226,19 +240,91 @@ class User {
                 }
             }
             
-            $sql = sprintf('UPDATE [user].[users] SET %s WHERE [pk_user_id] = :pk_user_id;', implode(',', $SET));
-            $stmt = $this->dbConnection->prepare($sql);
+            // Validar si sigue teniendo el mismo puesto, o se ha cambiado.
+            if (isset($data['fk_job_position_id'])) {
+                $sql = "SELECT [fk_job_position_id] FROM [user].[users] WHERE [pk_user_id] = :pk_user_id";
+                $stmt = $this->dbConnection->prepare($sql);
+                $stmt->bindParam(':pk_user_id', $id, PDO::PARAM_INT);
+                $stmt->execute();
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($result['fk_job_position_id'] != $data['fk_job_position_id']) {
+                    // Liberar la vacante anterior
+                    $sql2 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
+                    $this->dbConnection->beginTransaction();
+                    $stmt2 = $this->dbConnection->prepare($sql2);
+                    $fkJobPositionIdOld = $result['fk_job_position_id'];
+                    $JOB_POSITION_STATUS_AVAILABLE = JobPosition::STATUS_AVAILABLE;
+                    $JOB_POSITION_ADMIN_STATUS_CREATED = JobPosition::ADMIN_STATUS_CREATED;
+                    $stmt2->bindParam(':pk_job_position_id', $fkJobPositionIdOld, PDO::PARAM_INT);
+                    $stmt2->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_AVAILABLE, PDO::PARAM_INT);
+                    $stmt2->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_CREATED, PDO::PARAM_INT);
+                    if ($stmt2->execute()) {
+                        if ($stmt2->rowCount() > 0) {
+                            $this->dbConnection->commit();
+                        }
+                        else {
+                            throw new Exception('Error: No se realizaron cambios en el registro.');
+                        }
+                    }
+                    else {
+                        throw new Exception('Error: Falló la instrucción de actualización del registro.');
+                    }
+
+                    // Ocupar la actual.
+                    $sql3 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
+                    $this->dbConnection->beginTransaction();
+                    $stmt3 = $this->dbConnection->prepare($sql3);
+                    $fkJobPositionIdNew = $data['fk_job_position_id'];
+                    $JOB_POSITION_STATUS_BUSY = JobPosition::STATUS_BUSY;
+                    $JOB_POSITION_ADMIN_STATUS_BUSY = JobPosition::ADMIN_STATUS_BUSY;
+                    $stmt3->bindParam(':pk_job_position_id', $fkJobPositionIdNew, PDO::PARAM_INT);
+                    $stmt3->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_BUSY, PDO::PARAM_INT);
+                    $stmt3->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_BUSY, PDO::PARAM_INT);
+                    if ($stmt3->execute()) {
+                        if ($stmt3->rowCount() > 0) {
+                            $this->dbConnection->commit();
+                        }
+                        else {
+                            throw new Exception('Error: No se realizaron cambios en el registro.');
+                        }
+                    }
+                    else {
+                        throw new Exception('Error: Falló la instrucción de actualización del registro.');
+                    }
+                }
+            }
+
+            $sql4 = sprintf('UPDATE [user].[users] SET %s WHERE [pk_user_id] = :pk_user_id;', implode(',', $SET));
+            $this->dbConnection->beginTransaction();
+            $stmt4 = $this->dbConnection->prepare($sql4);
             foreach ($columns as $field => $pdoParam) {
                 if (isset($data[$field])) {
                     $columnValue = $data[$field];
-                    $stmt->bindValue(":$field", $columnValue, $pdoParam);
+                    $stmt4->bindValue(":$field", $columnValue, $pdoParam);
                 }
             }
-            $stmt->bindValue(':pk_user_id', $id, PDO::PARAM_INT);
-            if ($stmt->execute()) {
-                if ($stmt->rowCount() > 0) {
+            $stmt4->bindValue(':pk_user_id', $id, PDO::PARAM_INT);
+            if ($stmt4->execute()) {
+                if ($stmt4->rowCount() > 0) {
                     $this->dbConnection->commit();
-                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+                    $sql5 = 'UPDATE [user].[users_auth] SET [username] = :username, [fk_role_id] = :role_id WHERE fk_user_id = :fk_user_id;';
+                    $this->dbConnection->beginTransaction();
+                    $stmt5 = $this->dbConnection->prepare($sql5);
+                    $stmt5->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
+                    $stmt5->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
+                    $stmt5->bindParam(':fk_user_id', $id, PDO::PARAM_INT);
+                    if ($stmt5->execute()) {
+                        if ($stmt5->rowCount() > 0) {
+                            $this->dbConnection->commit();
+                            sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+                        }
+                        else {
+                            throw new Exception('Error: No se realizaron cambios en el registro.');
+                        }
+                    }
+                    else {
+                        throw new Exception('Error: Falló la instrucción de actualización del registro.');
+                    }
                 }
                 else {
                     throw new Exception('Error: No se realizaron cambios en el registro.');
@@ -261,10 +347,10 @@ class User {
     public function updateStatus($id, $status) {
         try {
             $sql = sprintf('UPDATE [user].[users] SET [is_active] = :is_active WHERE [pk_user_id] = :id;');
+            $this->dbConnection->beginTransaction();
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':is_active', $status, PDO::PARAM_INT);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            $stmt->execute();
             if ($stmt->execute()) {
                 if ($stmt->rowCount() > 0) {
                     $this->dbConnection->commit();

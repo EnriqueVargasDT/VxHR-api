@@ -87,7 +87,6 @@ class Catalog {
     
     public function saveItem($schema, $catalog, $item) {
         try {
-            $this->dbConnection->beginTransaction();
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
             $fields = array($catalogMetaData['description'] => ':description');
             $params = array(':description' => $item['description']);
@@ -113,6 +112,7 @@ class Catalog {
             $columns = implode(',', array_keys($fields));
             $placeholders = implode(',', array_values($fields));
             $sql = sprintf('INSERT INTO [%s].[%s] (%s) VALUES(%s);', $schema, $catalog, $columns, $placeholders);
+            $this->dbConnection->beginTransaction();
             $stmt = $this->dbConnection->prepare($sql);
             foreach ($params as $key => $value) {
                 $stmt->bindValue($key, $value, PDO::PARAM_STR);
@@ -142,7 +142,6 @@ class Catalog {
 
     public function updateItem($schema, $catalog, $item) {
         try {
-            $this->dbConnection->beginTransaction();
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
             $columns = array($catalogMetaData['description'] => ':description');
             $params = array(
@@ -171,6 +170,7 @@ class Catalog {
                 $setClause,
                 $catalogMetaData['primary_key']
             );
+            $this->dbConnection->beginTransaction();
             $stmt = $this->dbConnection->prepare($sql);
             foreach ($params as $key => $value) {
                 $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
@@ -200,7 +200,6 @@ class Catalog {
 
     public function updateItemStatus($schema, $catalog, $item) {
         try {
-            $this->dbConnection->beginTransaction();
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
             $sql = sprintf(
                 'UPDATE [%s].[%s] SET [status] = %s WHERE [%s] = :id;',
@@ -209,6 +208,7 @@ class Catalog {
                 $item['status'],
                 $catalogMetaData['primary_key']
             );
+            $this->dbConnection->beginTransaction();
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindValue(':id', $item['id'], PDO::PARAM_INT);
             if ($stmt->execute()) {

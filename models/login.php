@@ -15,8 +15,8 @@ class Login {
     public function validate($username, $password, $rememberMe) {
         try {
             $sql1 = "SELECT TOP 1 UA.* FROM [user].[users_auth] UA JOIN [user].[users] U ON UA.[fk_user_id] = U.[pk_user_id] WHERE UA.[username] = '$username' AND U.[is_active] = 1";
-            $stmt = $this->dbConnection->query($sql1);
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt1 = $this->dbConnection->query($sql1);
+            $result = $stmt1->fetch(PDO::FETCH_ASSOC);
             if ($result) {
                 $decryptedPassword = $this->decryptedPassword($password);
                 if (password_verify($decryptedPassword, $result['password'])) {
@@ -39,8 +39,8 @@ class Login {
                     ]);
 
                     // Actualizar la fecha de último inicio de sesión:
-                    $this->dbConnection->beginTransaction();
                     $sql2 = 'UPDATE [user].[users_auth] SET [last_access_at] = GETDATE() WHERE [pk_user_auth_id] = :pk_user_auth_id AND [fk_user_id] = :fk_user_id;';
+                    $this->dbConnection->beginTransaction();
                     $stmt2 = $this->dbConnection->prepare($sql2);
                     $stmt2->bindParam(':pk_user_auth_id', $result['pk_user_auth_id'], PDO::PARAM_INT);
                     $stmt2->bindParam(':fk_user_id', $result['fk_user_id'], PDO::PARAM_INT);
@@ -94,9 +94,9 @@ class Login {
                     $stmt2 = $this->dbConnection->prepare($sql2);
                     $stmt2->bindParam(':username', $username, PDO::PARAM_STR);
                     if ($stmt2->execute()) {
-                        $this->dbConnection->beginTransaction();
                         $token = password_hash($username, PASSWORD_BCRYPT);
                         $sql3 = 'INSERT INTO [user].[password_resets] ([username], [token], [created_at]) VALUES(:username, :token, GETDATE());';
+                        $this->dbConnection->beginTransaction();
                         $stmt3 = $this->dbConnection->prepare($sql3);
                         $stmt3->bindParam(':username', $username, PDO::PARAM_STR);
                         $stmt3->bindParam(':token', $token, PDO::PARAM_STR);
@@ -159,9 +159,9 @@ class Login {
                 if (isset($result['pk_password_reset_id'])) {
                     if (isset($newPassword) && isset($confirmPassword)) {
                         if ($newPassword === $confirmPassword) {
-                            $this->dbConnection->beginTransaction();
                             $encryptedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
                             $sql2 = 'UPDATE [user].[users_auth] SET [password] = :password WHERE [username] = :username';
+                            $this->dbConnection->beginTransaction();
                             $stmt2 = $this->dbConnection->prepare($sql2);
                             $stmt2->bindParam(':password', $encryptedPassword, PDO::PARAM_STR);
                             $stmt2->bindParam(':username', $result['username'], PDO::PARAM_STR);
