@@ -95,13 +95,16 @@ class Catalog {
                 if ($catalog === 'department') {
                     $fields[$catalogMetaData['foreign_key']] = ':area';
                     $params[':area'] = $item['area'];
+
+                    $fields['job_position_department_short'] = ':shortname';
+                    $params[':shortname'] = $item['shortname'];
                 }
                 elseif ($catalog === 'office') {
-                    $fields['job_position_office_address'] = ':address';
-                    $params[':address'] = $item['address'];
-
                     $fields['job_position_office_short'] = ':shortname';
                     $params[':shortname'] = $item['shortname'];
+
+                    $fields['job_position_office_address'] = ':address';
+                    $params[':address'] = $item['address'];
                 }
             }
             $fields['created_by'] = ':created_by';
@@ -143,15 +146,21 @@ class Catalog {
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
             $columns = array($catalogMetaData['description'] => ':description');
             $params = array(
+                ':id' => $item['id'],
                 ':description' => $item['description'],
-                ':id' => $item['id']
             );
-            if ($schema === 'job_position' && $catalog === 'office') {
-                $columns[$catalogMetaData['description'] . '_address'] = ':address';
-                $params[':address'] = $item['address'];
+            if ($schema === 'job_position') {
+                if ($catalog === 'department') {
+                    $columns[$catalogMetaData['description'] . '_short'] = ':shortname';
+                    $params[':shortname'] = $item['shortname'];
+                }
+                elseif ($catalog === 'office') {
+                    $columns[$catalogMetaData['description'] . '_short'] = ':shortname';
+                    $params[':shortname'] = $item['shortname'];
 
-                $columns[$catalogMetaData['description'] . '_short'] = ':shortname';
-                $params[':shortname'] = $item['shortname'];
+                    $columns[$catalogMetaData['description'] . '_address'] = ':address';
+                    $params[':address'] = $item['address'];
+                }
             }
 
             $setClause = implode(', ', array_map(fn($field, $placeholder) => "[$field] = $placeholder", array_keys($columns), $columns));
@@ -241,8 +250,8 @@ class Catalog {
                     'primary_key' => 'pk_job_position_department_id',
                     'description' => 'job_position_department',
                     'foreign_key' => 'fk_job_position_area_id',
-                    'columns' => '[pk_job_position_department_id], [job_position_department], [fk_job_position_area_id], [status], [created_at], [created_by]',
-                    'join_columns' => "jpd.pk_job_position_department_id, jpd.job_position_department, jpd.fk_job_position_area_id, jpa.job_position_area, jpd.status, jpd.created_at, jpd.created_by, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name",
+                    'columns' => '[pk_job_position_department_id], [job_position_department], [job_position_department_short], [fk_job_position_area_id], [status], [created_at], [created_by]',
+                    'join_columns' => "jpd.pk_job_position_department_id, jpd.job_position_department, jpd.job_position_department_short, jpd.fk_job_position_area_id, jpa.job_position_area, jpd.status, jpd.created_at, jpd.created_by, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name",
                     'alias' => 'jpd',
                     'join' => 'LEFT JOIN [user].[users] u ON jpd.[created_by] = u.[pk_user_id] LEFT JOIN [job_position].[area] jpa ON jpd.[fk_job_position_area_id] = jpa.[pk_job_position_area_id]',
                 ),
