@@ -12,8 +12,8 @@ class CatalogController {
         $this->catalog->getBasicFields();
     }
 
-    public function getAll($schema, $catalog) {
-        $this->catalog->getAll($schema, $catalog);
+    public function getAll($schema, $catalog, $available) {
+        $this->catalog->getAll($schema, $catalog, $available);
     }
 
     public function getItemById($schema, $catalog, $id) {

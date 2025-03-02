@@ -88,36 +88,35 @@ class User {
         exit();
     }
 
-    private function validateExistence($curp, $rfc, $imss, $infonavit, $institutionalEmail) {
-        $conditions = ['curp = :curp', 'rfc = :rfc', 'imss = :imss', 'institutional_email = :institutional_email'];
-        $params = [
-            ':curp' => $curp,
-            ':rfc' => $rfc,
-            ':imss' => $imss,
-            ':institutional_email' => $institutionalEmail
-        ];
-    
-        if (!empty($infonavit)) {
-            $conditions[] = 'infonavit = :infonavit';
-            $params[':infonavit'] = $infonavit;
-        }
-    
-        $sql = 'SELECT COUNT(*) FROM [user].[users] WHERE ' . implode(' OR ', $conditions);
+    private function validateExistence($field, $value) {
+        $sql = "SELECT COUNT(*) FROM [user].[users] WHERE $field = :value";
         $stmt = $this->dbConnection->prepare($sql);
-        
-        foreach ($params as $key => $value) {
-            $stmt->bindParam($key, $value, PDO::PARAM_STR);
-        }
-    
+        $stmt->bindParam(':value', $value, PDO::PARAM_STR);
         $stmt->execute();
         return $stmt->fetchColumn() > 0;
     }
 
     public function save($data) {
         try {
-            if ($this->validateExistence($data['curp'], $data['rfc'], $data['imss'], $data['infonavit'], $data['institutional_email'])) {
-                $error = (isset($data['infonavit'])) ? 'Error: El CURP, RFC, IMSS, INFONAVIT o Correo Institucional ya existe en la base de datos.' : 'Error: El CURP, RFC, IMSS o Correo Institucional ya existe en la base de datos.';
-                throw new Exception($error);
+            if ($this->validateExistence('curp', $data['curp'])) {
+                handleError(500, array('type' => 'curp', 'message' => 'Error: El CURP ya existe en la base de datos.',));
+                exit();
+            }
+            if ($this->validateExistence('rfc', $data['rfc'])) {
+                handleError(500, array('type' => 'rfc', 'message' => 'Error: El RFC ya existe en la base de datos.',));
+                exit();
+            }
+            if ($this->validateExistence('imss', $data['imss'])) {
+                handleError(500, array('type' => 'imss', 'message' => 'Error: El NSS ya existe en la base de datos.',));
+                exit();
+            }
+            if (isset($data['infonavit']) && $this->validateExistence('infonavit', $data['infonavit'])) {
+                handleError(500, array('type' => 'infonavit', 'message' => 'Error: El Número de Crédito Infonavit ya existe en la base de datos.',));
+                exit();
+            }
+            if ($this->validateExistence('institutional_email', $data['institutional_email'])) {
+                handleError(500, array('type' => 'institutional_email', 'message' => 'Error: El Correo Institucional ya existe en la base de datos.',));
+                exit();
             }
 
             $columns = $this->getColumns();
@@ -259,12 +258,7 @@ class User {
                     $stmt2->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_AVAILABLE, PDO::PARAM_INT);
                     $stmt2->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_CREATED, PDO::PARAM_INT);
                     if ($stmt2->execute()) {
-                        if ($stmt2->rowCount() > 0) {
-                            $this->dbConnection->commit();
-                        }
-                        else {
-                            throw new Exception('Error: No se realizaron cambios en el registro.');
-                        }
+                        $this->dbConnection->commit();
                     }
                     else {
                         throw new Exception('Error: Falló la instrucción de actualización del registro.');
@@ -281,12 +275,7 @@ class User {
                     $stmt3->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_BUSY, PDO::PARAM_INT);
                     $stmt3->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_BUSY, PDO::PARAM_INT);
                     if ($stmt3->execute()) {
-                        if ($stmt3->rowCount() > 0) {
-                            $this->dbConnection->commit();
-                        }
-                        else {
-                            throw new Exception('Error: No se realizaron cambios en el registro.');
-                        }
+                        $this->dbConnection->commit();
                     }
                     else {
                         throw new Exception('Error: Falló la instrucción de actualización del registro.');
@@ -294,6 +283,7 @@ class User {
                 }
             }
 
+            // Actualizar el usuario
             $sql4 = sprintf('UPDATE [user].[users] SET %s WHERE [pk_user_id] = :pk_user_id;', implode(',', $SET));
             $this->dbConnection->beginTransaction();
             $stmt4 = $this->dbConnection->prepare($sql4);
@@ -305,29 +295,21 @@ class User {
             }
             $stmt4->bindValue(':pk_user_id', $id, PDO::PARAM_INT);
             if ($stmt4->execute()) {
-                if ($stmt4->rowCount() > 0) {
+                $this->dbConnection->commit();
+
+                // Actualizar los datos de la cuenta.
+                $sql5 = 'UPDATE [user].[users_auth] SET [username] = :username, [fk_role_id] = :role_id WHERE fk_user_id = :fk_user_id;';
+                $this->dbConnection->beginTransaction();
+                $stmt5 = $this->dbConnection->prepare($sql5);
+                $stmt5->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
+                $stmt5->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
+                $stmt5->bindParam(':fk_user_id', $id, PDO::PARAM_INT);
+                if ($stmt5->execute()) {
                     $this->dbConnection->commit();
-                    $sql5 = 'UPDATE [user].[users_auth] SET [username] = :username, [fk_role_id] = :role_id WHERE fk_user_id = :fk_user_id;';
-                    $this->dbConnection->beginTransaction();
-                    $stmt5 = $this->dbConnection->prepare($sql5);
-                    $stmt5->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
-                    $stmt5->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
-                    $stmt5->bindParam(':fk_user_id', $id, PDO::PARAM_INT);
-                    if ($stmt5->execute()) {
-                        if ($stmt5->rowCount() > 0) {
-                            $this->dbConnection->commit();
-                            sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
-                        }
-                        else {
-                            throw new Exception('Error: No se realizaron cambios en el registro.');
-                        }
-                    }
-                    else {
-                        throw new Exception('Error: Falló la instrucción de actualización del registro.');
-                    }
+                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
                 }
                 else {
-                    throw new Exception('Error: No se realizaron cambios en el registro.');
+                    throw new Exception('Error: Falló la instrucción de actualización del registro.');
                 }
             }
             else {

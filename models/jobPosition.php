@@ -164,13 +164,8 @@ class JobPosition {
             $stmt->bindParam(':publish_date', $data['publish_date'], PDO::PARAM_STR);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             if ($stmt->execute()) {
-                if ($stmt->rowCount() > 0) {
-                    $this->dbConnection->commit();
-                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
-                }
-                else {
-                    throw new Exception('Error: No se realizaron cambios en el registro.');
-                }
+                $this->dbConnection->commit();
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
             }
             else {
                 throw new Exception('Error: Falló la instrucción de actualización del registro.');

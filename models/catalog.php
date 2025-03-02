@@ -35,12 +35,13 @@ class Catalog {
         exit();
     }
 
-    public function getAll($schema, $catalog) {
+    public function getAll($schema, $catalog, $available) {
         try {
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
             if ($schema === 'default') {
                 $columns = $catalogMetaData['columns'];
-                $sql = sprintf('SELECT %s FROM [%s].[%s] ORDER BY %s DESC;', $columns, 'dbo', $catalog, 'created_at');
+                $where = $available ? 'WHERE [status] = 1' : '';
+                $sql = sprintf('SELECT %s FROM [%s].[%s] %s ORDER BY [%s] DESC;', $columns, 'dbo', $catalog, $where, 'created_at');
                 $stmt = $this->dbConnection->query($sql);
                 $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 sendJsonResponse(200, array('ok' => true, 'data' => $result));
@@ -50,6 +51,7 @@ class Catalog {
                 $alias = $catalogMetaData['alias'] ?? '';
                 $primaryKey = $catalogMetaData['primary_key'] ?? '';
                 $join = $catalogMetaData['join'] ?? '';
+                $where = $available ? "WHERE $alias.[status] = 1" : '';
                 $sql = sprintf('SELECT %s FROM [%s].[%s] %s %s ORDER BY %s DESC;', $columns, $schema, $catalog, $alias, $join, "$alias.$primaryKey");
                 $stmt = $this->dbConnection->query($sql);
                 $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -176,13 +178,8 @@ class Catalog {
                 $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
             }
             if ($stmt->execute()) {
-                if ($stmt->rowCount() > 0) {
-                    $this->dbConnection->commit();
-                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
-                }
-                else {
-                    throw new Exception('Error: No se realizaron cambios en el registro.');
-                }
+                $this->dbConnection->commit();
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
             }
             else {
                 throw new Exception('Error: Falló la instrucción de actualización del registro.');
