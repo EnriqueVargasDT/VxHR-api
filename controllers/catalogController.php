@@ -8,10 +8,6 @@ class CatalogController {
         $this->catalog = new Catalog();
     }
 
-    public function getBasicFields() {
-        $this->catalog->getBasicFields();
-    }
-
     public function getAll($schema, $catalog, $available) {
         $this->catalog->getAll($schema, $catalog, $available);
     }

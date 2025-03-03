@@ -19,22 +19,6 @@ class Catalog {
         return array();
     }
 
-    public function getBasicFields() {
-        $fields = array();
-        $catalogsMetaData = $this->getAllMetaData();
-        foreach ($catalogsMetaData as $schema => $catalog) {
-            foreach ($catalog as $catalogName => $data) {
-                $fields[$schema][$catalogName] = array(
-                    'id' => $data['primary_key'],
-                    'description' => $data['description'],
-                );
-            }
-        }
-        
-        sendJsonResponse(200, array('ok' => true, 'data' => $fields));
-        exit();
-    }
-
     public function getAll($schema, $catalog, $available) {
         try {
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
