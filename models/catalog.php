@@ -119,18 +119,11 @@ class Catalog {
             foreach ($params as $key => $value) {
                 $stmt->bindValue($key, $value, PDO::PARAM_STR);
             }
-            if ($stmt->execute()) {
-                if ($stmt->rowCount() > 0) {
-                    $this->dbConnection->commit();
-                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro creado correctamente.'));
-                }
-                else {
-                    throw new Exception('Error: No se pudo crear el registro.');
-                }
+            if (!$stmt->execute() || $stmt->rowCount() === 0) {
+                throw new Exception('Error: No se pudo crear el registro.');
             }
-            else {
-                throw new Exception('Error: Falló la instrucción de creación del registro.');
-            }
+            $this->dbConnection->commit();
+            sendJsonResponse(200, array('ok' => true, 'message' => 'Registro creado correctamente.'));
         }
         catch (Exception $error) {
             if ($this->dbConnection->inTransaction()) {
@@ -177,13 +170,11 @@ class Catalog {
             foreach ($params as $key => $value) {
                 $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
             }
-            if ($stmt->execute()) {
-                $this->dbConnection->commit();
-                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
-            }
-            else {
+            if (!$stmt->execute()) {
                 throw new Exception('Error: Falló la instrucción de actualización del registro.');
             }
+            $this->dbConnection->commit();
+            sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
         }
         catch (Exception $error) {
             if ($this->dbConnection->inTransaction()) {
@@ -208,18 +199,11 @@ class Catalog {
             $this->dbConnection->beginTransaction();
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindValue(':id', $item['id'], PDO::PARAM_INT);
-            if ($stmt->execute()) {
-                if ($stmt->rowCount() > 0) {
-                    $this->dbConnection->commit();
-                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
-                }
-                else {
-                    throw new Exception('Error: No se realizaron cambios en el registro.');
-                }
+            if (!$stmt->execute() || $stmt->rowCount() === 0) {
+                throw new Exception('Error: No se realizaron cambios en el registro.');
             }
-            else {
-                throw new Exception('Error: Falló la instrucción de actualización del registro.');
-            }
+            $this->dbConnection->commit();
+            sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
         }
         catch (Exception $error) {
             if ($this->dbConnection->inTransaction()) {
