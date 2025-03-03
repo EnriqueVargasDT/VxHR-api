@@ -8,8 +8,8 @@ class JobPositionController {
         $this->jobPosition = new JobPosition();
     }
 
-    public function getAll() {
-        $this->jobPosition->getAll();
+    public function getAll($available) {
+        $this->jobPosition->getAll($available);
     }
 
     public function getDataById($id) {

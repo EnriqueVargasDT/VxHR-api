@@ -20,8 +20,15 @@ class JobPosition {
         $this->dbConnection = dbConnection();
     }
 
-    public function getAll() {
+    public function getAll($available) {
         try {
+            $where = 'WHERE jpp.publish_date <= GETDATE() ';
+            if ($available) {
+                $where .= '
+                    AND jpp.fk_job_position_status_id IN(' . self::STATUS_AVAILABLE . ')
+                    AND jpp.fk_job_position_admin_status_id IN(' . self::ADMIN_STATUS_CREATED . ', ' . self::ADMIN_STATUS_IN_SEARCH . ')
+                ';
+            }
             $sql = "
                 SELECT
                     jpp.pk_job_position_id,
@@ -33,10 +40,10 @@ class JobPosition {
                     jpp.fk_job_position_office_id,
                     jpo.job_position_office,
                     jpt.job_position_type,
-                    jps.job_position_status,
                     jpp.fk_job_position_status_id,
-                    jpas.job_position_admin_status,
+                    jps.job_position_status,
                     jpp.fk_job_position_admin_status_id,
+                    jpas.job_position_admin_status,
                     jpp.publish_date,
                     jpp.fk_job_position_area_id AS parent_id,
                     jpp.created_by,
@@ -49,7 +56,7 @@ class JobPosition {
                 LEFT JOIN [job_position].[status] jps ON jpp.fk_job_position_status_id = jps.pk_job_position_status_id
                 LEFT JOIN [job_position].[admin_status] jpas ON jpp.fk_job_position_admin_status_id = jpas.pk_job_position_admin_status_id
                 LEFT JOIN [user].[users] u ON jpp.created_by = u.pk_user_id
-                WHERE jpp.publish_date <= GETDATE()
+                $where
                 ORDER BY jpp.created_at DESC;
             ";
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);

@@ -242,7 +242,7 @@ function job_position($method, $subroutes, $body) {
                             $jobPositionController->getDataById($_GET['id']);
                         }
 
-                        $jobPositionController->getAll();
+                        $jobPositionController->getAll(isset($_GET['available']) ? $_GET['available'] : null);
                     }
 
                     pathNotFound();
