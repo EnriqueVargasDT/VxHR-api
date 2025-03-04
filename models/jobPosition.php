@@ -47,7 +47,8 @@ class JobPosition {
                     jpp.publish_date,
                     jpp.fk_job_position_area_id AS parent_id,
                     jpp.created_by,
-                    CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name
+                    CONCAT('VC-#', RIGHT('00000' + CAST(jpp.pk_job_position_id AS VARCHAR), 5), ' - ', jpp.job_position, ' - ', CASE WHEN pu.first_name = '' OR pu.first_name IS NULL THEN '[Vacante]' ELSE CONCAT(pu.first_name, ' ', pu.last_name_1, ' ', pu.last_name_2) END) AS inmediate_supervisor_full_name,
+                    CONCAT(cu.first_name, ' ', cu.last_name_1, ' ', cu.last_name_2) AS created_by_full_name
                 FROM [job_position].[positions] jpp
                 LEFT JOIN [job_position].[area] jpa ON jpp.fk_job_position_area_id = jpa.pk_job_position_area_id
                 LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
@@ -55,7 +56,8 @@ class JobPosition {
                 LEFT JOIN [job_position].[type] jpt ON jpp.fk_job_position_type_id = jpt.pk_job_position_type_id
                 LEFT JOIN [job_position].[status] jps ON jpp.fk_job_position_status_id = jps.pk_job_position_status_id
                 LEFT JOIN [job_position].[admin_status] jpas ON jpp.fk_job_position_admin_status_id = jpas.pk_job_position_admin_status_id
-                LEFT JOIN [user].[users] u ON jpp.created_by = u.pk_user_id
+                LEFT JOIN [user].[users] pu ON jpp.pk_job_position_id = pu.fk_job_position_id
+                LEFT JOIN [user].[users] cu ON jpp.created_by = cu.pk_user_id
                 $where
                 ORDER BY jpp.created_at DESC;
             ";
