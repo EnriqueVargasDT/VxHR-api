@@ -20,6 +20,10 @@ class UserController {
         $this->user->save($data);
     }
 
+    public function saveProfileImage($userId) {
+        $this->user->saveProfileImage($userId);
+    }
+
     public function update($id, $data) {
         $this->user->update($id, $data);
     }

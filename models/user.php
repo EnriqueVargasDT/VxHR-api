@@ -24,11 +24,14 @@ class User {
                 jpd.job_position_department,
                 jpo.job_position_office,
                 ua.username,
+                ui.image,
+                ui.file_extension,
                 ua.last_access_at
                 FROM [user].[users] u
                 LEFT JOIN [user].[users_auth] ua ON u.pk_user_id = ua.fk_user_id
                 LEFT JOIN [user].[marital_status] ums ON u.fk_marital_status_id = ums.pk_marital_status_id
                 LEFT JOIN [user].[relationships] urs ON u.fk_emergency_relationship_id = urs.pk_relationship_id
+                LEFT JOIN [user].[user_images] ui ON u.pk_user_id = ui.fk_user_id
                 LEFT JOIN [job_position].[positions] jpp ON u.fk_job_position_id = jpp.pk_job_position_id
                 LEFT JOIN [job_position].[area] jpa ON jpp.fk_job_position_area_id = jpa.pk_job_position_area_id
                 LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
@@ -37,6 +40,7 @@ class User {
             $stmt = $this->dbConnection->query($sql);
             $users = array();
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $row['image'] = isset($row['image']) ? 'data:image/' . $row['file_extension'] . ';base64,' . $row['image'] : '';
                 $users[] = $row;
             }
 
@@ -175,7 +179,7 @@ class User {
             
             $send = $this->sendWelcomeEmail($data);
             if ($send) {
-                sendJsonResponse(200, array('ok' => true, 'message' => 'Usuario creado correctamente.'));
+                sendJsonResponse(200, array('ok' => true, 'user_id' => $newUserId, 'message' => 'Usuario creado correctamente.'));
             }
             else {
                 handleError(500, 'No se pudo enviar el correo de bienvenida a plataforma.');
@@ -189,19 +193,6 @@ class User {
         }
 
         exit();
-    }
-
-    private function sendWelcomeEmail($data) {
-        $to = $data['institutional_email'];
-        $subject = '¡Bienvenido a nuestra plataforma digital! VxHR';
-        $template = file_get_contents('../templates/platform_welcome_email.html');
-        $template = str_replace('{{username}}', $data['first_name'].' '.$data['last_name_1'].' '.$data['last_name_2'] , $template);
-        $template = str_replace('{{email}}', $data['institutional_email'], $template);
-        $template = str_replace('{{password}}', $data['password'], $template);
-        $template = str_replace('{{login_link}}', $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].':3000/login', $template);
-        $message = $template;
-        $send = $this->email->send($to, $subject, $message);
-        return $send;
     }
 
     public function update($id, $data) {
@@ -315,6 +306,100 @@ class User {
         }
 
         exit();
+    }
+
+    public function saveProfileImage($userId) {
+        try {
+            if ($_FILES['profile_image']['error'] !== UPLOAD_ERR_OK) {
+                throw new Exception('Error: No se pudo cargar la imagen.');
+            }
+    
+            $fileName = $_FILES['profile_image']['name'];
+            $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
+            $fileSize = $_FILES['profile_image']['size'];
+    
+            if ($fileSize > 5000000) { // 5MB como ejemplo
+                throw new Exception('Error: El archivo es demasiado grande.');
+            }
+    
+            $imageType = mime_content_type($_FILES['profile_image']['tmp_name']);
+            if (!in_array($imageType, ['image/jpeg', 'image/png', 'image/gif'])) {
+                throw new Exception('Error: El archivo no es una imagen válida.');
+            }
+    
+            $file = $_FILES['profile_image']['tmp_name'];
+            $content = file_get_contents($file);
+            $imageBase64 = base64_encode($content);
+    
+            $sql1 = "SELECT pk_image_id FROM [user].[user_images] WHERE fk_user_id = :fk_user_id AND is_profile_picture = 1";
+            $stmt1 = $this->dbConnection->prepare($sql1);
+            $stmt1->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
+            $stmt1->execute();
+            $exists = $stmt1->fetch(PDO::FETCH_ASSOC);
+    
+            $this->dbConnection->beginTransaction();
+    
+            if ($exists) {
+                $sql2 = "
+                    UPDATE [user].[user_images] SET [image] = :image, file_name = :file_name, file_extension = :file_extension, file_size = :file_size
+                    WHERE pk_image_id = :pk_image_id
+                ";
+                $stmt2 = $this->dbConnection->prepare($sql2);
+                $stmt2->bindParam(':image', $imageBase64, PDO::PARAM_STR);
+                $stmt2->bindParam(':file_name', $fileName, PDO::PARAM_STR);
+                $stmt2->bindParam(':file_extension', $fileExt, PDO::PARAM_STR);
+                $stmt2->bindParam(':file_size', $fileSize, PDO::PARAM_INT);
+                $stmt2->bindParam(':pk_image_id', $exists['pk_image_id'], PDO::PARAM_INT);
+                if (!$stmt2->execute()) {
+                    throw new Exception('Error: No se pudo actualizar la fotografía de perfil.');
+                }
+    
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Fotografía de perfil actualizada correctamente.'));
+            }
+            else {
+                $sql3 = "
+                        INSERT INTO [user].[user_images] (fk_user_id, [image], file_name, file_extension, file_size, is_profile_picture) 
+                        VALUES (:fk_user_id, :image, :file_name, :file_extension, :file_size, :is_profile_picture)
+                ";
+                $stmt3 = $this->dbConnection->prepare($sql3);
+                $is_profile_picture = 1;
+                $stmt3->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
+                $stmt3->bindParam(':image', $imageBase64, PDO::PARAM_STR);
+                $stmt3->bindParam(':file_name', $fileName, PDO::PARAM_STR);
+                $stmt3->bindParam(':file_extension', $fileExt, PDO::PARAM_STR);
+                $stmt3->bindParam(':file_size', $fileSize, PDO::PARAM_INT);
+                $stmt3->bindParam(':is_profile_picture', $is_profile_picture, PDO::PARAM_INT);
+                if (!$stmt3->execute()) {
+                    throw new Exception('Error: No se pudo cargar la fotografía de perfil.');
+                }
+
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Fotografía cargada correctamente.'));
+            }
+
+            $this->dbConnection->commit();
+        }
+        catch (Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
+    
+            handleExceptionError($error);
+        }
+    
+        exit();
+    }
+
+    private function sendWelcomeEmail($data) {
+        $to = $data['institutional_email'];
+        $subject = '¡Bienvenido a nuestra plataforma digital! VxHR';
+        $template = file_get_contents('../templates/platform_welcome_email.html');
+        $template = str_replace('{{username}}', $data['first_name'].' '.$data['last_name_1'].' '.$data['last_name_2'] , $template);
+        $template = str_replace('{{email}}', $data['institutional_email'], $template);
+        $template = str_replace('{{password}}', $data['password'], $template);
+        $template = str_replace('{{login_link}}', $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].':3000/login', $template);
+        $message = $template;
+        $send = $this->email->send($to, $subject, $message);
+        return $send;
     }
 
     private function getColumns() {

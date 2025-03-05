@@ -8,7 +8,6 @@ spl_autoload_register(function ($className) {
     }
 });
 
-
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUriParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
 $body = json_decode(file_get_contents('php://input'), true);
@@ -124,6 +123,14 @@ function user($method, $subroutes, $body) {
             $userController->getAll();
             break;
         case 'POST':
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (str_contains($subroutes[0], 'image')) {
+                        $userController->saveProfileImage($_POST['user_id']);
+                    }
+                }
+            }
+            
             $userController->save($body);
             break;
         case 'PUT':
@@ -132,10 +139,8 @@ function user($method, $subroutes, $body) {
                     if (str_contains($subroutes[0], 'status')) {
                         $userController->updateStatus($body['id'], $body['status']);
                     }
-                    else {
-                        if (is_numeric($subroutes[0])) {
-                            $userController->update($subroutes[0], $body);
-                        }
+                    else if (is_numeric($subroutes[0])) {
+                        $userController->update($subroutes[0], $body);
                     }
 
                     pathNotFound();
