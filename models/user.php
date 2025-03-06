@@ -24,14 +24,13 @@ class User {
                 jpd.job_position_department,
                 jpo.job_position_office,
                 ua.username,
-                ui.image,
-                ui.file_extension,
+                CONCAT('data:image/', uf.file_extension, ';base64,', uf.[file]) AS profile_picture,
                 ua.last_access_at
                 FROM [user].[users] u
                 LEFT JOIN [user].[users_auth] ua ON u.pk_user_id = ua.fk_user_id
                 LEFT JOIN [user].[marital_status] ums ON u.fk_marital_status_id = ums.pk_marital_status_id
                 LEFT JOIN [user].[relationships] urs ON u.fk_emergency_relationship_id = urs.pk_relationship_id
-                LEFT JOIN [user].[user_images] ui ON u.pk_user_id = ui.fk_user_id
+                LEFT JOIN [user].[user_files] uf ON u.pk_user_id = uf.fk_user_id AND uf.is_profile_picture = 1
                 LEFT JOIN [job_position].[positions] jpp ON u.fk_job_position_id = jpp.pk_job_position_id
                 LEFT JOIN [job_position].[area] jpa ON jpp.fk_job_position_area_id = jpa.pk_job_position_area_id
                 LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
@@ -40,7 +39,6 @@ class User {
             $stmt = $this->dbConnection->query($sql);
             $users = array();
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $row['image'] = isset($row['image']) ? 'data:image/' . $row['file_extension'] . ';base64,' . $row['image'] : '';
                 $users[] = $row;
             }
 
@@ -149,37 +147,47 @@ class User {
             $newUserId = $this->dbConnection->lastInsertId();
 
             if (isset($data['fk_job_position_id'])) {
-                $sql2 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
-                $this->dbConnection->beginTransaction();
+                // Antes de todo, validar si la nueva vacante ya esta ocupada.
+                $sql2 = "SELECT COUNT(*) FROM [user].[users] WHERE [fk_job_position_id] = :fk_job_position_id";
                 $stmt2 = $this->dbConnection->prepare($sql2);
+                $stmt2->bindParam(':fk_job_position_id', $data['fk_job_position_id'], PDO::PARAM_INT);
+                $stmt2->execute();
+                $exists = $stmt2->fetchColumn();
+                if ($exists > 0) {
+                    throw new Exception('Error: La vacante ya está ocupada por otro usuario.');
+                } 
+
+                $sql3 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
+                $this->dbConnection->beginTransaction();
+                $stmt3 = $this->dbConnection->prepare($sql3);
                 $fkJobPositionId = $data['fk_job_position_id'];
                 $JOB_POSITION_STATUS_BUSY = JobPosition::STATUS_BUSY;
                 $JOB_POSITION_ADMIN_STATUS_BUSY = JobPosition::ADMIN_STATUS_BUSY;
-                $stmt2->bindParam(':pk_job_position_id', $fkJobPositionId, PDO::PARAM_INT);
-                $stmt2->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_BUSY, PDO::PARAM_INT);
-                $stmt2->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_BUSY, PDO::PARAM_INT);
-                if (!$stmt2->execute() || $stmt2->rowCount() === 0) {
+                $stmt3->bindParam(':pk_job_position_id', $fkJobPositionId, PDO::PARAM_INT);
+                $stmt3->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_BUSY, PDO::PARAM_INT);
+                $stmt3->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_BUSY, PDO::PARAM_INT);
+                if (!$stmt3->execute() || $stmt3->rowCount() === 0) {
                     throw new Exception('Error: No se realizaron cambios en la vacante asignada.');
                 }
                 $this->dbConnection->commit();
             }
 
-            $sql3 = 'INSERT INTO [user].[users_auth] ([username], [password], [fk_user_id], [fk_role_id]) VALUES(:username, :password, :user_id, :role_id);';
+            $sql4 = 'INSERT INTO [user].[users_auth] ([username], [password], [fk_user_id], [fk_role_id]) VALUES(:username, :password, :user_id, :role_id);';
             $this->dbConnection->beginTransaction();
-            $stmt3 = $this->dbConnection->prepare($sql3);
+            $stmt4 = $this->dbConnection->prepare($sql4);
             $password = password_hash($data['password'], PASSWORD_BCRYPT);
-            $stmt3->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
-            $stmt3->bindParam(':password', $password, PDO::PARAM_STR);
-            $stmt3->bindParam(':user_id', $newUserId, PDO::PARAM_INT);
-            $stmt3->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
-            if (!$stmt3->execute() || $stmt3->rowCount() === 0) {
+            $stmt4->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
+            $stmt4->bindParam(':password', $password, PDO::PARAM_STR);
+            $stmt4->bindParam(':user_id', $newUserId, PDO::PARAM_INT);
+            $stmt4->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
+            if (!$stmt4->execute() || $stmt4->rowCount() === 0) {
                 throw new Exception('Error: No se pudo crear la cuenta de acceso a plataforma.');
             }
             $this->dbConnection->commit();
             
             $send = $this->sendWelcomeEmail($data);
             if ($send) {
-                sendJsonResponse(200, array('ok' => true, 'user_id' => $newUserId, 'message' => 'Usuario creado correctamente.'));
+                sendJsonResponse(200, array('ok' => true, 'new_user_id' => $newUserId, 'message' => 'Usuario creado correctamente.'));
             }
             else {
                 handleError(500, 'No se pudo enviar el correo de bienvenida a plataforma.');
@@ -207,38 +215,48 @@ class User {
             
             // Validar si sigue teniendo el mismo puesto, o se ha cambiado.
             if (isset($data['fk_job_position_id'])) {
-                $sql = "SELECT [fk_job_position_id] FROM [user].[users] WHERE [pk_user_id] = :pk_user_id";
-                $stmt = $this->dbConnection->prepare($sql);
-                $stmt->bindParam(':pk_user_id', $id, PDO::PARAM_INT);
-                $stmt->execute();
-                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $sql1 = "SELECT [fk_job_position_id] FROM [user].[users] WHERE [pk_user_id] = :pk_user_id";
+                $stmt1 = $this->dbConnection->prepare($sql1);
+                $stmt1->bindParam(':pk_user_id', $id, PDO::PARAM_INT);
+                $stmt1->execute();
+                $result = $stmt1->fetch(PDO::FETCH_ASSOC);
                 if ($result['fk_job_position_id'] !== $data['fk_job_position_id']) {
-                    // Liberar la vacante anterior
-                    $sql2 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
-                    $this->dbConnection->beginTransaction();
+                    // Antes de todo, validar si la nueva vacante ya esta ocupada.
+                    $sql2 = "SELECT COUNT(*) FROM [user].[users] WHERE [fk_job_position_id] = :fk_job_position_id";
                     $stmt2 = $this->dbConnection->prepare($sql2);
+                    $stmt2->bindParam(':fk_job_position_id', $data['fk_job_position_id'], PDO::PARAM_INT);
+                    $stmt2->execute();
+                    $exists = $stmt2->fetchColumn();
+                    if ($exists > 0) {
+                        throw new Exception('Error: La vacante ya está ocupada por otro usuario.');
+                    } 
+
+                    // Liberar la vacante anterior
+                    $sql3 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
+                    $this->dbConnection->beginTransaction();
+                    $stmt3 = $this->dbConnection->prepare($sql3);
                     $fkJobPositionIdOld = $result['fk_job_position_id'];
                     $JOB_POSITION_STATUS_AVAILABLE = JobPosition::STATUS_AVAILABLE;
                     $JOB_POSITION_ADMIN_STATUS_CREATED = JobPosition::ADMIN_STATUS_CREATED;
-                    $stmt2->bindParam(':pk_job_position_id', $fkJobPositionIdOld, PDO::PARAM_INT);
-                    $stmt2->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_AVAILABLE, PDO::PARAM_INT);
-                    $stmt2->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_CREATED, PDO::PARAM_INT);
-                    if (!$stmt2->execute()) {
+                    $stmt3->bindParam(':pk_job_position_id', $fkJobPositionIdOld, PDO::PARAM_INT);
+                    $stmt3->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_AVAILABLE, PDO::PARAM_INT);
+                    $stmt3->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_CREATED, PDO::PARAM_INT);
+                    if (!$stmt3->execute()) {
                         throw new Exception('Error: No se pudo actualizar el estatus de la vacante actual del usuario.');
                     }
                     $this->dbConnection->commit();
 
                     // Ocupar la nueva vacante.
-                    $sql3 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
+                    $sql4 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
                     $this->dbConnection->beginTransaction();
-                    $stmt3 = $this->dbConnection->prepare($sql3);
+                    $stmt4 = $this->dbConnection->prepare($sql4);
                     $fkJobPositionIdNew = $data['fk_job_position_id'];
                     $JOB_POSITION_STATUS_BUSY = JobPosition::STATUS_BUSY;
                     $JOB_POSITION_ADMIN_STATUS_BUSY = JobPosition::ADMIN_STATUS_BUSY;
-                    $stmt3->bindParam(':pk_job_position_id', $fkJobPositionIdNew, PDO::PARAM_INT);
-                    $stmt3->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_BUSY, PDO::PARAM_INT);
-                    $stmt3->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_BUSY, PDO::PARAM_INT);
-                    if (!$stmt3->execute()) {
+                    $stmt4->bindParam(':pk_job_position_id', $fkJobPositionIdNew, PDO::PARAM_INT);
+                    $stmt4->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_BUSY, PDO::PARAM_INT);
+                    $stmt4->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_BUSY, PDO::PARAM_INT);
+                    if (!$stmt4->execute()) {
                         throw new Exception('Error: No se pudo actualizar el estatus de la nueva vacante para el usuario.');
                     }
                     $this->dbConnection->commit();
@@ -246,29 +264,29 @@ class User {
             }
 
             // Actualizar el usuario
-            $sql4 = sprintf('UPDATE [user].[users] SET %s WHERE [pk_user_id] = :pk_user_id;', implode(',', $SET));
+            $sql5 = sprintf('UPDATE [user].[users] SET %s WHERE [pk_user_id] = :pk_user_id;', implode(',', $SET));
             $this->dbConnection->beginTransaction();
-            $stmt4 = $this->dbConnection->prepare($sql4);
+            $stmt5 = $this->dbConnection->prepare($sql5);
             foreach ($columns as $field => $pdoParam) {
                 if (isset($data[$field])) {
                     $columnValue = $data[$field];
-                    $stmt4->bindValue(":$field", $columnValue, $pdoParam);
+                    $stmt5->bindValue(":$field", $columnValue, $pdoParam);
                 }
             }
-            $stmt4->bindValue(':pk_user_id', $id, PDO::PARAM_INT);
-            if (!$stmt4->execute()) {
+            $stmt5->bindValue(':pk_user_id', $id, PDO::PARAM_INT);
+            if (!$stmt5->execute()) {
                 throw new Exception('Error: No se realizaron cambios en el usuario.');
             }
             $this->dbConnection->commit();
 
             // Actualizar los datos de la cuenta.
-            $sql5 = 'UPDATE [user].[users_auth] SET [username] = :username, [fk_role_id] = :role_id WHERE fk_user_id = :fk_user_id;';
+            $sql6 = 'UPDATE [user].[users_auth] SET [username] = :username, [fk_role_id] = :role_id WHERE fk_user_id = :fk_user_id;';
             $this->dbConnection->beginTransaction();
-            $stmt5 = $this->dbConnection->prepare($sql5);
-            $stmt5->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
-            $stmt5->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
-            $stmt5->bindParam(':fk_user_id', $id, PDO::PARAM_INT);
-            if (!$stmt5->execute()) {
+            $stmt6 = $this->dbConnection->prepare($sql6);
+            $stmt6->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
+            $stmt6->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
+            $stmt6->bindParam(':fk_user_id', $id, PDO::PARAM_INT);
+            if (!$stmt6->execute()) {
                 throw new Exception('Error: No se realizaron cambios en el cuenta del usuario.');
             }
             $this->dbConnection->commit();
@@ -310,28 +328,28 @@ class User {
 
     public function saveProfileImage($userId) {
         try {
-            if ($_FILES['profile_image']['error'] !== UPLOAD_ERR_OK) {
+            if ($_FILES['profile_picture']['error'] !== UPLOAD_ERR_OK) {
                 throw new Exception('Error: No se pudo cargar la imagen.');
             }
     
-            $fileName = $_FILES['profile_image']['name'];
+            $fileName = $_FILES['profile_picture']['name'];
             $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
-            $fileSize = $_FILES['profile_image']['size'];
+            $fileSize = $_FILES['profile_picture']['size'];
     
             if ($fileSize > 5000000) { // 5MB como ejemplo
                 throw new Exception('Error: El archivo es demasiado grande.');
             }
     
-            $imageType = mime_content_type($_FILES['profile_image']['tmp_name']);
+            $imageType = mime_content_type($_FILES['profile_picture']['tmp_name']);
             if (!in_array($imageType, ['image/jpeg', 'image/png', 'image/gif'])) {
                 throw new Exception('Error: El archivo no es una imagen válida.');
             }
     
-            $file = $_FILES['profile_image']['tmp_name'];
+            $file = $_FILES['profile_picture']['tmp_name'];
             $content = file_get_contents($file);
-            $imageBase64 = base64_encode($content);
+            $fileBase64 = base64_encode($content);
     
-            $sql1 = "SELECT pk_image_id FROM [user].[user_images] WHERE fk_user_id = :fk_user_id AND is_profile_picture = 1";
+            $sql1 = "SELECT pk_file_id FROM [user].[user_files] WHERE fk_user_id = :fk_user_id AND is_profile_picture = 1";
             $stmt1 = $this->dbConnection->prepare($sql1);
             $stmt1->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
             $stmt1->execute();
@@ -341,15 +359,15 @@ class User {
     
             if ($exists) {
                 $sql2 = "
-                    UPDATE [user].[user_images] SET [image] = :image, file_name = :file_name, file_extension = :file_extension, file_size = :file_size
-                    WHERE pk_image_id = :pk_image_id
+                    UPDATE [user].[user_files] SET [file] = :file, file_name = :file_name, file_extension = :file_extension, file_size = :file_size
+                    WHERE pk_file_id = :pk_file_id
                 ";
                 $stmt2 = $this->dbConnection->prepare($sql2);
-                $stmt2->bindParam(':image', $imageBase64, PDO::PARAM_STR);
+                $stmt2->bindParam(':file', $imageBase64, PDO::PARAM_STR);
                 $stmt2->bindParam(':file_name', $fileName, PDO::PARAM_STR);
                 $stmt2->bindParam(':file_extension', $fileExt, PDO::PARAM_STR);
                 $stmt2->bindParam(':file_size', $fileSize, PDO::PARAM_INT);
-                $stmt2->bindParam(':pk_image_id', $exists['pk_image_id'], PDO::PARAM_INT);
+                $stmt2->bindParam(':pk_file_id', $exists['pk_file_id'], PDO::PARAM_INT);
                 if (!$stmt2->execute()) {
                     throw new Exception('Error: No se pudo actualizar la fotografía de perfil.');
                 }
@@ -358,13 +376,13 @@ class User {
             }
             else {
                 $sql3 = "
-                        INSERT INTO [user].[user_images] (fk_user_id, [image], file_name, file_extension, file_size, is_profile_picture) 
-                        VALUES (:fk_user_id, :image, :file_name, :file_extension, :file_size, :is_profile_picture)
+                        INSERT INTO [user].[user_files] (fk_user_id, [file], file_name, file_extension, file_size, is_profile_picture) 
+                        VALUES (:fk_user_id, :file, :file_name, :file_extension, :file_size, :is_profile_picture)
                 ";
                 $stmt3 = $this->dbConnection->prepare($sql3);
                 $is_profile_picture = 1;
                 $stmt3->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
-                $stmt3->bindParam(':image', $imageBase64, PDO::PARAM_STR);
+                $stmt3->bindParam(':file', $fileBase64, PDO::PARAM_STR);
                 $stmt3->bindParam(':file_name', $fileName, PDO::PARAM_STR);
                 $stmt3->bindParam(':file_extension', $fileExt, PDO::PARAM_STR);
                 $stmt3->bindParam(':file_size', $fileSize, PDO::PARAM_INT);
