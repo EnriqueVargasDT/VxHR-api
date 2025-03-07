@@ -74,7 +74,7 @@ Class UserFiles {
                 }
 
                 $this->dbConnection->commit();
-                sendJsonResponse(200, array('ok' => true, 'message' => $message));
+                sendJsonResponse(200, ['ok' => true, 'message' => $message]);
             }
             elseif ($typeFile === self::SIGNATURE) {
                 if (!$userId || !$fileBase64) {
@@ -120,7 +120,7 @@ Class UserFiles {
                 }
                 
                 $this->dbConnection->commit();
-                sendJsonResponse(200, array('ok' => true, 'message' => $message));
+                sendJsonResponse(200, ['ok' => true, 'message' => $message]);
             }
         }
         catch (Exception $error) {
@@ -144,10 +144,10 @@ Class UserFiles {
             $stmt->execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if (isset($result['file'])) {
-                sendJsonResponse(200, array('ok' => true, 'file' => $result['file']));
+                sendJsonResponse(200, ['ok' => true, 'file' => $result['file']]);
             }
             else {
-                sendJsonResponse(200, array('ok' => true, 'file' => null));
+                sendJsonResponse(200, ['ok' => true, 'file' => null]);
             }
         }
         catch(Exception $error) {

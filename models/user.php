@@ -41,12 +41,12 @@ class User {
                 ORDER BY u.created_at DESC
             ", UserFiles::PROFILE_PICTURE);
             $stmt = $this->dbConnection->query($sql);
-            $users = array();
+            $users = [];
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $users[] = $row;
             }
 
-            sendJsonResponse(200, array('ok' => true, 'users' => $users));
+            sendJsonResponse(200, ['ok' => true, 'users' => $users]);
         }
         catch(Exception $error) {
             handleExceptionError($error);
@@ -57,7 +57,7 @@ class User {
 
     public function getById($pk_user_id) {
         try {
-            $sql = sprintf("
+            $sql = "
                 SELECT u.*,
                     CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS full_name,
                     ums.marital_status,
@@ -78,11 +78,11 @@ class User {
                 LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
                 LEFT JOIN [job_position].[office] jpo ON jpp.fk_job_position_office_id = jpo.pk_job_position_office_id
                 WHERE u.pk_user_id = %s
-            ", UserFiles::PROFILE_PICTURE);
-            $sql = sprintf($sql, $pk_user_id);
+            ";
+            $sql = sprintf($sql, UserFiles::PROFILE_PICTURE, $pk_user_id);
             $user = $this->dbConnection->query($sql)->fetch(PDO::FETCH_ASSOC);
             if ($user) {
-                sendJsonResponse(200, array('ok' => true, 'user' => $user));
+                sendJsonResponse(200, ['ok' => true, 'user' => $user]);
             }
             else {
                 handleError(500, 'No se encontró al usuario en la base de datos.');
@@ -154,14 +154,14 @@ class User {
             }
 
             $insert = sprintf('INSERT INTO [user].[users](%s)', implode(',', array_keys($columns)));
-            $values = array();
+            $values = [];
             foreach ($columns as $column => $pdoParam) {
                 if (array_key_exists($column, $data)) {
                     $values[":$column"] = $pdoParam;
                 }
             }
 
-            $sql1 = sprintf("$insert VALUES(%s)", implode(',', array_merge(array_keys($values), array(':created_by',))));
+            $sql1 = sprintf("$insert VALUES(%s)", implode(',', array_merge(array_keys($values), [':created_by',])));
             $stmt1 = $this->dbConnection->prepare($sql1);
             foreach ($values as $placeholder => $pdoParam) {
                 $columnName = ltrim($placeholder, ':');
@@ -189,7 +189,7 @@ class User {
             $this->dbConnection->commit();
             $send = $this->sendWelcomeEmail($data);
             if ($send) {
-                sendJsonResponse(200, array('ok' => true, 'new_user_id' => $newUserId, 'message' => 'Usuario creado con éxito.'));
+                sendJsonResponse(200, ['ok' => true, 'new_user_id' => $newUserId, 'message' => 'Usuario creado con éxito.']);
             }
             else {
                 handleError(500, 'Usuario creado con éxito, pero no se pudo enviar el correo de bienvenida.');
@@ -207,7 +207,7 @@ class User {
 
     public function update($id, $data) {
         try {
-            $SET = array();
+            $SET = [];
             $columns = $this->getColumns();
             foreach ($columns as $field => $pdoParam) {
                 if (isset($data[$field])) {
@@ -289,7 +289,7 @@ class User {
             }
             
             $this->dbConnection->commit();
-            sendJsonResponse(200, array('ok' => true, 'message' => 'Los datos del usuario fueron actualizados exitosamente.'));
+            sendJsonResponse(200, ['ok' => true, 'message' => 'Los datos del usuario fueron actualizados exitosamente.']);
         }
         catch(Exception $error) {
             if ($this->dbConnection->inTransaction()) {
@@ -314,7 +314,7 @@ class User {
             }
             
             $this->dbConnection->commit();
-            sendJsonResponse(200, array('ok' => true, 'message' => 'El estado del usuario fue actualizado exitosamente.'));
+            sendJsonResponse(200, ['ok' => true, 'message' => 'El estado del usuario fue actualizado exitosamente.']);
         }
         catch(Exception $error) {
             if ($this->dbConnection->inTransaction()) {
@@ -355,7 +355,7 @@ class User {
         $sql = "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'users' AND TABLE_SCHEMA = 'user' AND COLUMN_NAME NOT IN('created_at', 'updated_at');";
         $stmt = $this->dbConnection->query($sql);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $columns = array();
+        $columns = [];
         foreach ($result as $index => $column) {
             switch ($column['DATA_TYPE']) {
                 case 'varchar':

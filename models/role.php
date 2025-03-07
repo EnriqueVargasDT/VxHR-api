@@ -16,7 +16,7 @@ class Role {
     public function getBySession() {
         try {
             $decoded = $this->token->validate();
-            sendJsonResponse(200, array('ok' => true, 'role' => $decoded['role'], ));
+            sendJsonResponse(200, ['ok' => true, 'role' => $decoded['role'], ]);
         }
         catch (Exception $error) {
             handleExceptionError($error);
@@ -27,7 +27,7 @@ class Role {
         try {
             $sql = 'SELECT * FROM [user].[roles]';
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-            sendJsonResponse(200, array('ok' => true, 'roles' => $result, ));
+            sendJsonResponse(200, ['ok' => true, 'roles' => $result, ]);
         }
         catch (Exception $error) {
             handleExceptionError($error);

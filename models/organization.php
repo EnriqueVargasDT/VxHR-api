@@ -28,7 +28,7 @@ class Organization {
                 ORDER BY jp.job_position_parent_id ASC
             ", UserFiles::PROFILE_PICTURE);
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-            $positions = array();
+            $positions = [];
             foreach ($result as $key => $value) {
                 $positions[$value['pk_job_position_id']] = array (
                     'id' => $value['pk_job_position_id'],

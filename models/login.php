@@ -20,12 +20,12 @@ class Login {
                 $decryptedPassword = $this->decryptedPassword($password);
                 if (password_verify($decryptedPassword, $result['password'])) {
                     $expTime = $rememberMe ? time() + (30 * 24 * 60 * 60) : time() + (60 * 60);
-                    $payload = array(
+                    $payload = [
                         'iat' => time(),
                         'exp' => $rememberMe ? time() + (3 * 24 * 60 * 60) /* Token válido por 3 días */ : time() + 3600 /* Token válido por 1 hora */,
                         'sub' => $username,
                         'role' => $result['fk_role_id'], 
-                    );
+                    ];
                     
                     // Generar el JWT con la librería JWT
                     $jwt = JWT::encode($payload, $this->secretKey, 'HS256');
@@ -50,14 +50,14 @@ class Login {
                     
                     $this->dbConnection->commit();
                     $_SESSION['pk_user_id'] = $result['fk_user_id'];
-                    sendJsonResponse(200, array('ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], 'message' => 'Registro actualizado correctamente.', ));
+                    sendJsonResponse(200, ['ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], 'message' => 'Registro actualizado correctamente.', ]);
                 }
                 else {
-                    handleError(401, array('error' => true, 'type' => 'password', 'message' => 'Error: Contraseña inválida.'));
+                    handleError(401, ['error' => true, 'type' => 'password', 'message' => 'Error: Contraseña inválida.']);
                 }
             }
             else {
-                handleError(401, array('error' => true, 'type' => 'username', 'message' => 'Error: Usuario no encontrado.'));
+                handleError(401, ['error' => true, 'type' => 'username', 'message' => 'Error: Usuario no encontrado.']);
             }
         }
         catch(Exception $error) {
@@ -115,7 +115,7 @@ class Login {
                     }
                     
                     $this->dbConnection->commit();
-                    sendJsonResponse(200, array('ok' => true, 'message' => 'Correo electrónico enviado correctamente.'));
+                    sendJsonResponse(200, ['ok' => true, 'message' => 'Correo electrónico enviado correctamente.']);
                 }
                 else {
                     handleError(500, 'El correo electrónico proporcionado no esta registrado en la plataforma.');
@@ -160,7 +160,7 @@ class Login {
                             $stmt3->execute();
 
                             $this->dbConnection->commit();
-                            sendJsonResponse(200, array('ok' => true, 'message' => 'La contraseña ha sido actualizada correctamente.'));
+                            sendJsonResponse(200, ['ok' => true, 'message' => 'La contraseña ha sido actualizada correctamente.']);
                         }
                         else {
                             handleError(500, 'La contraseña no coincide.');

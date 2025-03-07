@@ -62,7 +62,7 @@ class JobPosition {
                 ORDER BY jpp.created_at DESC;
             ";
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-            sendJsonResponse(200, array('ok' => true, 'data' => $result));
+            sendJsonResponse(200, ['ok' => true, 'data' => $result]);
         }
         catch (Exception $error) {
             handleExceptionError($error);
@@ -91,7 +91,7 @@ class JobPosition {
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            sendJsonResponse(200, array('ok' => true, 'data' => $result));
+            sendJsonResponse(200, ['ok' => true, 'data' => $result]);
         }
         catch (Exception $error) {
             handleExceptionError($error);
@@ -120,7 +120,7 @@ class JobPosition {
             $stmt->bindValue(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             if ($stmt->execute() && $stmt->rowCount() > 0) {
                 $this->dbConnection->commit();
-                sendJsonResponse(200, array('ok' => true, 'message' => 'La nueva vacante fue creada exitosamente.'));
+                sendJsonResponse(200, ['ok' => true, 'message' => 'La nueva vacante fue creada exitosamente.']);
             }
             else {
                 throw new Exception('Error: No se pudo crear la vacante.');
@@ -165,7 +165,7 @@ class JobPosition {
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             if ($stmt->execute() && $stmt->rowCount() > 0) {
                 $this->dbConnection->commit();
-                sendJsonResponse(200, array('ok' => true, 'message' => 'Los datos de la vacante fueron actualizados correctamente.'));
+                sendJsonResponse(200, ['ok' => true, 'message' => 'Los datos de la vacante fueron actualizados correctamente.']);
             }
             else {
                 throw new Exception('Error: No se realizaron cambios en los datos de la vacante.');
