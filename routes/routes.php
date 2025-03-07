@@ -122,16 +122,18 @@ function user($method, $subroutes, $body) {
                         if (isset($_GET['id'])) {
                             $userController->getSignature($_GET['id']);
                         }
-
+                    }
+                    elseif (str_contains($subroutes[0], 'signed_policies')) {
+                        $userController->getSignedPolicies();
+                    }
+                    elseif (!str_contains($subroutes[0], '?id')) {
                         pathNotFound();
                     }
                 }
             }
-
             if (isset($_GET['id'])) {
                 $userController->getById($_GET['id']);
             }
-
             $userController->getAll();
             break;
         case 'POST':

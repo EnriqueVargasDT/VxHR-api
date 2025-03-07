@@ -50,7 +50,7 @@ class Login {
                     
                     $this->dbConnection->commit();
                     $_SESSION['pk_user_id'] = $result['fk_user_id'];
-                    sendJsonResponse(200, ['ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], 'message' => 'Registro actualizado correctamente.', ]);
+                    sendJsonResponse(200, ['ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], 'message' => 'Registro actualizado exitosamente.', ]);
                 }
                 else {
                     handleError(401, ['error' => true, 'type' => 'password', 'message' => 'Error: Contraseña inválida.']);
@@ -111,11 +111,11 @@ class Login {
                     $message = $template;
                     $send = $email->send($username, $subject, $message);
                     if (!$send) {
-                        throw new Exception('Error: No se realizó el envío del correo electrónico.');
+                        throw new Exception('Error: No se pudo realizar el envío del correo electrónico.');
                     }
                     
                     $this->dbConnection->commit();
-                    sendJsonResponse(200, ['ok' => true, 'message' => 'Correo electrónico enviado correctamente.']);
+                    sendJsonResponse(200, ['ok' => true, 'message' => 'Correo electrónico enviado exitosamente.']);
                 }
                 else {
                     handleError(500, 'El correo electrónico proporcionado no esta registrado en la plataforma.');
@@ -160,7 +160,7 @@ class Login {
                             $stmt3->execute();
 
                             $this->dbConnection->commit();
-                            sendJsonResponse(200, ['ok' => true, 'message' => 'La contraseña ha sido actualizada correctamente.']);
+                            sendJsonResponse(200, ['ok' => true, 'message' => 'La contraseña ha sido actualizada exitosamente.']);
                         }
                         else {
                             handleError(500, 'La contraseña no coincide.');

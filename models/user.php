@@ -15,10 +15,19 @@ class User {
         $this->userFiles = new UserFiles($this->dbConnection);
     }
 
+    private function validateExistence($field, $value) {
+        $sql = "SELECT COUNT(*) FROM [user].[users] WHERE $field = :value";
+        $stmt = $this->dbConnection->prepare($sql);
+        $stmt->bindParam(':value', $value, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetchColumn() > 0;
+    }
+
     public function getAll() {
         try {
             $sql = sprintf("
-                SELECT u.*,
+                SELECT
+                    u.*,
                     CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS full_name,
                     ums.marital_status,
                     urs.relationship AS emergency_relationship,
@@ -58,7 +67,8 @@ class User {
     public function getById($pk_user_id) {
         try {
             $sql = "
-                SELECT u.*,
+                SELECT
+                    u.*,
                     CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS full_name,
                     ums.marital_status,
                     urs.relationship AS emergency_relationship,
@@ -95,12 +105,55 @@ class User {
         exit();
     }
 
-    private function validateExistence($field, $value) {
-        $sql = "SELECT COUNT(*) FROM [user].[users] WHERE $field = :value";
-        $stmt = $this->dbConnection->prepare($sql);
-        $stmt->bindParam(':value', $value, PDO::PARAM_STR);
-        $stmt->execute();
-        return $stmt->fetchColumn() > 0;
+    public function getSignature($userId) {
+        $this->userFiles->getByType($userId, UserFiles::SIGNATURE);
+    }
+
+    public function getSignedPolicies() {
+        try {
+            $sql = sprintf('SELECT signed_policies FROM [user].[users] WHERE pk_user_id = %s;', $_SESSION['pk_user_id']);
+            $result = $this->dbConnection->query($sql)->fetch(PDO::FETCH_ASSOC);
+            sendJsonResponse(200, ['ok' => true, 'signed_policies' => $result['signed_policies'], ]);
+        }
+        catch (Exception $error) {
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
+    private function getColumns() {
+        $sql = "
+            SELECT
+                COLUMN_NAME,
+                DATA_TYPE
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = 'users'
+            AND TABLE_SCHEMA = 'user'
+            AND COLUMN_NAME NOT IN('created_at', 'updated_at');
+        ";
+        $stmt = $this->dbConnection->query($sql);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $columns = [];
+        foreach ($result as $index => $column) {
+            switch ($column['DATA_TYPE']) {
+                case 'varchar':
+                case 'nvarchar':
+                case 'datetime':
+                case 'date':
+                    $columns[$column['COLUMN_NAME']] = PDO::PARAM_STR;
+                    break;
+                case 'int':
+                case 'tinyint':
+                    $columns[$column['COLUMN_NAME']] = PDO::PARAM_INT;
+                    break;
+                default:
+                    $columns[$column['COLUMN_NAME']] = PDO::PARAM_STR;
+                    break;
+            }
+        }
+
+        return $columns;
     }
 
     public function save($data) {
@@ -334,10 +387,6 @@ class User {
         $this->userFiles->upload($userId, $fileBase64, UserFiles::SIGNATURE);
     }
 
-    public function getSignature($userId) {
-        $this->userFiles->getByType($userId, UserFiles::SIGNATURE);
-    }
-
     private function sendWelcomeEmail($data) {
         $to = $data['institutional_email'];
         $subject = '¡Bienvenido a nuestra plataforma digital! VxHR';
@@ -349,32 +398,6 @@ class User {
         $message = $template;
         $send = $this->email->send($to, $subject, $message);
         return $send;
-    }
-
-    private function getColumns() {
-        $sql = "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'users' AND TABLE_SCHEMA = 'user' AND COLUMN_NAME NOT IN('created_at', 'updated_at');";
-        $stmt = $this->dbConnection->query($sql);
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $columns = [];
-        foreach ($result as $index => $column) {
-            switch ($column['DATA_TYPE']) {
-                case 'varchar':
-                case 'nvarchar':
-                case 'datetime':
-                case 'date':
-                    $columns[$column['COLUMN_NAME']] = PDO::PARAM_STR;
-                    break;
-                case 'int':
-                case 'tinyint':
-                    $columns[$column['COLUMN_NAME']] = PDO::PARAM_INT;
-                    break;
-                default:
-                    $columns[$column['COLUMN_NAME']] = PDO::PARAM_STR;
-                    break;
-            }
-        }
-
-        return $columns;
     }
 }
 ?>

@@ -143,12 +143,7 @@ Class UserFiles {
             $stmt->bindParam(':type_file', $typeFile, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (isset($result['file'])) {
-                sendJsonResponse(200, ['ok' => true, 'file' => $result['file']]);
-            }
-            else {
-                sendJsonResponse(200, ['ok' => true, 'file' => null]);
-            }
+            sendJsonResponse(200, ['ok' => true, 'file' => isset($result['file']) ? $result['file'] : null]);
         }
         catch(Exception $error) {
             handleExceptionError($error);

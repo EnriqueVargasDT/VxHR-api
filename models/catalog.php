@@ -10,56 +10,56 @@ class Catalog {
 
     private function getMetaDataByName($schema, $catalog) {
         $catalogsMetaData = $this->getAllMetaData();
-        if (isset($catalogsMetaData[$schema])) {
-            if (isset($catalogsMetaData[$schema][$catalog])) {
-                return $catalogsMetaData[$schema][$catalog];
-            }
-        }
-        
-        return [];
+        return $catalogsMetaData[$schema][$catalog] ?? [];
     }
 
     public function getAll($schema, $catalog, $available) {
         try {
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
-            if ($schema === 'default') {
-                $columns = $catalogMetaData['columns'];
-                $where = $available ? 'WHERE [status] = 1' : '';
-                $sql = sprintf('SELECT %s FROM [%s].[%s] %s ORDER BY [%s] DESC;', $columns, 'dbo', $catalog, $where, 'created_at');
-                $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-                sendJsonResponse(200, ['ok' => true, 'data' => $result]);
-            }
-            else {
-                $columns = $catalogMetaData['join_columns'];
-                $alias = $catalogMetaData['alias'] ?? '';
-                $primaryKey = $catalogMetaData['primary_key'] ?? '';
-                $join = $catalogMetaData['join'] ?? '';
-                $where = $available ? "WHERE $alias.[status] = 1" : '';
-                $sql = sprintf('SELECT %s FROM [%s].[%s] %s %s ORDER BY %s DESC;', $columns, $schema, $catalog, $alias, $join, "$alias.$primaryKey");
-                $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-                sendJsonResponse(200, ['ok' => true, 'data' => $result]);
-            }
+            $isDefault = $schema === 'default';
+    
+            // Determinar las columnas y otras variables según el esquema
+            $columns = $catalogMetaData[$isDefault ? 'columns' : 'join_columns'] ?? '*';
+            $alias = $catalogMetaData['alias'] ?? '';
+            $primaryKey = $catalogMetaData['primary_key'] ?? 'created_at';
+            $join = $catalogMetaData['join'] ?? '';
+            $where = $available ? ($isDefault ? 'WHERE [status] = 1' : "WHERE $alias.[status] = 1") : '';
+    
+            // Construcción de la consulta SQL
+            $sql = sprintf(
+                'SELECT %s FROM [%s].[%s] %s %s ORDER BY %s DESC;',
+                $columns,
+                $isDefault ? 'dbo' : $schema,
+                $catalog,
+                $isDefault ? '' : $alias,
+                $isDefault ? '' : $join,
+                $isDefault ? 'created_at' : "$alias.$primaryKey"
+            );
+    
+            // Ejecutar la consulta y retornar los resultados
+            $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+            sendJsonResponse(200, ['ok' => true, 'data' => $result]);
         }
         catch (Exception $error) {
             handleExceptionError($error);
         }
     
         exit();
-    }
+    }    
 
     public function getItemById($schema, $catalog, $id) {
         try {
             if (isset($id)) {
-                $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
-                $primaryKey = $catalogMetaData['primary_key'];
-                $columns = $catalogMetaData['columns'];
-                $sql = sprintf('SELECT TOP 1 %s FROM [%s].[%s] WHERE %s = %s', $columns, $schema, $catalog, $primaryKey, $id);
-                $result = $this->dbConnection->query($sql)->fetch(PDO::FETCH_ASSOC);
-                sendJsonResponse(200, ['ok' => true, 'data' => $result]);
-            }
-            else {
                 sendJsonResponse(401, ['error' => true, 'message' => 'Error: Id de catálogo no válido.']);
+                exit();
             }
+            
+            $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
+            $primaryKey = $catalogMetaData['primary_key'];
+            $columns = $catalogMetaData['columns'];
+            $sql = sprintf('SELECT TOP 1 %s FROM [%s].[%s] WHERE %s = %s', $columns, $schema, $catalog, $primaryKey, $id);
+            $result = $this->dbConnection->query($sql)->fetch(PDO::FETCH_ASSOC);
+            sendJsonResponse(200, ['ok' => true, 'data' => $result]);
         }
         catch (Exception $error) {
             handleExceptionError($error);

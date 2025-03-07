@@ -39,5 +39,9 @@ class UserController {
     public function getSignature($userId) {
         $this->user->getSignature($userId);
     }
+
+    public function getSignedPolicies() {
+        $this->user->getSignedPolicies();
+    }
 }
 ?>
