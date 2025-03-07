@@ -103,6 +103,7 @@ class JobPosition {
     public function save($data) {
         try {
             $this->dbConnection->beginTransaction();
+
             $fields = '[job_position], [fk_job_position_area_id], [fk_job_position_department_id], [fk_job_position_office_id], [fk_job_position_type_id], [fk_job_position_status_id], [fk_job_position_admin_status_id], [job_position_parent_id], [publish_date], [created_by]';
             $values = ':job_position, :job_position_area_id, :job_position_department_id, :job_position_office_id, :job_position_type_id, :job_position_status_id, :job_position_admin_status_id, :job_position_parent_id, :publish_date, :created_by';
             $sql = sprintf('INSERT INTO [job_position].[positions] (%s) VALUES(%s)', $fields, $values);
@@ -117,17 +118,12 @@ class JobPosition {
             $stmt->bindParam(':job_position_parent_id', $data['job_position_parent_id'], PDO::PARAM_INT);
             $stmt->bindParam(':publish_date', $data['publish_date'], PDO::PARAM_STR);
             $stmt->bindValue(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
-            if ($stmt->execute()) {
-                if ($stmt->rowCount() > 0) {
-                    $this->dbConnection->commit();
-                    sendJsonResponse(200, array('ok' => true, 'message' => 'Registro creado correctamente.'));
-                }
-                else {
-                    throw new Exception('Error: No se pudo crear el registro.');
-                }
+            if ($stmt->execute() && $stmt->rowCount() > 0) {
+                $this->dbConnection->commit();
+                sendJsonResponse(200, array('ok' => true, 'message' => 'La nueva vacante fue creada exitosamente.'));
             }
             else {
-                throw new Exception('Error: Falló la instrucción de creación del registro.');
+                throw new Exception('Error: No se pudo crear la vacante.');
             }
         }
         catch (Exception $error) {
@@ -143,6 +139,7 @@ class JobPosition {
     public function update($id, $data) {
         try {
             $this->dbConnection->beginTransaction();
+            
             $sql = "
                 UPDATE [job_position].[positions]
                 SET 
@@ -166,12 +163,12 @@ class JobPosition {
             $stmt->bindParam(':job_position_parent_id', $data['job_position_parent_id'], PDO::PARAM_INT);
             $stmt->bindParam(':publish_date', $data['publish_date'], PDO::PARAM_STR);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            if ($stmt->execute()) {
+            if ($stmt->execute() && $stmt->rowCount() > 0) {
                 $this->dbConnection->commit();
-                sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Los datos de la vacante fueron actualizados correctamente.'));
             }
             else {
-                throw new Exception('Error: Falló la instrucción de actualización del registro.');
+                throw new Exception('Error: No se realizaron cambios en los datos de la vacante.');
             }
         } 
         catch (Exception $error) {

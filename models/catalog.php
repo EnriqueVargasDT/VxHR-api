@@ -58,7 +58,7 @@ class Catalog {
                 sendJsonResponse(200, array('ok' => true, 'data' => $result));
             }
             else {
-                sendJsonResponse(401, array('error' => true, 'message' => 'Error: id de catálogo no válido.'));
+                sendJsonResponse(401, array('error' => true, 'message' => 'Error: Id de catálogo no válido.'));
             }
         }
         catch (Exception $error) {
@@ -107,7 +107,7 @@ class Catalog {
             }
             
             $this->dbConnection->commit();
-            sendJsonResponse(200, array('ok' => true, 'message' => 'Registro creado correctamente.'));
+            sendJsonResponse(200, array('ok' => true, 'message' => 'Registro creado exitosamente.'));
         }
         catch (Exception $error) {
             if ($this->dbConnection->inTransaction()) {
@@ -156,11 +156,11 @@ class Catalog {
                 $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
             }
             if (!$stmt->execute()) {
-                throw new Exception('Error: Falló la instrucción de actualización del registro.');
+                throw new Exception('Error: No se realizaron cambios en los datos del registro.');
             }
             
             $this->dbConnection->commit();
-            sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+            sendJsonResponse(200, array('ok' => true, 'message' => 'Los datos del registro fueron actualizados exitosamente.'));
         }
         catch (Exception $error) {
             if ($this->dbConnection->inTransaction()) {
@@ -188,11 +188,11 @@ class Catalog {
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindValue(':id', $item['id'], PDO::PARAM_INT);
             if (!$stmt->execute() || $stmt->rowCount() === 0) {
-                throw new Exception('Error: No se realizaron cambios en el registro.');
+                throw new Exception('Error: No se realizaron cambios en el estado del registro.');
             }
             
             $this->dbConnection->commit();
-            sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
+            sendJsonResponse(200, array('ok' => true, 'message' => 'El estado del registro fue actualizado exitosamente.'));
         }
         catch (Exception $error) {
             if ($this->dbConnection->inTransaction()) {
