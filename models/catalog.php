@@ -26,8 +26,7 @@ class Catalog {
                 $columns = $catalogMetaData['columns'];
                 $where = $available ? 'WHERE [status] = 1' : '';
                 $sql = sprintf('SELECT %s FROM [%s].[%s] %s ORDER BY [%s] DESC;', $columns, 'dbo', $catalog, $where, 'created_at');
-                $stmt = $this->dbConnection->query($sql);
-                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                 sendJsonResponse(200, array('ok' => true, 'data' => $result));
             }
             else {
@@ -37,8 +36,7 @@ class Catalog {
                 $join = $catalogMetaData['join'] ?? '';
                 $where = $available ? "WHERE $alias.[status] = 1" : '';
                 $sql = sprintf('SELECT %s FROM [%s].[%s] %s %s ORDER BY %s DESC;', $columns, $schema, $catalog, $alias, $join, "$alias.$primaryKey");
-                $stmt = $this->dbConnection->query($sql);
-                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                 sendJsonResponse(200, array('ok' => true, 'data' => $result));
             }
         }
@@ -56,8 +54,7 @@ class Catalog {
                 $primaryKey = $catalogMetaData['primary_key'];
                 $columns = $catalogMetaData['columns'];
                 $sql = sprintf('SELECT TOP 1 %s FROM [%s].[%s] WHERE %s = %s', $columns, $schema, $catalog, $primaryKey, $id);
-                $stmt = $this->dbConnection->query($sql);
-                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $result = $this->dbConnection->query($sql)->fetch(PDO::FETCH_ASSOC);
                 sendJsonResponse(200, array('ok' => true, 'data' => $result));
             }
             else {
@@ -97,8 +94,10 @@ class Catalog {
     
             $columns = implode(',', array_keys($fields));
             $placeholders = implode(',', array_values($fields));
-            $sql = sprintf('INSERT INTO [%s].[%s] (%s) VALUES(%s);', $schema, $catalog, $columns, $placeholders);
+
             $this->dbConnection->beginTransaction();
+
+            $sql = sprintf('INSERT INTO [%s].[%s] (%s) VALUES(%s);', $schema, $catalog, $columns, $placeholders);
             $stmt = $this->dbConnection->prepare($sql);
             foreach ($params as $key => $value) {
                 $stmt->bindValue($key, $value, PDO::PARAM_STR);
@@ -106,6 +105,7 @@ class Catalog {
             if (!$stmt->execute() || $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se pudo crear el registro.');
             }
+            
             $this->dbConnection->commit();
             sendJsonResponse(200, array('ok' => true, 'message' => 'Registro creado correctamente.'));
         }
@@ -141,15 +141,16 @@ class Catalog {
                 }
             }
 
-            $setClause = implode(', ', array_map(fn($field, $placeholder) => "[$field] = $placeholder", array_keys($columns), $columns));
+            $this->dbConnection->beginTransaction();
+            
+            $set = implode(', ', array_map(fn($field, $placeholder) => "[$field] = $placeholder", array_keys($columns), $columns));
             $sql = sprintf(
                 'UPDATE [%s].[%s] SET %s WHERE [%s] = :id;',
                 $schema,
                 $catalog,
-                $setClause,
+                $set,
                 $catalogMetaData['primary_key']
             );
-            $this->dbConnection->beginTransaction();
             $stmt = $this->dbConnection->prepare($sql);
             foreach ($params as $key => $value) {
                 $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
@@ -157,6 +158,7 @@ class Catalog {
             if (!$stmt->execute()) {
                 throw new Exception('Error: Falló la instrucción de actualización del registro.');
             }
+            
             $this->dbConnection->commit();
             sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
         }
@@ -173,6 +175,9 @@ class Catalog {
     public function updateItemStatus($schema, $catalog, $item) {
         try {
             $catalogMetaData = $this->getMetaDataByName($schema, $catalog);
+            
+            $this->dbConnection->beginTransaction();
+            
             $sql = sprintf(
                 'UPDATE [%s].[%s] SET [status] = %s WHERE [%s] = :id;',
                 $schema,
@@ -180,12 +185,12 @@ class Catalog {
                 $item['status'],
                 $catalogMetaData['primary_key']
             );
-            $this->dbConnection->beginTransaction();
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindValue(':id', $item['id'], PDO::PARAM_INT);
             if (!$stmt->execute() || $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se realizaron cambios en el registro.');
             }
+            
             $this->dbConnection->commit();
             sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
         }

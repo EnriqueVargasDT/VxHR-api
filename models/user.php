@@ -30,7 +30,7 @@ class User {
                 LEFT JOIN [user].[users_auth] ua ON u.pk_user_id = ua.fk_user_id
                 LEFT JOIN [user].[marital_status] ums ON u.fk_marital_status_id = ums.pk_marital_status_id
                 LEFT JOIN [user].[relationships] urs ON u.fk_emergency_relationship_id = urs.pk_relationship_id
-                LEFT JOIN [user].[user_files] uf ON u.pk_user_id = uf.fk_user_id AND uf.is_profile_picture = 1
+                LEFT JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = 1
                 LEFT JOIN [job_position].[positions] jpp ON u.fk_job_position_id = jpp.pk_job_position_id
                 LEFT JOIN [job_position].[area] jpa ON jpp.fk_job_position_area_id = jpa.pk_job_position_area_id
                 LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
@@ -62,11 +62,13 @@ class User {
                 jpa.job_position_area,
                 jpd.job_position_department,
                 jpo.job_position_office,
-                ua.fk_role_id AS role_id
+                ua.fk_role_id AS role_id,
+                CONCAT('data:image/', uf.file_extension, ';base64,', uf.[file]) AS profile_picture
                 FROM [user].[users] u
                 LEFT JOIN [user].[users_auth] ua ON u.pk_user_id = ua.fk_user_id
                 LEFT JOIN [user].[marital_status] ums ON u.fk_marital_status_id = ums.pk_marital_status_id
                 LEFT JOIN [user].[relationships] urs ON u.fk_emergency_relationship_id = urs.pk_relationship_id
+                LEFT JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = 1
                 LEFT JOIN [job_position].[positions] jpp ON u.fk_job_position_id = jpp.pk_job_position_id
                 LEFT JOIN [job_position].[area] jpa ON jpp.fk_job_position_area_id = jpa.pk_job_position_area_id
                 LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
@@ -74,8 +76,7 @@ class User {
                 WHERE u.pk_user_id = %s
             ";
             $sql = sprintf($sql, $pk_user_id);
-            $stmt = $this->dbConnection->query($sql);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $user = $this->dbConnection->query($sql)->fetch(PDO::FETCH_ASSOC);
             if ($user) {
                 sendJsonResponse(200, array('ok' => true, 'user' => $user));
             }
@@ -117,6 +118,8 @@ class User {
                 }
             }
 
+            $this->dbConnection->beginTransaction();
+
             $columns = $this->getColumns();
 
             // Excluir columnas de valores por defecto
@@ -131,7 +134,6 @@ class User {
             }
 
             $sql1 = sprintf("$insert VALUES(%s)", implode(',', array_merge(array_keys($values), array(':created_by',))));
-            $this->dbConnection->beginTransaction();
             $stmt1 = $this->dbConnection->prepare($sql1);
             foreach ($values as $placeholder => $pdoParam) {
                 $columnName = ltrim($placeholder, ':');
@@ -142,7 +144,6 @@ class User {
             if (!$stmt1->execute() || $stmt1->rowCount() === 0) {
                 throw new Exception('Error: No se pudo crear el usuario.');
             }
-            $this->dbConnection->commit();
             
             $newUserId = $this->dbConnection->lastInsertId();
 
@@ -158,7 +159,6 @@ class User {
                 } 
 
                 $sql3 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
-                $this->dbConnection->beginTransaction();
                 $stmt3 = $this->dbConnection->prepare($sql3);
                 $fkJobPositionId = $data['fk_job_position_id'];
                 $JOB_POSITION_STATUS_BUSY = JobPosition::STATUS_BUSY;
@@ -169,11 +169,9 @@ class User {
                 if (!$stmt3->execute() || $stmt3->rowCount() === 0) {
                     throw new Exception('Error: No se realizaron cambios en la vacante asignada.');
                 }
-                $this->dbConnection->commit();
             }
 
             $sql4 = 'INSERT INTO [user].[users_auth] ([username], [password], [fk_user_id], [fk_role_id]) VALUES(:username, :password, :user_id, :role_id);';
-            $this->dbConnection->beginTransaction();
             $stmt4 = $this->dbConnection->prepare($sql4);
             $password = password_hash($data['password'], PASSWORD_BCRYPT);
             $stmt4->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
@@ -183,15 +181,10 @@ class User {
             if (!$stmt4->execute() || $stmt4->rowCount() === 0) {
                 throw new Exception('Error: No se pudo crear la cuenta de acceso a plataforma.');
             }
-            $this->dbConnection->commit();
             
-            $send = $this->sendWelcomeEmail($data);
-            if ($send) {
-                sendJsonResponse(200, array('ok' => true, 'new_user_id' => $newUserId, 'message' => 'Usuario creado correctamente.'));
-            }
-            else {
-                handleError(500, 'No se pudo enviar el correo de bienvenida a plataforma.');
-            }
+            $this->dbConnection->commit();
+            $this->sendWelcomeEmail($data);
+            sendJsonResponse(200, array('ok' => true, 'new_user_id' => $newUserId, 'message' => 'Usuario creado correctamente.'));
         }
         catch(Exception $error) {
             if ($this->dbConnection->inTransaction()) {
@@ -213,6 +206,8 @@ class User {
                 }
             }
             
+            $this->dbConnection->beginTransaction();
+
             // Validar si sigue teniendo el mismo puesto, o se ha cambiado.
             if (isset($data['fk_job_position_id'])) {
                 $sql1 = "SELECT [fk_job_position_id] FROM [user].[users] WHERE [pk_user_id] = :pk_user_id";
@@ -233,7 +228,6 @@ class User {
 
                     // Liberar la vacante anterior
                     $sql3 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
-                    $this->dbConnection->beginTransaction();
                     $stmt3 = $this->dbConnection->prepare($sql3);
                     $fkJobPositionIdOld = $result['fk_job_position_id'];
                     $JOB_POSITION_STATUS_AVAILABLE = JobPosition::STATUS_AVAILABLE;
@@ -244,7 +238,6 @@ class User {
                     if (!$stmt3->execute()) {
                         throw new Exception('Error: No se pudo actualizar el estatus de la vacante actual del usuario.');
                     }
-                    $this->dbConnection->commit();
 
                     // Ocupar la nueva vacante.
                     $sql4 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
@@ -259,13 +252,11 @@ class User {
                     if (!$stmt4->execute()) {
                         throw new Exception('Error: No se pudo actualizar el estatus de la nueva vacante para el usuario.');
                     }
-                    $this->dbConnection->commit();
                 }
             }
 
             // Actualizar el usuario
             $sql5 = sprintf('UPDATE [user].[users] SET %s WHERE [pk_user_id] = :pk_user_id;', implode(',', $SET));
-            $this->dbConnection->beginTransaction();
             $stmt5 = $this->dbConnection->prepare($sql5);
             foreach ($columns as $field => $pdoParam) {
                 if (isset($data[$field])) {
@@ -277,11 +268,9 @@ class User {
             if (!$stmt5->execute()) {
                 throw new Exception('Error: No se realizaron cambios en el usuario.');
             }
-            $this->dbConnection->commit();
 
             // Actualizar los datos de la cuenta.
             $sql6 = 'UPDATE [user].[users_auth] SET [username] = :username, [fk_role_id] = :role_id WHERE fk_user_id = :fk_user_id;';
-            $this->dbConnection->beginTransaction();
             $stmt6 = $this->dbConnection->prepare($sql6);
             $stmt6->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
             $stmt6->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
@@ -289,8 +278,8 @@ class User {
             if (!$stmt6->execute()) {
                 throw new Exception('Error: No se realizaron cambios en el cuenta del usuario.');
             }
-            $this->dbConnection->commit();
             
+            $this->dbConnection->commit();
             sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
         }
         catch(Exception $error) {
@@ -305,14 +294,16 @@ class User {
 
     public function updateStatus($id, $status) {
         try {
-            $sql = sprintf('UPDATE [user].[users] SET [is_active] = :is_active WHERE [pk_user_id] = :id;');
             $this->dbConnection->beginTransaction();
+
+            $sql = sprintf('UPDATE [user].[users] SET [is_active] = :is_active WHERE [pk_user_id] = :id;');
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':is_active', $status, PDO::PARAM_INT);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             if (!$stmt->execute() || $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se realizaron cambios en el estatus del usuario.');
             }
+            
             $this->dbConnection->commit();
             sendJsonResponse(200, array('ok' => true, 'message' => 'Registro actualizado correctamente.'));
         }
@@ -326,9 +317,9 @@ class User {
         exit();
     }
 
-    public function saveProfileImage($userId) {
+    public function uploadProfilePicture($userId) {
         try {
-            if ($_FILES['profile_picture']['error'] !== UPLOAD_ERR_OK) {
+            if (!$userId || $_FILES['profile_picture']['error'] !== UPLOAD_ERR_OK) {
                 throw new Exception('Error: No se pudo cargar la imagen.');
             }
     
@@ -348,22 +339,20 @@ class User {
             $file = $_FILES['profile_picture']['tmp_name'];
             $content = file_get_contents($file);
             $fileBase64 = base64_encode($content);
-    
-            $sql1 = "SELECT pk_file_id FROM [user].[user_files] WHERE fk_user_id = :fk_user_id AND is_profile_picture = 1";
+
+            $sql1 = "SELECT pk_file_id FROM [user].[files] WHERE fk_user_id = :fk_user_id AND type_file = 1";
             $stmt1 = $this->dbConnection->prepare($sql1);
             $stmt1->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
             $stmt1->execute();
             $exists = $stmt1->fetch(PDO::FETCH_ASSOC);
-    
+            
             $this->dbConnection->beginTransaction();
     
             if ($exists) {
-                $sql2 = "
-                    UPDATE [user].[user_files] SET [file] = :file, file_name = :file_name, file_extension = :file_extension, file_size = :file_size
-                    WHERE pk_file_id = :pk_file_id
-                ";
+                $sql2 = "UPDATE [user].[files] SET [file] = :file, file_name = :file_name, file_extension = :file_extension, file_size = :file_size
+                        WHERE pk_file_id = :pk_file_id";
                 $stmt2 = $this->dbConnection->prepare($sql2);
-                $stmt2->bindParam(':file', $imageBase64, PDO::PARAM_STR);
+                $stmt2->bindParam(':file', $fileBase64, PDO::PARAM_STR);
                 $stmt2->bindParam(':file_name', $fileName, PDO::PARAM_STR);
                 $stmt2->bindParam(':file_extension', $fileExt, PDO::PARAM_STR);
                 $stmt2->bindParam(':file_size', $fileSize, PDO::PARAM_INT);
@@ -375,18 +364,16 @@ class User {
                 sendJsonResponse(200, array('ok' => true, 'message' => 'Fotografía de perfil actualizada correctamente.'));
             }
             else {
-                $sql3 = "
-                        INSERT INTO [user].[user_files] (fk_user_id, [file], file_name, file_extension, file_size, is_profile_picture) 
-                        VALUES (:fk_user_id, :file, :file_name, :file_extension, :file_size, :is_profile_picture)
-                ";
+                $sql3 = "INSERT INTO [user].[files] (fk_user_id, [file], file_name, file_extension, file_size, type_file) 
+                        VALUES (:fk_user_id, :file, :file_name, :file_extension, :file_size, :type_file)";
                 $stmt3 = $this->dbConnection->prepare($sql3);
-                $is_profile_picture = 1;
+                $type_file = 1;
                 $stmt3->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
                 $stmt3->bindParam(':file', $fileBase64, PDO::PARAM_STR);
                 $stmt3->bindParam(':file_name', $fileName, PDO::PARAM_STR);
                 $stmt3->bindParam(':file_extension', $fileExt, PDO::PARAM_STR);
                 $stmt3->bindParam(':file_size', $fileSize, PDO::PARAM_INT);
-                $stmt3->bindParam(':is_profile_picture', $is_profile_picture, PDO::PARAM_INT);
+                $stmt3->bindParam(':type_file', $type_file, PDO::PARAM_INT);
                 if (!$stmt3->execute()) {
                     throw new Exception('Error: No se pudo cargar la fotografía de perfil.');
                 }
@@ -404,6 +391,88 @@ class User {
             handleExceptionError($error);
         }
     
+        exit();
+    }
+
+    public function uploadSignature($userId, $fileBase64) {
+        try{
+            if (!$userId || !$fileBase64) {
+                throw new Exception('Error: No se recibío la imagen o el usuario.');
+            }
+
+            $sql1 = "SELECT pk_file_id FROM [user].[files] WHERE fk_user_id = :fk_user_id AND type_file = :type_file";
+            $stmt1 = $this->dbConnection->prepare($sql1);
+            $type_file = 2;
+            $stmt1->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
+            $stmt1->bindParam(':type_file', $type_file, PDO::PARAM_INT);
+            $stmt1->execute();
+            $exists = $stmt1->fetch(PDO::FETCH_ASSOC);
+    
+            $this->dbConnection->beginTransaction();
+
+            if ($exists) {
+                $sql2 = 'UPDATE [user].[files] SET [file] = :file WHERE pk_file_id = :pk_file_id';
+                $stmt2 = $this->dbConnection->prepare($sql2);
+                $stmt2->bindParam(':file', $fileBase64, PDO::PARAM_STR);
+                $stmt2->bindParam(':pk_file_id', $exists['pk_file_id'], PDO::PARAM_INT);
+                if (!$stmt2->execute()) {
+                    throw new Exception('Error: No se pudo actualizar la firma.');
+                }
+    
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Firma actualizada correctamente.'));
+            }
+            else {
+                $sql3 = "INSERT INTO [user].[files] (fk_user_id, [file], file_name, file_extension, file_size, type_file) 
+                        VALUES (:fk_user_id, :file, :file_name, :file_extension, :file_size, :type_file)";
+                $stmt3 = $this->dbConnection->prepare($sql3);
+                $fileName = 'signature.png';
+                $fileExt = 'png';
+                $fileSize = 5503;
+                $type_file = 2;
+                $stmt3->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
+                $stmt3->bindParam(':file', $fileBase64, PDO::PARAM_STR);
+                $stmt3->bindParam(':file_name', $fileName, PDO::PARAM_STR);
+                $stmt3->bindParam(':file_extension', $fileExt, PDO::PARAM_STR);
+                $stmt3->bindParam(':file_size', $fileSize, PDO::PARAM_INT);
+                $stmt3->bindParam(':type_file', $type_file, PDO::PARAM_INT);
+                if (!$stmt3->execute()) {
+                    throw new Exception('Error: No se pudo cargar la firma.');
+                }
+
+                sendJsonResponse(200, array('ok' => true, 'message' => 'Firma cargada correctamente.'));
+            }
+
+            $this->dbConnection->commit();
+        }
+        catch (Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
+    
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
+    public function getSignature($userId) {
+        try {
+            $sql = 'SELECT [file] FROM [user].[files] WHERE fk_user_id = :fk_user_id AND type_file = 2;';
+            $stmt = $this->dbConnection->prepare($sql);
+            $stmt->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (isset($result['file'])) {
+                sendJsonResponse(200, array('ok' => true, 'file' => $result['file']));
+            }
+            else {
+                sendJsonResponse(200, array('ok' => true, 'file' => null));
+            }
+        }
+        catch(Exception $error) {
+            handleExceptionError($error);
+        }
+
         exit();
     }
 

@@ -116,6 +116,18 @@ function user($method, $subroutes, $body) {
     $userController = new UserController();
     switch ($method) {
         case 'GET':
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (str_contains($subroutes[0], 'signature')) {
+                        if (isset($_GET['id'])) {
+                            $userController->getSignature($_GET['id']);
+                        }
+
+                        pathNotFound();
+                    }
+                }
+            }
+
             if (isset($_GET['id'])) {
                 $userController->getById($_GET['id']);
             }
@@ -125,8 +137,11 @@ function user($method, $subroutes, $body) {
         case 'POST':
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
-                    if (str_contains($subroutes[0], 'image')) {
-                        $userController->saveProfileImage($_POST['user_id']);
+                    if (str_contains($subroutes[0], 'profile_picture')) {
+                        $userController->uploadProfilePicture($_POST['user_id']);
+                    }
+                    else if (str_contains($subroutes[0], 'signature')) {
+                        $userController->uploadSignature($body['user_id'], $body['file_base64']);
                     }
                 }
             }

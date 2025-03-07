@@ -20,16 +20,24 @@ class UserController {
         $this->user->save($data);
     }
 
-    public function saveProfileImage($userId) {
-        $this->user->saveProfileImage($userId);
-    }
-
     public function update($id, $data) {
         $this->user->update($id, $data);
     }
 
     public function updateStatus($id, $status) {
         $this->user->updateStatus($id, $status);
+    }
+
+    public function uploadProfilePicture($userId) {
+        $this->user->uploadProfilePicture($userId);
+    }
+
+    public function uploadSignature($userId, $fileBase64) {
+        $this->user->uploadSignature($userId, $fileBase64);
+    }
+
+    public function getSignature($userId) {
+        $this->user->getSignature($userId);
     }
 }
 ?>

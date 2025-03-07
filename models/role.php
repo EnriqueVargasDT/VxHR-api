@@ -26,8 +26,7 @@ class Role {
     public function getAll() {
         try {
             $sql = 'SELECT * FROM [user].[roles]';
-            $stmt = $this->dbConnection->query($sql);
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             sendJsonResponse(200, array('ok' => true, 'roles' => $result, ));
         }
         catch (Exception $error) {

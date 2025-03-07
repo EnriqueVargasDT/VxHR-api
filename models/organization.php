@@ -1,34 +1,6 @@
 <?php
 require_once '../config/config.php';
 
-/*
-const data = {
-    id: 1,
-    name: 'John Doe',
-    title: 'CEO',
-    children: [
-        {
-            id: 2,
-            name: 'Jane Smith',
-            title: 'CTO',
-            children: [
-                { id: 3, name: 'Jake White', title: 'Dev Lead' },
-                { id: 4, name: 'Sally Brown', title: 'QA Lead' },
-            ],
-        },
-        {
-            id: 5,
-            name: 'Mark Johnson',
-            title: 'CFO',
-            children: [
-                { id: 6, name: 'Emma Davis', title: 'Accounting Manager' },
-                { id: 7, name: 'Liam Clark', title: 'Financial Analyst' },
-            ],
-        },
-    ],
-};
-*/
-
 class Organization {
     private $dbConnection;
 
