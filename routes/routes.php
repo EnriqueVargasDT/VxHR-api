@@ -35,6 +35,9 @@ else {
             case str_contains($route, 'role'):
                 role($method, $subroutes, $body);
                 break;
+            case str_contains($route, 'user_policies'):
+                user_policies($method,$subroutes, $body);
+                break;
             case str_contains($route, 'user'):
                 user($method, $subroutes, $body);
                 break;
@@ -49,6 +52,9 @@ else {
                 break;
             case str_contains($route, 'organization'):
                 organization($method);
+                break;
+            case str_contains($route, 'policies'):
+                policies($method,$subroutes, $body);
                 break;
             default:
                 pathNotFound();
@@ -300,6 +306,35 @@ function organization($method) {
     switch ($method) {
         case 'GET':
             $organizationController->getData();
+            break;
+        default:
+            methodNotAllowed();
+            break;
+    }
+}
+
+function policies($method, $subroutes, $body) {
+    $policiesController = new PoliciesController();
+    switch ($method) {
+        case 'GET':
+            $policiesController->getAll();
+            break;
+        default:
+            methodNotAllowed();
+            break;
+    }
+}
+
+function user_policies($method, $subroutes, $body) {
+    $userPoliciesController = new UserPoliciesController();
+    switch ($method) {
+        case 'GET':
+            if (isset($_GET['user_id'])) {
+                $userPoliciesController->getAll($_GET['user_id']);    
+            }
+            break;
+        case 'POST':
+            $userPoliciesController->save($body);
             break;
         default:
             methodNotAllowed();
