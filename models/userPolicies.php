@@ -8,9 +8,20 @@ class UserPolicies {
         $this->dbConnection = dbConnection();
     }
 
-    public function getAll($userId) {
+    public function getAll($userId, $signed) {
         try {
             $sql = 'SELECT * FROM [dbo].[policies] WHERE pk_policy_id NOT IN(SELECT fk_policy_id FROM [user].[policies] WHERE fk_user_id = :fk_user_id)';
+            if ($signed) {
+                $sql = '
+                    SELECT
+                        dbop.pk_policy_id,
+                        dbop.policy,
+                        dbop.description,
+                        up.*
+                    FROM [user].[policies] up
+                    LEFT JOIN [dbo].[policies] dbop ON up.fk_policy_id = dbop.pk_policy_id
+                    WHERE up.fk_user_id = :fk_user_id';
+            }
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
             $stmt->execute();
@@ -27,18 +38,42 @@ class UserPolicies {
     public function save($data) {
         try {
             $this->dbConnection->beginTransaction();
-            $sql1 = 'INSERT INTO [user].[policies] ([fk_user_id], [fk_policy_id], [signed_date], [signed_file]) VALUES (:fk_user_id, :fk_policy_id, :signed_date, :signed_file)';
-            $stmt1 = $this->dbConnection->prepare($sql1);
-            $stmt1->bindParam(':fk_user_id', $data['fk_user_id'], PDO::PARAM_INT);
-            $stmt1->bindParam(':fk_policy_id', $data['fk_policy_id'], PDO::PARAM_INT);
-            $stmt1->bindParam(':signed_date', $data['signed_date'], PDO::PARAM_STR);
-            $stmt1->bindParam(':signed_file', $data['signed_file'], PDO::PARAM_STR);
-            if (!$stmt1->execute() || $stmt1->rowCount() === 0) {
+            $sql = 'INSERT INTO [user].[policies] ([fk_user_id], [fk_policy_id], [signed_date], [signed_file]) VALUES (:fk_user_id, :fk_policy_id, :signed_date, :signed_file)';
+            $stmt = $this->dbConnection->prepare($sql);
+            $stmt->bindParam(':fk_user_id', $data['fk_user_id'], PDO::PARAM_INT);
+            $stmt->bindParam(':fk_policy_id', $data['fk_policy_id'], PDO::PARAM_INT);
+            $stmt->bindParam(':signed_date', $data['signed_date'], PDO::PARAM_STR);
+            $stmt->bindParam(':signed_file', $data['signed_file'], PDO::PARAM_STR);
+            if (!$stmt->execute() || $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se pudo registrar las políticas firmadas por el usuario.');
             }
 
             $this->dbConnection->commit();
             sendJsonResponse(200, array('ok' => true, 'message' => 'Política firmada y registrada exitosamente.', ));
+        }
+        catch (Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
+    public function updateStatus($data) {
+        try {
+            $this->dbConnection->beginTransaction();
+            $sql = 'UPDATE [user].[users] SET [has_signed_policies] = :has_signed_policies WHERE pk_user_id = :pk_user_id;';
+            $stmt = $this->dbConnection->prepare($sql);
+            $stmt->bindParam(':has_signed_policies', $data['signed'], PDO::PARAM_INT);
+            $stmt->bindParam(':pk_user_id', $data['fk_user_id'], PDO::PARAM_INT);
+            if (!$stmt->execute() || $stmt->rowCount() === 0) {
+                throw new Exception('Error: No se pudo actualizar el estado del usuario.');
+            }
+
+            $this->dbConnection->commit();
+            sendJsonResponse(200, array('ok' => true, 'message' => 'Estado del usuario actualizado exitosamente.', ));
         }
         catch (Exception $error) {
             if ($this->dbConnection->inTransaction()) {

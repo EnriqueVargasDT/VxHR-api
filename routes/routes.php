@@ -36,7 +36,10 @@ else {
                 role($method, $subroutes, $body);
                 break;
             case str_contains($route, 'user_policies'):
-                user_policies($method,$subroutes, $body);
+                user_policies($method, $subroutes, $body);
+                break;
+            case str_contains($route, 'user_files'):
+                user_files($method, $subroutes, $body);
                 break;
             case str_contains($route, 'user'):
                 user($method, $subroutes, $body);
@@ -54,7 +57,7 @@ else {
                 organization($method);
                 break;
             case str_contains($route, 'policies'):
-                policies($method,$subroutes, $body);
+                policies($method, $subroutes, $body);
                 break;
             default:
                 pathNotFound();
@@ -122,38 +125,21 @@ function user($method, $subroutes, $body) {
     $userController = new UserController();
     switch ($method) {
         case 'GET':
-            if (count($subroutes) > 0) {
-                if (isset($subroutes[0])) {
-                    if (str_contains($subroutes[0], 'signature')) {
-                        if (isset($_GET['id'])) {
-                            $userController->getSignature($_GET['id']);
-                        }
-                    }
-                    elseif (str_contains($subroutes[0], 'signed_policies')) {
-                        $userController->getSignedPolicies();
-                    }
-                    elseif (!str_contains($subroutes[0], '?id')) {
-                        pathNotFound();
-                    }
-                }
-            }
             if (isset($_GET['id'])) {
                 $userController->getById($_GET['id']);
             }
-            $userController->getAll();
-            break;
-        case 'POST':
+
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
-                    if (str_contains($subroutes[0], 'profile_picture')) {
-                        $userController->uploadProfilePicture($_POST['user_id']);
-                    }
-                    else if (str_contains($subroutes[0], 'signature')) {
-                        $userController->uploadSignature($body['user_id'], $body['file_base64']);
+                    if (str_contains($subroutes[0], 'has_signed_policies')) {
+                        $userController->hasSignedPolicies();
                     }
                 }
             }
-            
+
+            $userController->getAll();
+            break;
+        case 'POST':
             $userController->save($body);
             break;
         case 'PUT':
@@ -168,6 +154,62 @@ function user($method, $subroutes, $body) {
 
                     pathNotFound();
                 }
+            }
+
+            pathNotFound();
+            break;
+        default:
+            methodNotAllowed();
+            break;
+    }
+}
+
+function user_policies($method, $subroutes, $body) {
+    $userPoliciesController = new UserPoliciesController();
+    switch ($method) {
+        case 'GET':
+            if (isset($_GET['user_id']) && isset($_GET['signed'])) {
+                $userPoliciesController->getAll($_GET['user_id'], $_GET['signed']);
+            }
+            break;
+        case 'POST':
+            $userPoliciesController->save($body);
+            break;
+        case 'PUT':
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (str_contains($subroutes[0], 'status')) {
+                        $userPoliciesController->updateStatus($body);
+                    }
+
+                    pathNotFound();
+                }
+            }
+
+            pathNotFound();
+            break;
+        default:
+            methodNotAllowed();
+            break;
+    }
+}
+
+function user_files($method, $subroutes, $body) {
+    $userFilesController = new UserFilesController();
+    switch ($method) {
+        case 'GET':
+            if (isset($_GET['user_id']) && isset($_GET['type_file'])) {
+                $userFilesController->getByType($_GET['user_id'], $_GET['type_file']);
+            }
+            
+            pathNotFound();
+            break;
+        case 'POST':
+            if (isset($_POST['type_file']) && $_POST['type_file'] == UserFiles::TYPE_PROFILE_PICTURE) {
+                $userFilesController->upload($_POST['user_id'], UserFiles::TYPE_PROFILE_PICTURE, null);
+            }
+            else if (isset($body['type_file']) && $body['type_file'] == UserFiles::TYPE_SIGNATURE) {
+                $userFilesController->upload($body['user_id'], UserFiles::TYPE_SIGNATURE, (isset($body['file']) ? $body['file'] : null));
             }
 
             pathNotFound();
@@ -318,23 +360,6 @@ function policies($method, $subroutes, $body) {
     switch ($method) {
         case 'GET':
             $policiesController->getAll();
-            break;
-        default:
-            methodNotAllowed();
-            break;
-    }
-}
-
-function user_policies($method, $subroutes, $body) {
-    $userPoliciesController = new UserPoliciesController();
-    switch ($method) {
-        case 'GET':
-            if (isset($_GET['user_id'])) {
-                $userPoliciesController->getAll($_GET['user_id']);    
-            }
-            break;
-        case 'POST':
-            $userPoliciesController->save($body);
             break;
         default:
             methodNotAllowed();

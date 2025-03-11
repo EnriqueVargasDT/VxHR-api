@@ -14,7 +14,7 @@ class Login {
 
     public function validate($username, $password, $rememberMe) {
         try {
-            $sql1 = "SELECT TOP 1 ua.*, u.signed_policies FROM [user].[users_auth] ua JOIN [user].[users] u ON ua.[fk_user_id] = u.[pk_user_id] WHERE ua.[username] = '$username' AND u.[is_active] = 1";
+            $sql1 = "SELECT TOP 1 ua.*, u.has_signed_policies FROM [user].[users_auth] ua JOIN [user].[users] u ON ua.[fk_user_id] = u.[pk_user_id] WHERE ua.[username] = '$username' AND u.[is_active] = 1";
             $result = $this->dbConnection->query($sql1)->fetch(PDO::FETCH_ASSOC);
             if ($result) {
                 $decryptedPassword = $this->decryptedPassword($password);
@@ -50,7 +50,7 @@ class Login {
                     
                     $this->dbConnection->commit();
                     $_SESSION['pk_user_id'] = $result['fk_user_id'];
-                    sendJsonResponse(200, ['ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], 'signed_policies' => $result['signed_policies'], 'message' => 'Registro actualizado exitosamente.', ]);
+                    sendJsonResponse(200, ['ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], 'has_signed_policies' => $result['has_signed_policies'], 'message' => 'Registro actualizado exitosamente.', ]);
                 }
                 else {
                     handleError(401, ['error' => true, 'type' => 'password', 'message' => 'Error: Contraseña inválida.']);

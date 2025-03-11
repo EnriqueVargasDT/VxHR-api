@@ -8,12 +8,16 @@ class UserPoliciesController {
         $this->userPolicies = new UserPolicies();
     }
 
-    public function getAll($userId) {
-        $this->userPolicies->getAll($userId);
+    public function getAll($userId, $signed) {
+        $this->userPolicies->getAll($userId, $signed);
     }
 
     public function save($data) {
         $this->userPolicies->save($data);
+    }
+
+    public function updateStatus($data) {
+        $this->userPolicies->updateStatus($data);
     }
 }
 ?>

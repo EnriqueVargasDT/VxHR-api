@@ -48,7 +48,7 @@ class User {
                 LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
                 LEFT JOIN [job_position].[office] jpo ON jpp.fk_job_position_office_id = jpo.pk_job_position_office_id
                 ORDER BY u.created_at DESC
-            ", UserFiles::PROFILE_PICTURE);
+            ", UserFiles::TYPE_PROFILE_PICTURE);
             $stmt = $this->dbConnection->query($sql);
             $users = [];
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -89,7 +89,7 @@ class User {
                 LEFT JOIN [job_position].[office] jpo ON jpp.fk_job_position_office_id = jpo.pk_job_position_office_id
                 WHERE u.pk_user_id = %s
             ";
-            $sql = sprintf($sql, UserFiles::PROFILE_PICTURE, $pk_user_id);
+            $sql = sprintf($sql, UserFiles::TYPE_PROFILE_PICTURE, $pk_user_id);
             $user = $this->dbConnection->query($sql)->fetch(PDO::FETCH_ASSOC);
             if ($user) {
                 sendJsonResponse(200, ['ok' => true, 'user' => $user]);
@@ -107,19 +107,6 @@ class User {
 
     public function getSignature($userId) {
         $this->userFiles->getByType($userId, UserFiles::SIGNATURE);
-    }
-
-    public function getSignedPolicies() {
-        try {
-            $sql = sprintf('SELECT signed_policies FROM [user].[users] WHERE pk_user_id = %s;', $_SESSION['pk_user_id']);
-            $result = $this->dbConnection->query($sql)->fetch(PDO::FETCH_ASSOC);
-            sendJsonResponse(200, ['ok' => true, 'signed_policies' => $result['signed_policies'], ]);
-        }
-        catch (Exception $error) {
-            handleExceptionError($error);
-        }
-
-        exit();
     }
 
     private function getColumns() {
@@ -154,6 +141,19 @@ class User {
         }
 
         return $columns;
+    }
+
+    public function hasSignedPolicies() {
+        try {
+            $sql = sprintf('SELECT has_signed_policies FROM [user].[users] WHERE pk_user_id = %s;', $_SESSION['pk_user_id']);
+            $result = $this->dbConnection->query($sql)->fetch(PDO::FETCH_ASSOC);
+            sendJsonResponse(200, ['ok' => true, 'has_signed_policies' => $result['has_signed_policies'], ]);
+        }
+        catch (Exception $error) {
+            handleExceptionError($error);
+        }
+
+        exit();
     }
 
     public function save($data) {

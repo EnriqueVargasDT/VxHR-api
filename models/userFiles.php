@@ -1,18 +1,19 @@
 <?php
+require_once '../config/config.php';
 
 Class UserFiles {
     private $dbConnection;
 
-    const PROFILE_PICTURE = 1;
-    const SIGNATURE = 2;
+    const TYPE_PROFILE_PICTURE = 1;
+    const TYPE_SIGNATURE = 2;
 
-    public function __construct($dbConnection) {
-        $this->dbConnection = $dbConnection;
+    public function __construct() {
+        $this->dbConnection = dbConnection();
     }
 
-    public function upload($userId, $fileBase64, $typeFile) {
+    public function upload($userId, $typeFile, $file) {
         try {
-            if ($typeFile === self::PROFILE_PICTURE) {
+            if ($typeFile == self::TYPE_PROFILE_PICTURE) {
                 if (!$userId || $_FILES['profile_picture']['error'] !== UPLOAD_ERR_OK) {
                     throw new Exception('Error: No se pudo cargar la imagen.');
                 }
@@ -32,7 +33,7 @@ Class UserFiles {
         
                 $file = $_FILES['profile_picture']['tmp_name'];
                 $content = file_get_contents($file);
-                $fileBase64 = base64_encode($content);
+                $file = base64_encode($content);
 
                 $this->dbConnection->beginTransaction();
 
@@ -47,7 +48,7 @@ Class UserFiles {
                     $sql2 = "UPDATE [user].[files] SET [file] = :file, file_name = :file_name, file_extension = :file_extension, file_size = :file_size
                              WHERE pk_file_id = :pk_file_id";
                     $stmt2 = $this->dbConnection->prepare($sql2);
-                    $stmt2->bindParam(':file', $fileBase64, PDO::PARAM_STR);
+                    $stmt2->bindParam(':file', $file, PDO::PARAM_STR);
                     $stmt2->bindParam(':file_name', $fileName, PDO::PARAM_STR);
                     $stmt2->bindParam(':file_extension', $fileExt, PDO::PARAM_STR);
                     $stmt2->bindParam(':file_size', $fileSize, PDO::PARAM_INT);
@@ -62,7 +63,7 @@ Class UserFiles {
                              VALUES (:fk_user_id, :file, :file_name, :file_extension, :file_size, :type_file)";
                     $stmt3 = $this->dbConnection->prepare($sql3);
                     $stmt3->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
-                    $stmt3->bindParam(':file', $fileBase64, PDO::PARAM_STR);
+                    $stmt3->bindParam(':file', $file, PDO::PARAM_STR);
                     $stmt3->bindParam(':file_name', $fileName, PDO::PARAM_STR);
                     $stmt3->bindParam(':file_extension', $fileExt, PDO::PARAM_STR);
                     $stmt3->bindParam(':file_size', $fileSize, PDO::PARAM_INT);
@@ -76,8 +77,8 @@ Class UserFiles {
                 $this->dbConnection->commit();
                 sendJsonResponse(200, ['ok' => true, 'message' => $message]);
             }
-            elseif ($typeFile === self::SIGNATURE) {
-                if (!$userId || !$fileBase64) {
+            elseif ($typeFile == self::TYPE_SIGNATURE) {
+                if (!$userId || !$file) {
                     throw new Exception('Error: Id de usuario y/o imagen no válidos.');
                 }
                 
@@ -93,7 +94,7 @@ Class UserFiles {
                 if ($exists) {
                     $sql2 = 'UPDATE [user].[files] SET [file] = :file WHERE pk_file_id = :pk_file_id';
                     $stmt2 = $this->dbConnection->prepare($sql2);
-                    $stmt2->bindParam(':file', $fileBase64, PDO::PARAM_STR);
+                    $stmt2->bindParam(':file', $file, PDO::PARAM_STR);
                     $stmt2->bindParam(':pk_file_id', $exists['pk_file_id'], PDO::PARAM_INT);
                     if (!$stmt2->execute()) {
                         throw new Exception('Error: No se pudo actualizar la firma digital.');
@@ -108,7 +109,7 @@ Class UserFiles {
                     $fileExt = 'png';
                     $fileSize = 5503;
                     $stmt3->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
-                    $stmt3->bindParam(':file', $fileBase64, PDO::PARAM_STR);
+                    $stmt3->bindParam(':file', $file, PDO::PARAM_STR);
                     $stmt3->bindParam(':file_name', $fileName, PDO::PARAM_STR);
                     $stmt3->bindParam(':file_extension', $fileExt, PDO::PARAM_STR);
                     $stmt3->bindParam(':file_size', $fileSize, PDO::PARAM_INT);
@@ -121,6 +122,9 @@ Class UserFiles {
                 
                 $this->dbConnection->commit();
                 sendJsonResponse(200, ['ok' => true, 'message' => $message]);
+            }
+            else {
+                throw new Exception('Error: No se recibió el tipo de archivo a subir.');
             }
         }
         catch (Exception $error) {
