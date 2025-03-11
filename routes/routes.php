@@ -35,7 +35,10 @@ else {
             case str_contains($route, 'role'):
                 role($method, $subroutes, $body);
                 break;
-            case str_contains($route, 'user_policies'):
+            case 'policies':
+                policies($method, $subroutes, $body);
+                break;
+            case 'user_policies':
                 user_policies($method, $subroutes, $body);
                 break;
             case str_contains($route, 'user_files'):
@@ -55,9 +58,6 @@ else {
                 break;
             case str_contains($route, 'organization'):
                 organization($method);
-                break;
-            case str_contains($route, 'policies'):
-                policies($method, $subroutes, $body);
                 break;
             default:
                 pathNotFound();
@@ -171,6 +171,8 @@ function user_policies($method, $subroutes, $body) {
             if (isset($_GET['user_id']) && isset($_GET['signed'])) {
                 $userPoliciesController->getAll($_GET['user_id'], $_GET['signed']);
             }
+
+            $userPoliciesController->getAll();
             break;
         case 'POST':
             $userPoliciesController->save($body);
@@ -360,6 +362,16 @@ function policies($method, $subroutes, $body) {
     switch ($method) {
         case 'GET':
             $policiesController->getAll();
+            break;
+        case 'PUT':
+            if (count($subroutes) > 0) {
+                if (isset($subroutes[0])) {
+                    if (str_contains($subroutes[0], 'status')) {
+                        $policiesController->updateStatus($body['id'], $body['status']);
+                    }
+                }
+            }
+
             break;
         default:
             methodNotAllowed();

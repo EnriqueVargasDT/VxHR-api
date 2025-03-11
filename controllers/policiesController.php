@@ -12,8 +12,8 @@ class PoliciesController {
         $this->policies->getAll();
     }
 
-    public function getByUser($userId) {
-        $this->policies->getByUser($userId);
+    public function updateStatus($id, $status) {
+        $this->policies->updateStatus($id, $status);
     }
 }
 ?>
