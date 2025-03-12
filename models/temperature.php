@@ -35,7 +35,7 @@ class Temperature {
                     }
 
                     curl_close($initTemperaturWeatherAPI);
-                    echo $responseTemperature;
+                    sendJsonResponse(200, ['ok' => true, 'data' => json_decode($responseTemperature)]);
                 }
             }
             else {

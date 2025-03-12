@@ -367,7 +367,7 @@ function policies($method, $subroutes, $body) {
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
                     if (str_contains($subroutes[0], 'status')) {
-                        $policiesController->updateStatus($body['id'], $body['status']);
+                        $policiesController->updateStatus();
                     }
                 }
             }

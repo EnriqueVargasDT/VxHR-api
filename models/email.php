@@ -21,7 +21,7 @@ Class Email {
             $this->mail->Host = 'smtp.gmail.com';
             $this->mail->SMTPAuth = true;
             $this->mail->Username = 'noreply.vxhr@gmail.com';
-            $this->mail->Password = getenv('EMAIL_NO_REPLY_SECRET');
+            $this->mail->Password = 'agoy lodr jzgr jted';
             $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $this->mail->Port = 587;
 

@@ -105,10 +105,6 @@ class User {
         exit();
     }
 
-    public function getSignature($userId) {
-        $this->userFiles->getByType($userId, UserFiles::SIGNATURE);
-    }
-
     private function getColumns() {
         $sql = "
             SELECT
@@ -377,14 +373,6 @@ class User {
         }
 
         exit();
-    }
-
-    public function uploadProfilePicture($userId) {
-        $this->userFiles->upload($userId, null, UserFiles::PROFILE_PICTURE);
-    }
-
-    public function uploadSignature($userId, $fileBase64) {
-        $this->userFiles->upload($userId, $fileBase64, UserFiles::SIGNATURE);
     }
 
     private function sendWelcomeEmail($data) {

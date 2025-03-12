@@ -26,7 +26,7 @@ class UserPolicies {
             $stmt->bindParam(':fk_user_id', $userId, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            sendJsonResponse(200, array('ok' => true, 'data' => $result, ));
+            sendJsonResponse(200, ['ok' => true, 'data' => $result, ]);
         }
         catch (Exception $error) {
             handleExceptionError($error);
@@ -49,7 +49,7 @@ class UserPolicies {
             }
 
             $this->dbConnection->commit();
-            sendJsonResponse(200, array('ok' => true, 'message' => 'Política firmada y registrada exitosamente.', ));
+            sendJsonResponse(200, ['ok' => true, 'message' => 'Política firmada y registrada exitosamente.', ]);
         }
         catch (Exception $error) {
             if ($this->dbConnection->inTransaction()) {
@@ -73,7 +73,7 @@ class UserPolicies {
             }
 
             $this->dbConnection->commit();
-            sendJsonResponse(200, array('ok' => true, 'message' => 'Estado del usuario actualizado exitosamente.', ));
+            sendJsonResponse(200, ['ok' => true, 'message' => 'Estado del usuario actualizado exitosamente.', ]);
         }
         catch (Exception $error) {
             if ($this->dbConnection->inTransaction()) {

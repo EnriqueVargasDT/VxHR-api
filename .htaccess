@@ -11,4 +11,3 @@ SetEnv DB_SERVER aorokag8pb.database.windows.net,1433
 SetEnv DB_USERNAME traacedb
 SetEnv DB_PASSWORD Traace2014
 SetEnv APP_SECRET_KEY oc7yqqXqiaNOqFAMhRUbPo3dGqDI8wIB
-SetEnv EMAIL_NO_REPLY_SECRET agoy lodr jzgr jted
