@@ -34,7 +34,7 @@ class Login {
                         'path' => '/',
                         'secure' => true, // https o  http
                         'httponly' => true,
-                        'samesite' => 'Strict',
+                        'samesite' => 'None',
                     ]);
 
                     // Actualizar la fecha de último inicio de sesión:

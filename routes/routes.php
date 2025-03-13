@@ -20,43 +20,42 @@ if ($main !== 'api') {
 $route = $requestUriParts[1] ?? null;
 $subroutes = array_slice($requestUriParts, 2);
 
-if (str_contains($route, 'login')) {
+if (str_starts_with($route, 'login')) {
     login($method, $subroutes, $body);
 }
-else if (str_contains($route, 'logout')) {
+else if (str_starts_with($route, 'logout')) {
     logout($method);
 }
 else {
     $tokenController = new TokenController();
     $validateToken = $tokenController->validate();
-
     if (isset($validateToken['ok'])) {
-        switch ($route) {
-            case str_contains($route, 'role'):
+        switch (true) {
+            case str_starts_with($route, 'role'):
                 role($method, $subroutes, $body);
                 break;
-            case 'policies':
+            case str_starts_with($route, 'policies'):
                 policies($method, $subroutes, $body);
                 break;
-            case 'user_policies':
+            case str_starts_with($route, 'user_policies'):
                 user_policies($method, $subroutes, $body);
                 break;
-            case str_contains($route, 'user_files'):
+            case str_starts_with($route, 'user_files'):
                 user_files($method, $subroutes, $body);
                 break;
-            case str_contains($route, 'user'):
+            case str_starts_with($route, 'user'):
                 user($method, $subroutes, $body);
                 break;
-            case str_contains($route, 'temperature'):
+            case str_starts_with($route, 'temperature'):
                 temperature($method);
                 break;
-            case str_contains($route, 'catalog'):
+            case str_starts_with($route, 'catalog'):
                 catalog($method, $subroutes, $body);
                 break;
-            case str_contains($route, 'job_position'):
+            case str_starts_with($route, 'job_position'):
                 job_position($method, $subroutes, $body);
                 break;
-            case str_contains($route, 'organization'):
+            case str_starts_with($route, 'organization'):
                 organization($method);
                 break;
             default:
@@ -75,10 +74,10 @@ function login($method, $subroutes, $body) {
         case 'POST':
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
-                    if (str_contains($subroutes[0], 'password_recovery')) {
+                    if (str_starts_with($subroutes[0], 'password_recovery')) {
                         $loginController->passwordRecovery($body['username']);
                     }
-                    else if (str_contains($subroutes[0], 'password_update')) {
+                    else if (str_starts_with($subroutes[0], 'password_update')) {
                         $loginController->passwordUpdate($body['token'], $body['newPassword'], $body['confirmPassword']);
                     }
                     
@@ -105,7 +104,7 @@ function role($method, $subroutes, $body) {
         case 'GET':
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
-                    if (str_contains($subroutes[0], 'catalog')) {
+                    if (str_starts_with($subroutes[0], 'catalog')) {
                         $roleController->getAll();    
                     }
                     
@@ -131,7 +130,7 @@ function user($method, $subroutes, $body) {
 
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
-                    if (str_contains($subroutes[0], 'has_signed_policies')) {
+                    if (str_starts_with($subroutes[0], 'has_signed_policies')) {
                         $userController->hasSignedPolicies();
                     }
                 }
@@ -145,7 +144,7 @@ function user($method, $subroutes, $body) {
         case 'PUT':
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
-                    if (str_contains($subroutes[0], 'status')) {
+                    if (str_starts_with($subroutes[0], 'status')) {
                         $userController->updateStatus($body['id'], $body['status']);
                     }
                     else if (is_numeric($subroutes[0])) {
@@ -275,7 +274,7 @@ function catalog($method, $subroutes, $body) {
                 if (isset($subroutes[0])) {
                     if (isset($subroutes[1])) {
                         if (isset($subroutes[2])) {
-                            if (str_contains($subroutes[2], 'status')) {
+                            if (str_starts_with($subroutes[2], 'status')) {
                                 $catalogController->updateItemStatus($subroutes[0], $subroutes[1], $body);
                             }
 
@@ -309,7 +308,7 @@ function job_position($method, $subroutes, $body) {
         case 'GET':
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
-                    if (str_contains($subroutes[0], 'positions')) {
+                    if (str_starts_with($subroutes[0], 'positions')) {
                         if (isset($_GET['id'])) {
                             $jobPositionController->getDataById($_GET['id']);
                         }
@@ -366,7 +365,7 @@ function policies($method, $subroutes, $body) {
         case 'PUT':
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
-                    if (str_contains($subroutes[0], 'status')) {
+                    if (str_starts_with($subroutes[0], 'status')) {
                         $policiesController->updateStatus();
                     }
                 }
