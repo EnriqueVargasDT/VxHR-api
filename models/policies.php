@@ -112,12 +112,13 @@ class Policies {
     public function update($id, $data) {
         try {
             $this->dbConnection->beginTransaction();
-            $sql = 'UPDATE [dbo].[policies] SET [policy] = :policy, [nom_iso] = :nom_iso, [fk_job_position_type_scope] = :fk_job_position_type_scope, [content] = :content';
+            $sql = 'UPDATE [dbo].[policies] SET [policy] = :policy, [nom_iso] = :nom_iso, [fk_job_position_type_scope] = :fk_job_position_type_scope, [content] = :content WHERE [pk_policy_id] = :pk_policy_id';
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':policy', $data['policy'], PDO::PARAM_STR);
             $stmt->bindParam(':nom_iso', $data['nom_iso'], PDO::PARAM_STR);
             $stmt->bindParam(':fk_job_position_type_scope', $data['fk_job_position_type_scope'], PDO::PARAM_INT);
             $stmt->bindParam(':content', $data['content'], PDO::PARAM_STR);
+            $stmt->bindParam(':pk_policy_id', $id, PDO::PARAM_INT);
             if (!$stmt->execute() && $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se realizaron cambios en los datos de la política.');
             }
