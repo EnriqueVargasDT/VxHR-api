@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notificación de asignación de nueva política.</title>
+</head>
+<body style="font-family: 'Roboto', sans-serif; font-size: 13px; background-color: white; padding: 0; margin: 0;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #F2F2F2; border-radius: 16px; padding: 24px;">
+                    <tr>
+                        <td style="font-size: 13px; color: #0F2746; text-align: left;">
+                            <p>Estimad@, <strong>{{username}}</strong>:</p>
+                            <p>Se le notifca que se le asigno una nueva política.</p>
+                            <p>Puede hacer clic en el siguiente enlace para realizar la firma correspondiente y habilitar el resto de funcionalidades:</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="left">
+                            <!-- Botón compatible con Outlook -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td align="left" bgcolor="#0F2746" style="border-radius: 24px;">
+                                        <a href="{{link}}" target="_blank" style="display: inline-block; padding: 12px 24px; background-color: #0F2746; color: white; text-decoration: none; font-weight: bold; font-size: 13px; border-radius: 24px; mso-padding-alt: 0;">
+                                            <!--[if mso]>
+                                            <span style="font-size: 13px; line-height: 8px; font-family: Arial, sans-serif; color: white;">Iniciar sesión</span>
+                                            <![endif]-->
+                                            <span style="font-size: 13px; line-height: 8px; font-family: Arial, sans-serif; color: white; mso-hide: all;">Restablecer
+                                                Iniciar sesión
+                                            </span>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

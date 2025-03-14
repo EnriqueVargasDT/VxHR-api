@@ -2,16 +2,13 @@
 require_once '../config/config.php';
 require_once 'userFiles.php';
 require_once 'jobPosition.php';
-require_once 'email.php';
 
 class User {
     private $dbConnection;
-    private $email;
     private $userFiles;
 
     public function __construct() {
         $this->dbConnection = dbConnection();
-        $this->email = new Email();
         $this->userFiles = new UserFiles($this->dbConnection);
     }
 
@@ -376,6 +373,8 @@ class User {
     }
 
     private function sendWelcomeEmail($data) {
+        require_once 'email.php';
+        $email = new Email();
         $to = $data['institutional_email'];
         $subject = '¡Bienvenido a nuestra plataforma digital! VxHR';
         $template = file_get_contents('../templates/platform_welcome_email.html');
@@ -384,7 +383,7 @@ class User {
         $template = str_replace('{{password}}', $data['password'], $template);
         $template = str_replace('{{login_link}}', $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].':3000/login', $template);
         $message = $template;
-        $send = $this->email->send($to, $subject, $message);
+        $send = $email->send($to, $subject, $message);
         return $send;
     }
 }

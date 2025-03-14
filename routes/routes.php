@@ -360,17 +360,28 @@ function policies($method, $subroutes, $body) {
     $policiesController = new PoliciesController();
     switch ($method) {
         case 'GET':
+            if (isset($_GET['id'])) {
+                $policiesController->getById($_GET['id']);
+            }
+
             $policiesController->getAll();
+            break;
+        case 'POST':
+            $policiesController->save($body);
             break;
         case 'PUT':
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
                     if (str_starts_with($subroutes[0], 'status')) {
-                        $policiesController->updateStatus();
+                        $policiesController->updateStatus($body['id'], $body['status']);
+                    }
+                    elseif (is_numeric($subroutes[0])) {
+                        $policiesController->update($subroutes[0], $body);
                     }
                 }
             }
 
+            pathNotFound();
             break;
         default:
             methodNotAllowed();

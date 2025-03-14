@@ -12,6 +12,18 @@ class PoliciesController {
         $this->policies->getAll();
     }
 
+    public function getById($id) {
+        $this->policies->getById($id);
+    }
+
+    public function save($data) {
+        $this->policies->save($data);
+    }
+
+    public function update($id, $data) {
+        $this->policies->update($id, $data);
+    }
+
     public function updateStatus($id, $status) {
         $this->policies->updateStatus($id, $status);
     }
