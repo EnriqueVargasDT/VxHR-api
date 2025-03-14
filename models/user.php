@@ -173,7 +173,7 @@ class User {
             $columns = $this->getColumns();
 
             // Excluir columnas de valores por defecto
-            unset($columns['pk_user_id'], $columns['date_of_hire'], $columns['is_active']);
+            unset($columns['pk_user_id'], $columns['date_of_hire'], $columns['is_active'], $columns['has_signed_policies']);
 
             // Antes de todo, si se asigno una vacante al usuario, validar si ya esta ocupada.
             if (isset($data['fk_job_position_id'])) {
@@ -214,6 +214,7 @@ class User {
                 $columnValue = trim($data[$columnName]);
                 $stmt1->bindValue($placeholder, $columnValue, $pdoParam);
             }
+            $stmt1->bindValue(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             $stmt1->bindValue(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             if (!$stmt1->execute() || $stmt1->rowCount() === 0) {
                 throw new Exception('Error: No fue posible crear el usuario.');
