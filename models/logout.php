@@ -11,7 +11,7 @@ class Logout {
             ]);
             session_unset();
             session_destroy();
-            sendJsonResponse(200, array('ok' => true, 'message' => 'Sesión cerrada exitosamente.'));
+            sendJsonResponse(200, ['ok' => true, 'message' => 'Sesión cerrada exitosamente.']);
         }
         catch(Exception $error) {
             handleExceptionError($error);

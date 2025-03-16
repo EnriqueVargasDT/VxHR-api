@@ -11,27 +11,31 @@ class UserPolicies {
     public function getAll($userId, $signed) {
         try {
             if ($signed) {
-                $sql = 'SELECT p.pk_policy_id, p.policy, p.content, up.* FROM [user].[policies] up LEFT JOIN [dbo].[policies] p ON up.fk_policy_id = p.pk_policy_id AND p.[status] = 1;';
-                $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+                $sql = 'SELECT p.pk_policy_id, p.policy, p.content, up.*
+                        FROM [user].[policies] up
+                        LEFT JOIN [dbo].[policies] p ON up.fk_policy_id = p.pk_policy_id AND p.[status] = 1
+                        WHERE up.fk_user_id = :fk_user_id;';
+                $stmt = $this->dbConnection->prepare($sql);
+                $stmt->bindParam('fk_user_id', $userId, PDO::PARAM_INT);
+                $stmt->execute();
+                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 sendJsonResponse(200, ['ok' => true, 'data' => $result, ]);
             }
             else {
-                $sql = "
-                    SELECT p.*
-                    FROM [dbo].[policies] p
-                    WHERE NOT EXISTS(
-                        SELECT 1
-                        FROM [user].[policies] up
-                        WHERE up.fk_policy_id = p.pk_policy_id
-                        AND up.fk_user_id = $userId
-                    )
-                    AND p.fk_job_position_type_scope IN(
-                        SELECT jp.fk_job_position_type_id
-                        FROM [user].[users] u
-                        INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
-                        WHERE u.pk_user_id = $userId
-                    );
-                ";
+                $sql = "SELECT p.*
+                        FROM [dbo].[policies] p
+                        WHERE NOT EXISTS(
+                            SELECT 1
+                            FROM [user].[policies] up
+                            WHERE up.fk_policy_id = p.pk_policy_id
+                            AND up.fk_user_id = $userId
+                        )
+                        AND p.fk_job_position_type_id IN(
+                            SELECT jp.fk_job_position_type_id
+                            FROM [user].[users] u
+                            INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
+                            WHERE u.pk_user_id = $userId
+                        );";
                 $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                 sendJsonResponse(200, ['ok' => true, 'data' => $result, ]);
             }

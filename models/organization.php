@@ -40,7 +40,7 @@ class Organization {
                     'full_location' => $value['job_position_office'],
                     'location' => $value['job_position_office_short'],
                     'parent_id' => $value['job_position_parent_id'],
-                    'children' => array(),
+                    'children' => [],
                 );
             }
             
@@ -53,7 +53,7 @@ class Organization {
                     $positions[$node['parent_id']]['children'][] = &$node;
                 }
             }
-            sendJsonResponse(200, array('ok' => true, 'data' => $data, ));
+            sendJsonResponse(200, ['ok' => true, 'data' => $data, ]);
         }
         catch (Exception $error) {
             handleExceptionError($error);
