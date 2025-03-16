@@ -11,16 +11,14 @@ class Policies {
 
     public function getAll() {
         try {
-            $sql = "
-                SELECT
-                p.*,
-                CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS created_by_full_name
-                FROM [dbo].[policies] p
-                LEFT JOIN [user].[users] u ON p.created_by = u.pk_user_id
-                ORDER BY created_at DESC
-            ";
+            $sql = "SELECT
+                    p.*,
+                    CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS created_by_full_name
+                    FROM [dbo].[policies] p
+                    LEFT JOIN [user].[users] u ON p.created_by = u.pk_user_id
+                    ORDER BY created_at DESC";
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
-            sendJsonResponse(200, array('ok' => true, 'data' => $result, ));
+            sendJsonResponse(200, ['ok' => true, 'data' => $result, ]);
         }
         catch (Exception $error) {
             handleExceptionError($error);
@@ -45,15 +43,45 @@ class Policies {
         exit();
     }
 
+    public function getAllUsers($id) {
+        try {
+            $sql = "
+                SELECT
+                    p.policy,
+                    CASE WHEN TRIM(CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2)) = '' THEN '~Sin Asignar' ELSE TRIM(CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2))
+                    END AS created_by_full_name,
+                    jp.job_position,
+                    CASE WHEN institutional_email IS NULL THEN '~Sin Asignar' ELSE institutional_email
+                    END AS username,
+                    p.created_at,
+                    up.signed_date
+                FROM [dbo].[policies] p
+                LEFT JOIN [job_position].[positions] jp ON p.fk_job_position_type_id = jp.fk_job_position_type_id
+                LEFT JOIN [user].[users] u ON jp.pk_job_position_id = u.fk_job_position_id
+                LEFT JOIN [user].[policies] up ON p.pk_policy_id = up.fk_policy_id AND up.fk_user_id = u.pk_user_id
+                WHERE p.pk_policy_id = :pk_policy_id";
+            $stmt = $this->dbConnection->prepare($sql);
+            $stmt->bindParam(':pk_policy_id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            sendJsonResponse(200, ['ok' => true, 'data' => $result]);
+        }
+        catch (Exception $error) {
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
     public function save($data) {
         try {
             $this->dbConnection->beginTransaction();
-            $sql = 'INSERT INTO [dbo].[policies] ([policy], [nom_iso], [fk_job_position_type_scope], [content], [created_by])
-                    VALUES(:policy, :nom_iso, :fk_job_position_type_scope, :content, :created_by)';
+            $sql = 'INSERT INTO [dbo].[policies] ([policy], [nom_iso], [fk_job_position_type_id], [content], [created_by])
+                    VALUES(:policy, :nom_iso, :fk_job_position_type_id, :content, :created_by)';
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':policy', $data['policy'], PDO::PARAM_STR);
             $stmt->bindParam(':nom_iso', $data['nom_iso'], PDO::PARAM_STR);
-            $stmt->bindParam(':fk_job_position_type_scope', $data['fk_job_position_type_scope'], PDO::PARAM_INT);
+            $stmt->bindParam(':fk_job_position_type_id', $data['fk_job_position_type_id'], PDO::PARAM_INT);
             $stmt->bindParam(':content', $data['content'], PDO::PARAM_STR);
             $stmt->bindParam(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             if (!$stmt->execute() && $stmt->rowCount() === 0) {
@@ -69,7 +97,7 @@ class Policies {
                 WHERE jp.fk_job_position_type_id = :fk_job_position_type_id
             ";
             $stmt2 = $this->dbConnection->prepare($sql2);
-            $stmt2->bindParam(':fk_job_position_type_id', $data['fk_job_position_type_scope'], PDO::PARAM_INT);
+            $stmt2->bindParam(':fk_job_position_type_id', $data['fk_job_position_type_id'], PDO::PARAM_INT);
             $stmt2->execute();
             $result = $stmt2->fetchAll(PDO::FETCH_ASSOC);
             if (!empty($result)) {
@@ -112,11 +140,11 @@ class Policies {
     public function update($id, $data) {
         try {
             $this->dbConnection->beginTransaction();
-            $sql = 'UPDATE [dbo].[policies] SET [policy] = :policy, [nom_iso] = :nom_iso, [fk_job_position_type_scope] = :fk_job_position_type_scope, [content] = :content WHERE [pk_policy_id] = :pk_policy_id';
+            $sql = 'UPDATE [dbo].[policies] SET [policy] = :policy, [nom_iso] = :nom_iso, [fk_job_position_type_id] = :fk_job_position_type_id, [content] = :content WHERE [pk_policy_id] = :pk_policy_id';
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':policy', $data['policy'], PDO::PARAM_STR);
             $stmt->bindParam(':nom_iso', $data['nom_iso'], PDO::PARAM_STR);
-            $stmt->bindParam(':fk_job_position_type_scope', $data['fk_job_position_type_scope'], PDO::PARAM_INT);
+            $stmt->bindParam(':fk_job_position_type_id', $data['fk_job_position_type_id'], PDO::PARAM_INT);
             $stmt->bindParam(':content', $data['content'], PDO::PARAM_STR);
             $stmt->bindParam(':pk_policy_id', $id, PDO::PARAM_INT);
             if (!$stmt->execute() && $stmt->rowCount() === 0) {
