@@ -1,4 +1,12 @@
 <?php
+session_set_cookie_params([
+    'lifetime' => 0, // La cookie se eliminará cuando se cierre el navegador
+    'path' => '/',
+    'domain' => '', // Dejar vacío equivale a "None"
+    'secure' => true, // Debe ser `true` si usas HTTPS
+    'httponly' => true,
+    'samesite' => 'None' // Configura esto si necesitas compatibilidad con CORS
+]);
 session_start();
 require_once '../utils/response.php';
 spl_autoload_register(function ($className) {
