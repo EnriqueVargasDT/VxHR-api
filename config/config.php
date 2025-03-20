@@ -1,16 +1,14 @@
 <?php
-/*
 define('DB_SERVER', getenv('DB_SERVER'));
 define('DB_USERNAME', getenv('DB_USERNAME'));
 define('DB_PASSWORD', getenv('DB_PASSWORD'));
 define('DB_DATABASE', 'dev-VXHR');
-*/
-
+/*
 define('DB_SERVER', 'localhost');
 define('DB_USERNAME', 'sa');
 define('DB_PASSWORD', 'Kingdiamond2025*');
 define('DB_DATABASE', 'dev-VXHR');
-
+*/
 function dbConnection() {
     $connection = null;
     try {
