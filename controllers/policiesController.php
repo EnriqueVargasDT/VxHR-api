@@ -16,8 +16,8 @@ class PoliciesController {
         $this->policies->getById($id);
     }
 
-    public function getAllUsers($id) {
-        $this->policies->getAllUsers($id);
+    public function getAllUsersById($id) {
+        $this->policies->getAllUsersById($id);
     }
 
     public function save($data) {

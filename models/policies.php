@@ -43,18 +43,21 @@ class Policies {
         exit();
     }
 
-    public function getAllUsers($id) {
+    public function getAllUsersById($id) {
         try {
             $sql = "
                 SELECT
+                    p.pk_policy_id,
                     p.policy,
                     CASE WHEN TRIM(CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2)) = '' THEN '~Sin Asignar' ELSE TRIM(CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2))
-                    END AS created_by_full_name,
+                    END AS user_full_name,
                     jp.job_position,
                     CASE WHEN institutional_email IS NULL THEN '~Sin Asignar' ELSE institutional_email
                     END AS username,
+                    p.content,
                     p.created_at,
-                    up.signed_date
+                    up.signing_date,
+                    up.signature_file
                 FROM [dbo].[policies] p
                 LEFT JOIN [job_position].[positions] jp ON p.fk_job_position_type_id = jp.fk_job_position_type_id
                 LEFT JOIN [user].[users] u ON jp.pk_job_position_id = u.fk_job_position_id

@@ -361,8 +361,8 @@ function policies($method, $subroutes, $body) {
     switch ($method) {
         case 'GET':
             if (isset($_GET['id'])) {
-                if (str_starts_with($subroutes[0], 'all_users')) {
-                    $policiesController->getAllUsers($_GET['id']);
+                if (str_starts_with($subroutes[0], 'all_users_by_id')) {
+                    $policiesController->getAllUsersById($_GET['id']);
                 }
                 
                 $policiesController->getById($_GET['id']);
