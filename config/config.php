@@ -1,7 +1,7 @@
 <?php
-define('DB_SERVER', getenv('DB_SERVER'));
-define('DB_USERNAME', getenv('DB_USERNAME'));
-define('DB_PASSWORD', getenv('DB_PASSWORD'));
+define('DB_SERVER', 'aorokag8pb.database.windows.net,1433');
+define('DB_USERNAME', 'traacedb');
+define('DB_PASSWORD', 'Traace2014');
 define('DB_DATABASE', 'dev-VXHR');
 /*
 define('DB_SERVER', 'localhost');
