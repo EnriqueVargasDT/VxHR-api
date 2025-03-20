@@ -1,14 +1,16 @@
 <?php
 session_set_cookie_params([
-    'lifetime' => 0, // La cookie se eliminará cuando se cierre el navegador
+    'lifetime' => 0,
     'path' => '/',
-    'domain' => '', // Dejar vacío equivale a "None"
-    'secure' => true, // Debe ser `true` si usas HTTPS
+    'domain' => '',
+    'secure' => true,
     'httponly' => true,
-    'samesite' => 'None' // Configura esto si necesitas compatibilidad con CORS
+    'samesite' => 'None'
 ]);
 session_start();
+
 require_once '../utils/response.php';
+
 spl_autoload_register(function ($className) {
     $controllerPath = __DIR__ . '/../controllers/' . $className . '.php';
     if (file_exists($controllerPath)) {
@@ -22,11 +24,11 @@ $body = json_decode(file_get_contents('php://input'), true);
 
 $main = $requestUriParts[0] ?? '';
 if ($main !== 'api') {
-    // pathNotFound();
+    pathNotFound();
 }
 
-$route = $requestUriParts[2] ?? null;
-$subroutes = array_slice($requestUriParts, 3);
+$route = $requestUriParts[1] ?? null;
+$subroutes = array_slice($requestUriParts, 2);
 
 if (str_starts_with($route, 'login')) {
     login($method, $subroutes, $body);
