@@ -12,4 +12,4 @@ RewriteRule ^(.*)$ public/index.php/$1 [QSA,L]
 SetEnv DB_SERVER localhost
 SetEnv DB_USERNAME sa
 SetEnv DB_PASSWORD Kingdiamond2025*
-SetEnv APP_SECRET_KEY oc7yqqXqiaNOqFAMhRUbPo3dGqDI8wIB
+SetEnv ENCRIPT_PASSWORD_KEY oc7yqqXqiaNOqFAMhRUbPo3dGqDI8wIB

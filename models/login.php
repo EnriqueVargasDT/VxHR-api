@@ -9,7 +9,7 @@ class Login {
 
     public function __construct() {
         $this->dbConnection = dbConnection();
-        $this->secretKey = getenv('APP_SECRET_KEY');
+        $this->secretKey = getenv('ENCRIPT_PASSWORD_KEY');
     }
 
     public function validate($username, $password, $rememberMe) {
