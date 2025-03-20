@@ -23,12 +23,18 @@ $requestUriParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
 $body = json_decode(file_get_contents('php://input'), true);
 
 $main = $requestUriParts[0] ?? '';
-if ($main !== 'api') {
-    pathNotFound();
+if ($main === 'public') {
+    $route = $requestUriParts[2] ?? null;
+    $subroutes = array_slice($requestUriParts, 3);
 }
+else {
+    if ($main !== 'api') {
+        pathNotFound();
+    }
 
-$route = $requestUriParts[1] ?? null;
-$subroutes = array_slice($requestUriParts, 2);
+    $route = $requestUriParts[1] ?? null;
+    $subroutes = array_slice($requestUriParts, 2);
+}
 
 if (str_starts_with($route, 'login')) {
     login($method, $subroutes, $body);
