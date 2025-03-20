@@ -26,7 +26,6 @@ if ($main !== 'api') {
 }
 
 $route = $requestUriParts[2] ?? null;
-echo $route;
 $subroutes = array_slice($requestUriParts, 3);
 
 if (str_starts_with($route, 'login')) {
