@@ -60,6 +60,11 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
+
+      - name: Create 'api' folder and move content
+        run: |
+          mkdir -p api  # Crea la carpeta 'api' en el directorio raíz
+          mv ./scripts/* ./api/  # Mueve todos los archivos dentro de 'scripts' a 'api'
       
       - name: Login to Azure
         uses: azure/login@v2
