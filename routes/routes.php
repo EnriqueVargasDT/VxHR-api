@@ -250,8 +250,6 @@ function temperature($method) {
 
 function catalog($method, $subroutes, $body) {
     $catalogController = new CatalogController();
-    print_r($_REQUEST);
-    print_r($_GET);
     switch ($method) {
         case 'GET':
             if (count($subroutes) > 0) {

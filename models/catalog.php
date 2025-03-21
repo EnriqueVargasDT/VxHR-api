@@ -49,7 +49,7 @@ class Catalog {
 
     public function getItemById($schema, $catalog, $id) {
         try {
-            if (isset($id)) {
+            if (!isset($id)) {
                 sendJsonResponse(401, ['error' => true, 'message' => 'Error: Id de catálogo no válido.']);
                 exit();
             }
