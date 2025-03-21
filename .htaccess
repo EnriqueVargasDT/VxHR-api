@@ -13,3 +13,4 @@ SetEnv DB_SERVER localhost
 SetEnv DB_USERNAME sa
 SetEnv DB_PASSWORD Kingdiamond2025*
 SetEnv ENCRIPT_PASSWORD_KEY oc7yqqXqiaNOqFAMhRUbPo3dGqDI8wIB
+SetEnv ACCESS_CONTROL_ALLOW_ORIGIN http://localhost:3000
