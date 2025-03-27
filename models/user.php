@@ -297,7 +297,6 @@ class User {
 
                     // Ocupar la nueva vacante.
                     $sql4 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
-                    $this->dbConnection->beginTransaction();
                     $stmt4 = $this->dbConnection->prepare($sql4);
                     $fkJobPositionIdNew = $data['fk_job_position_id'];
                     $JOB_POSITION_STATUS_BUSY = JobPosition::STATUS_BUSY;
