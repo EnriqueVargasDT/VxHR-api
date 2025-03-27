@@ -21,8 +21,9 @@ Class UserFiles {
                 $fileName = $_FILES['profile_picture']['name'];
                 $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
                 $fileSize = $_FILES['profile_picture']['size'];
-        
-                if ($fileSize > 5000000) { // 5MB como ejemplo
+                
+                // 5MB
+                if ($fileSize > 5000000) {
                     throw new Exception('Error: El archivo cargado es demasiado grande.');
                 }
         
@@ -136,7 +137,6 @@ Class UserFiles {
         }
 
         exit();
-
     }
 
     public function getByType($userId, $typeFile) {

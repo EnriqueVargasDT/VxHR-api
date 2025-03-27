@@ -20,12 +20,12 @@ Class Email {
             $this->mail->isSMTP();
             $this->mail->Host = 'smtp.gmail.com';
             $this->mail->SMTPAuth = true;
-            $this->mail->Username = 'noreply.vxhr@gmail.com';
-            $this->mail->Password = 'agoy lodr jzgr jted';
+            $this->mail->Username = 'noreply.vica@gmail.com';
+            $this->mail->Password = preg_replace('/(.{4})/', '$1 ', getenv('NOREPLY_MAIL_PASSWORD'));
             $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $this->mail->Port = 587;
 
-            $this->mail->setFrom('noreply.vxhr@gmail.com', 'No-Reply VxHR');
+            $this->mail->setFrom('noreply.vica@gmail.com', 'No-Reply VICA');
             $this->mail->addAddress($to, $to);
             
             $this->mail->CharSet = 'UTF-8';

@@ -13,9 +13,11 @@ class Policies {
         try {
             $sql = "SELECT
                     p.*,
-                    CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS created_by_full_name
+                    CONCAT(u1.first_name, ' ' , u1.last_name_1, ' ', u1.last_name_2) AS created_by_full_name,
+                    CONCAT(u2.first_name, ' ' , u2.last_name_1, ' ', u2.last_name_2) AS updated_by_full_name
                     FROM [dbo].[policies] p
-                    LEFT JOIN [user].[users] u ON p.created_by = u.pk_user_id
+                    LEFT JOIN [user].[users] u1 ON p.created_by = u1.pk_user_id
+                    LEFT JOIN [user].[users] u2 ON p.updated_by = u2.pk_user_id
                     ORDER BY created_at DESC";
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             sendJsonResponse(200, ['ok' => true, 'data' => $result, ]);
@@ -143,12 +145,13 @@ class Policies {
     public function update($id, $data) {
         try {
             $this->dbConnection->beginTransaction();
-            $sql = 'UPDATE [dbo].[policies] SET [policy] = :policy, [nom_iso] = :nom_iso, [fk_job_position_type_id] = :fk_job_position_type_id, [content] = :content WHERE [pk_policy_id] = :pk_policy_id';
+            $sql = 'UPDATE [dbo].[policies] SET [policy] = :policy, [nom_iso] = :nom_iso, [fk_job_position_type_id] = :fk_job_position_type_id, [content] = :content, [updated_at] = GETDATE(), [updated_by] = :updated_by WHERE [pk_policy_id] = :pk_policy_id';
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':policy', $data['policy'], PDO::PARAM_STR);
             $stmt->bindParam(':nom_iso', $data['nom_iso'], PDO::PARAM_STR);
             $stmt->bindParam(':fk_job_position_type_id', $data['fk_job_position_type_id'], PDO::PARAM_INT);
             $stmt->bindParam(':content', $data['content'], PDO::PARAM_STR);
+            $stmt->bindParam(':updated_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             $stmt->bindParam(':pk_policy_id', $id, PDO::PARAM_INT);
             if (!$stmt->execute() && $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se realizaron cambios en los datos de la política.');
