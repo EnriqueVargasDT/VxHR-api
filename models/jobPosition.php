@@ -98,8 +98,10 @@ class JobPosition {
 
     public function save($data) {
         try {
+            if (isset($data['job_position_parent_id']) && intval($data['job_position_parent_id']) === 0) {
+                throw new Exception('Error: No se puede crear la vacante, se requiere un Jefe Inmediato.');
+            }
             $this->dbConnection->beginTransaction();
-
             $fields = '[job_position], [fk_job_position_area_id], [fk_job_position_department_id], [fk_job_position_office_id], [fk_job_position_type_id], [fk_job_position_status_id], [fk_job_position_admin_status_id], [job_position_parent_id], [publish_date], [created_by]';
             $values = ':job_position, :job_position_area_id, :job_position_department_id, :job_position_office_id, :job_position_type_id, :job_position_status_id, :job_position_admin_status_id, :job_position_parent_id, :publish_date, :created_by';
             $sql = sprintf('INSERT INTO [job_position].[positions] (%s) VALUES(%s)', $fields, $values);
@@ -133,8 +135,10 @@ class JobPosition {
 
     public function update($id, $data) {
         try {
+            if (isset($data['job_position_parent_id']) && intval($data['job_position_parent_id']) === 0) {
+                throw new Exception('Error: No se puede editar la vacante, se requiere un Jefe Inmediato.');
+            }
             $this->dbConnection->beginTransaction();
-            
             $sql = "UPDATE [job_position].[positions]
                     SET 
                         [job_position] = :job_position,

@@ -157,10 +157,11 @@ class User {
                 'imss' => 'NSS',
                 'institutional_email' => 'Correo Institucional'
             ];
-            if (isset($data['infonavit'])) {
+            
+            if (isset($data['infonavit']) && $data['infonavit'] != '') {
                 $fieldsToValidate['infonavit'] = 'Número de Crédito Infonavit';
             }
-    
+
             foreach ($fieldsToValidate as $field => $message) {
                 if ($this->validateExistence($field, $data[$field])) {
                     handleError(500, ['type' => $field, 'message' => "Error: El $message ya existe en la base de datos."]);
@@ -173,7 +174,7 @@ class User {
             $columns = $this->getColumns();
 
             // Excluir columnas de valores por defecto
-            unset($columns['pk_user_id'], $columns['date_of_hire'], $columns['is_active'], $columns['has_signed_policies']);
+            unset($columns['pk_user_id'], $columns['is_active'], $columns['has_signed_policies']);
 
             // Antes de todo, si se asigno una vacante al usuario, validar si ya esta ocupada.
             if (isset($data['fk_job_position_id'])) {

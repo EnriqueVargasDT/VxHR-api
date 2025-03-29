@@ -32,20 +32,21 @@ class Communication {
 
             // Aniversarios Laborales.
             $sqlWorkAnniversaries = sprintf("
-                SELECT
-                    CONCAT('Aniversarios Laborales Semana ', DATEPART(ISO_WEEK, GETDATE())) AS 'title',
+                SELECT 
+                    CONCAT('Aniversarios Laborales Semana ', DATEPART(ISO_WEEK, u.date_of_hire)) AS 'title',
                     CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS user_full_name,
                     jp.job_position,
                     jpo.job_position_office_short,
                     DATEDIFF(YEAR, u.date_of_hire, GETDATE()) AS years_worked,
                     uf.[file],
-                    uf.file_extension
+                    uf.file_extension,
+                    DATEPART(YEAR, u.date_of_hire) AS hire_year,
+                    DATEPART(ISO_WEEK, u.date_of_hire) AS hire_week
                 FROM [user].[users] u
                 INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
                 INNER JOIN [job_position].[office] jpo ON jp.fk_job_position_office_id = jpo.pk_job_position_office_id
                 INNER JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = %s
-                WHERE DATEPART(ISO_WEEK, date_of_hire) = DATEPART(ISO_WEEK, GETDATE())
-                AND DATEPART(YEAR, date_of_hire) <> DATEPART(YEAR, GETDATE())
+                WHERE DATEPART(YEAR, u.date_of_hire) <> DATEPART(YEAR, GETDATE())
                 ORDER BY years_worked DESC;
             ", UserFiles::TYPE_PROFILE_PICTURE);
             $resultWorkAnniversaries = $this->dbConnection->query($sqlWorkAnniversaries)->fetchAll(PDO::FETCH_ASSOC);
