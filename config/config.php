@@ -4,7 +4,8 @@ define('DB_USERNAME', getenv('DB_USERNAME'));
 define('DB_PASSWORD', getenv('DB_PASSWORD'));
 
 $DB_DATABASE = 'VICA-PROD';
-if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN'])) {
+$HTTP_ORIGIN = $_SERVER['HTTP_ORIGIN'];
+if (preg_match('/dev/', $HTTP_ORIGIN) || preg_match('/sandbox/', $HTTP_ORIGIN) || preg_match('/localhost/', $HTTP_ORIGIN)) {
     $DB_DATABASE = 'VICA-DEV';
 }
 define('DB_DATABASE', $DB_DATABASE);
