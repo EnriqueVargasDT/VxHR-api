@@ -117,8 +117,15 @@ class Policies {
                 $email = new Email();
                 $subject = 'Notificación de asignación de nueva política.';
                 $template = file_get_contents('../templates/new_policies_notification.html');
-                $link = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].":3000";
-
+                $HTTP_HOST = null;
+                if ($_SERVER['HTTP_HOST'] === 'localhost') {
+                    $HTTP_HOST = 'http://localhost:3000/login';
+                }
+                else {
+                    $HTTP_HOST = $_SERVER['HTTP_ORIGIN'].'/login';
+                }
+                $link = $HTTP_HOST;
+                
                 foreach ($result as $row) {
                     $message = str_replace('{{username}}', $row['full_name'], $template);
                     $message = str_replace('{{link}}', $link, $message);

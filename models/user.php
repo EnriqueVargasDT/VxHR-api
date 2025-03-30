@@ -377,12 +377,19 @@ class User {
         require_once 'email.php';
         $email = new Email();
         $to = $data['institutional_email'];
+        $HTTP_HOST = null;
+        if ($_SERVER['HTTP_HOST'] === 'localhost') {
+            $HTTP_HOST = 'http://localhost:3000/login';
+        }
+        else {
+            $HTTP_HOST = $_SERVER['HTTP_ORIGIN'].'/login';
+        }
         $subject = '¡Bienvenido a nuestra plataforma digital! VxHR';
         $template = file_get_contents('../templates/platform_welcome_email.html');
         $template = str_replace('{{username}}', $data['first_name'].' '.$data['last_name_1'].' '.$data['last_name_2'] , $template);
         $template = str_replace('{{email}}', $data['institutional_email'], $template);
         $template = str_replace('{{password}}', $data['password'], $template);
-        $template = str_replace('{{login_link}}', $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'].':3000/login', $template);
+        $template = str_replace('{{login_link}}', $HTTP_HOST.'/login', $template);
         $message = $template;
         $send = $email->send($to, $subject, $message);
         return $send;

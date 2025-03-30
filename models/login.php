@@ -107,13 +107,14 @@ class Login {
                     $template = file_get_contents('../templates/password_recovery_email.html');
                     $template = str_replace('{{username}}', $result['user_full_name'], $template);
                     $template = str_replace('{{email}}', $username, $template);
+                    $HTTP_HOST = null;
                     if ($_SERVER['HTTP_HOST'] === 'localhost') {
                         $HTTP_HOST = 'http://localhost:3000';
                     }
                     else {
                         $HTTP_HOST = $_SERVER['HTTP_ORIGIN'];
                     }
-                    $template = str_replace('{{reset_link}}', $HTTP_HOST."/restablecer-contraseña?token=$token", $template);
+                    $template = str_replace('{{reset_link}}', $HTTP_HOST.'/restablecer-contraseña?token=$token', $template);
                     $message = $template;
                     $send = $email->send($username, $subject, $message);
                     if (!$send) {
