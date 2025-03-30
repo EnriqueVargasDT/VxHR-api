@@ -379,10 +379,10 @@ class User {
         $to = $data['institutional_email'];
         $HTTP_HOST = null;
         if ($_SERVER['HTTP_HOST'] === 'localhost') {
-            $HTTP_HOST = 'http://localhost:3000/login';
+            $HTTP_HOST = 'http://localhost:3000';
         }
         else {
-            $HTTP_HOST = $_SERVER['HTTP_ORIGIN'].'/login';
+            $HTTP_HOST = $_SERVER['HTTP_ORIGIN'];
         }
         $subject = '¡Bienvenido a nuestra plataforma digital! VxHR';
         $template = file_get_contents('../templates/platform_welcome_email.html');

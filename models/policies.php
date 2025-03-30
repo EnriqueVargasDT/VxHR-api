@@ -119,10 +119,10 @@ class Policies {
                 $template = file_get_contents('../templates/new_policies_notification.html');
                 $HTTP_HOST = null;
                 if ($_SERVER['HTTP_HOST'] === 'localhost') {
-                    $HTTP_HOST = 'http://localhost:3000/login';
+                    $HTTP_HOST = 'http://localhost:3000/politicas-empresa';
                 }
                 else {
-                    $HTTP_HOST = $_SERVER['HTTP_ORIGIN'].'/login';
+                    $HTTP_HOST = $_SERVER['HTTP_ORIGIN'].'/politicas-empresa';
                 }
                 $link = $HTTP_HOST;
                 
