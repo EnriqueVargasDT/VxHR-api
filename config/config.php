@@ -2,8 +2,12 @@
 define('DB_SERVER', getenv('DB_SERVER'));
 define('DB_USERNAME', getenv('DB_USERNAME'));
 define('DB_PASSWORD', getenv('DB_PASSWORD'));
-define('DB_DATABASE', 'VICA-DEV');
-print_r($_SERVER);
+
+$DB_DATABASE = 'VICA-PROD';
+if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN'])) {
+    $DB_DATABASE = 'VICA-DEV';
+}
+define('DB_DATABASE', $DB_DATABASE);
 
 function dbConnection() {
     $connection = null;
