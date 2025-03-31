@@ -114,7 +114,7 @@ class Login {
                     else {
                         $HTTP_HOST = $_SERVER['HTTP_ORIGIN'];
                     }
-                    $template = str_replace('{{reset_link}}', $HTTP_HOST.'/restablecer-contraseña?token=$token', $template);
+                    $template = str_replace('{{reset_link}}', $HTTP_HOST."/restablecer-contraseña?token=$token", $template);
                     $message = $template;
                     $send = $email->send($username, $subject, $message);
                     if (!$send) {
