@@ -138,10 +138,13 @@ function role($method, $subroutes, $body) {
 }
 
 function users($method, $subroutes, $body) {
-    $userController = new UserController();
+    $usersController = new UsersController();
     switch ($method) {
         case 'GET':
-            $userController->getAll();
+            if (isset($_GET['page'])) {
+                $usersController->getAll(isset($_GET['page']) ? $_GET['page'] : 1);
+            }
+            pathNotFound();
             break;
         default:
             methodNotAllowed();
@@ -164,7 +167,7 @@ function user($method, $subroutes, $body) {
             if (isset($_GET['id'])) {
                 $userController->getById($_GET['id']);
             }
-            $userController->getAll();
+            pathNotFound();
             break;
         case 'POST':
             $userController->save($body);
