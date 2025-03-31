@@ -70,6 +70,9 @@ else {
             case 'catalog':
                 catalog($method, $subroutes, $body);
                 break;
+            case 'job_positions':
+                job_positions($method, $subroutes, $body);
+                break;
             case 'job_position':
                 job_position($method, $subroutes, $body);
                 break;
@@ -305,6 +308,19 @@ function catalog($method, $subroutes, $body) {
                     internalServerError('No se recibió un nombre de catálogo válido.');
                 }
             }
+            pathNotFound();
+            break;
+        default:
+            methodNotAllowed();
+            break;
+    }
+}
+
+function job_positions($method, $subroutes, $body) {
+    $jobPositionsController = new JobPositionsController();
+    switch ($method) {
+        case 'GET':
+            $jobPositionsController->getAll(isset($_GET['page']) ? $_GET['page'] : 1);
             pathNotFound();
             break;
         default:

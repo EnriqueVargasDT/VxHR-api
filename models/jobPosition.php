@@ -22,9 +22,9 @@ class JobPosition {
 
     public function getAll($available) {
         try {
-            $where = 'WHERE jpp.publish_date <= GETDATE() ';
+            $WHERE = 'WHERE jpp.publish_date <= GETDATE() ';
             if ($available) {
-                $where .= '
+                $WHERE .= '
                     AND jpp.fk_job_position_status_id IN(' . self::STATUS_AVAILABLE . ')
                     AND jpp.fk_job_position_admin_status_id IN(' . self::ADMIN_STATUS_CREATED . ', ' . self::ADMIN_STATUS_IN_SEARCH . ')
                 ';
@@ -57,7 +57,7 @@ class JobPosition {
                     LEFT JOIN [job_position].[admin_status] jpas ON jpp.fk_job_position_admin_status_id = jpas.pk_job_position_admin_status_id
                     LEFT JOIN [user].[users] pu ON jpp.pk_job_position_id = pu.fk_job_position_id
                     LEFT JOIN [user].[users] cu ON jpp.created_by = cu.pk_user_id
-                    $where
+                    $WHERE
                     ORDER BY jpp.created_at DESC;";
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             sendJsonResponse(200, ['ok' => true, 'data' => $result]);
