@@ -22,7 +22,6 @@ class JobPositions {
 
     public function getAll($page) {
         try {
-            $WHERE = 'WHERE jpp.publish_date <= GETDATE() ';
             $sql = sprintf("
                     SELECT
                         (SELECT COUNT(*) FROM [job_position].[positions]) AS total_rows,
@@ -54,8 +53,7 @@ class JobPositions {
                     LEFT JOIN [job_position].[admin_status] jpas ON jpp.fk_job_position_admin_status_id = jpas.pk_job_position_admin_status_id
                     LEFT JOIN [user].[users] pu ON jpp.pk_job_position_id = pu.fk_job_position_id
                     LEFT JOIN [user].[users] cu ON jpp.created_by = cu.pk_user_id
-                    $WHERE
-                    ORDER BY jpp.created_at DESC
+                    ORDER BY jpp.created_at ASC
                     OFFSET (%s - 1) * 10 ROWS 
                     FETCH NEXT 10 ROWS ONLY;
                 ", $page);
