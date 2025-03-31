@@ -14,7 +14,7 @@ Class Email {
         $this->mail = new PHPMailer(true);
     }
 
-    public function send($to, $subject, $message) {
+    public function send($to, $subject, $message, $attachmentUserManual = false) {
         try {
             $this->mail->SMTPDebug = SMTP::DEBUG_OFF;
             $this->mail->isSMTP();
@@ -34,6 +34,9 @@ Class Email {
             $this->mail->isHTML(true);
             $this->mail->Subject = $subject;
             $this->mail->Body = $message;
+            if ($attachmentUserManual) {
+                $this->mail->addAttachment('../docs/manual_usuario_vica.pdf', 'manual_usuario_vica.pdf');
+            }
             return $this->mail->send();
         }
         catch (Exception $error) {

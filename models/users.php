@@ -35,7 +35,7 @@ class Users {
                 LEFT JOIN [job_position].[area] jpa ON jpp.fk_job_position_area_id = jpa.pk_job_position_area_id
                 LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
                 LEFT JOIN [job_position].[office] jpo ON jpp.fk_job_position_office_id = jpo.pk_job_position_office_id
-                ORDER BY u.created_at DESC
+                ORDER BY u.first_name
                 OFFSET (%s - 1) * 10 ROWS 
                 FETCH NEXT 10 ROWS ONLY;
             ", $page, UserFiles::TYPE_PROFILE_PICTURE);

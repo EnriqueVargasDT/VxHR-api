@@ -350,7 +350,7 @@ class User {
         $template = str_replace('{{password}}', $data['password'], $template);
         $template = str_replace('{{login_link}}', $HTTP_HOST.'/login', $template);
         $message = $template;
-        $send = $email->send($to, $subject, $message);
+        $send = $email->send($to, $subject, $message, true);
         return $send;
     }
 }
