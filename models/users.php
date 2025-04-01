@@ -38,7 +38,7 @@ class Users {
                 ORDER BY u.first_name
                 OFFSET (%s - 1) * 10 ROWS 
                 FETCH NEXT 10 ROWS ONLY;
-            ", $page, UserFiles::TYPE_PROFILE_PICTURE);
+            ", UserFiles::TYPE_PROFILE_PICTURE, $page);
             $stmt = $this->dbConnection->query($sql);
             $users = [];
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
