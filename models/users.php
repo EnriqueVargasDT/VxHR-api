@@ -9,7 +9,7 @@ class Users {
         $this->dbConnection = dbConnection();
     }
 
-    public function getAll($page = 1) {
+    public function getAll($page) {
         try {
             $sql = sprintf("
                 SELECT
