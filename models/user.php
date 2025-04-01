@@ -32,6 +32,7 @@ class User {
                     jpa.job_position_area,
                     jpd.job_position_department,
                     jpo.job_position_office,
+                    ua.username,
                     ua.fk_role_id AS role_id,
                     CONCAT('data:image/', uf.file_extension, ';base64,', uf.[file]) AS profile_picture
                 FROM [user].[users] u
@@ -185,7 +186,7 @@ class User {
             $sql4 = 'INSERT INTO [user].[users_auth] ([username], [password], [fk_user_id], [fk_role_id]) VALUES(:username, :password, :user_id, :role_id);';
             $stmt4 = $this->dbConnection->prepare($sql4);
             $password = password_hash($data['password'], PASSWORD_BCRYPT);
-            $stmt4->bindParam(':username', $data['user'], PDO::PARAM_STR);
+            $stmt4->bindParam(':username', $data['username'], PDO::PARAM_STR);
             $stmt4->bindParam(':password', $password, PDO::PARAM_STR);
             $stmt4->bindParam(':user_id', $newUserId, PDO::PARAM_INT);
             $stmt4->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
