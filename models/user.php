@@ -288,7 +288,7 @@ class User {
             // Actualizar los datos de la cuenta.
             $sql6 = 'UPDATE [user].[users_auth] SET [username] = :username, [fk_role_id] = :role_id WHERE fk_user_id = :fk_user_id;';
             $stmt6 = $this->dbConnection->prepare($sql6);
-            $stmt6->bindParam(':username', $data['institutional_email'], PDO::PARAM_STR);
+            $stmt6->bindParam(':username', $data['username'], PDO::PARAM_STR);
             $stmt6->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
             $stmt6->bindParam(':fk_user_id', $id, PDO::PARAM_INT);
             if (!$stmt6->execute()) {
