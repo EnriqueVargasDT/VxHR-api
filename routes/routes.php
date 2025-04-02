@@ -382,7 +382,7 @@ function policies($method, $subroutes, $body) {
         case 'GET':
             if (isset($_GET['id'])) {
                 if ($subroutes[0] === 'all_users_by_id') {
-                    $policiesController->getAllUsersById($_GET['id']);
+                    $policiesController->getAllUsersById($_GET['id'], isset($_GET['page']) ? $_GET['page'] : 1);
                 }
                 $policiesController->getById($_GET['id']);
             }

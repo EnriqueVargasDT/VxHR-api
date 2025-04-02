@@ -45,10 +45,12 @@ class Policies {
         exit();
     }
 
-    public function getAllUsersById($id) {
+    public function getAllUsersById($id, $page) {
         try {
-            $sql = "
+            $sql = sprintf("
                 SELECT
+                    (SELECT COUNT(*) FROM [user].[users]) AS total_rows,
+                    CEILING(CAST(COUNT(*) OVER() AS FLOAT) / 10) AS total_pages,
                     up.pk_user_policy_id,
                     p.pk_policy_id,
                     p.policy,
@@ -65,7 +67,10 @@ class Policies {
                 INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
                 INNER JOIN [user].[users_auth] ua ON u.pk_user_id = ua.fk_user_id
                 WHERE p.pk_policy_id = :pk_policy_id
-                ORDER BY user_full_name";
+                ORDER BY user_full_name
+                OFFSET (%s - 1) * 10 ROWS 
+                FETCH NEXT 10 ROWS ONLY;
+            ", $page);
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':pk_policy_id', $id, PDO::PARAM_INT);
             $stmt->execute();
