@@ -30,12 +30,14 @@ class UserPolicies {
                             WHERE up.fk_policy_id = p.pk_policy_id
                             AND up.fk_user_id = $userId
                         )
+                        /*
                         AND p.fk_job_position_type_id IN(
                             SELECT jp.fk_job_position_type_id
                             FROM [user].[users] u
                             INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
                             WHERE u.pk_user_id = $userId
-                        );";
+                        )
+                        */;";
                 $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
                 sendJsonResponse(200, ['ok' => true, 'data' => $result, ]);
             }
