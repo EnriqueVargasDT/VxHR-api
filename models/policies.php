@@ -90,11 +90,12 @@ class Policies {
             $sql = 'INSERT INTO [dbo].[policies] ([policy], [nom_iso], [fk_job_position_type_id], [content], [created_by])
                     VALUES(:policy, :nom_iso, :fk_job_position_type_id, :content, :created_by)';
             $stmt = $this->dbConnection->prepare($sql);
+            $createdBy = 1;
             $stmt->bindParam(':policy', $data['policy'], PDO::PARAM_STR);
             $stmt->bindParam(':nom_iso', $data['nom_iso'], PDO::PARAM_STR);
             $stmt->bindParam(':fk_job_position_type_id', $data['fk_job_position_type_id'], PDO::PARAM_INT);
             $stmt->bindParam(':content', $data['content'], PDO::PARAM_STR);
-            $stmt->bindParam(':created_by', 1, PDO::PARAM_INT);
+            $stmt->bindParam(':created_by', $createdBy, PDO::PARAM_INT);
             if (!$stmt->execute() && $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se pudo crear la política.');
             }
@@ -164,7 +165,8 @@ class Policies {
             $stmt->bindParam(':nom_iso', $data['nom_iso'], PDO::PARAM_STR);
             $stmt->bindParam(':fk_job_position_type_id', $data['fk_job_position_type_id'], PDO::PARAM_INT);
             $stmt->bindParam(':content', $data['content'], PDO::PARAM_STR);
-            $stmt->bindParam(':updated_by', 1, PDO::PARAM_INT);
+            $createdBy = 1;
+            $stmt->bindParam(':updated_by', $createdBy, PDO::PARAM_INT);
             $stmt->bindParam(':pk_policy_id', $id, PDO::PARAM_INT);
             if (!$stmt->execute() && $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se realizaron cambios en los datos de la política.');
