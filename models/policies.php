@@ -90,12 +90,12 @@ class Policies {
             $sql = 'INSERT INTO [dbo].[policies] ([policy], [nom_iso], [fk_job_position_type_id], [content], [created_by])
                     VALUES(:policy, :nom_iso, :fk_job_position_type_id, :content, :created_by)';
             $stmt = $this->dbConnection->prepare($sql);
-            $createdBy = 1;
             $stmt->bindParam(':policy', $data['policy'], PDO::PARAM_STR);
             $stmt->bindParam(':nom_iso', $data['nom_iso'], PDO::PARAM_STR);
             $stmt->bindParam(':fk_job_position_type_id', $data['fk_job_position_type_id'], PDO::PARAM_INT);
             $stmt->bindParam(':content', $data['content'], PDO::PARAM_STR);
-            $stmt->bindParam(':created_by', $createdBy, PDO::PARAM_INT);
+            session_start();
+            $stmt->bindParam(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             if (!$stmt->execute() && $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se pudo crear la política.');
             }
@@ -120,8 +120,6 @@ class Policies {
                     throw new Exception('No se pudo realizar la asignación de la nueva política a los usuarios dentro del alcance.');
                 }
 
-                require_once '../models/email.php';
-                $email = new Email();
                 $subject = 'Notificación de asignación de nueva política.';
                 $template = file_get_contents('../templates/new_policies_notification.html');
                 $HTTP_HOST = null;
@@ -133,7 +131,9 @@ class Policies {
                 }
                 $link = $HTTP_HOST;
                 
+                require_once '../models/email.php';
                 foreach ($result as $row) {
+                    $email = new Email();
                     $message = str_replace('{{username}}', $row['full_name'], $template);
                     $message = str_replace('{{link}}', $link, $message);
                     $send = $email->send($row['email'], $subject, $message);
@@ -165,8 +165,7 @@ class Policies {
             $stmt->bindParam(':nom_iso', $data['nom_iso'], PDO::PARAM_STR);
             $stmt->bindParam(':fk_job_position_type_id', $data['fk_job_position_type_id'], PDO::PARAM_INT);
             $stmt->bindParam(':content', $data['content'], PDO::PARAM_STR);
-            $createdBy = 1;
-            $stmt->bindParam(':updated_by', $createdBy, PDO::PARAM_INT);
+            $stmt->bindParam(':updated_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             $stmt->bindParam(':pk_policy_id', $id, PDO::PARAM_INT);
             if (!$stmt->execute() && $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se realizaron cambios en los datos de la política.');
