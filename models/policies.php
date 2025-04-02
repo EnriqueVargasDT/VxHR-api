@@ -101,6 +101,7 @@ class Policies {
             }
 
             // Envío de notificación:
+            /*
             $sql2 = "
                 SELECT u.pk_user_id, ua.username AS email, CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS full_name
                 FROM [user].[users] u
@@ -142,6 +143,7 @@ class Policies {
                     }
                 }
             }
+            */
 
             $this->dbConnection->commit();
             sendJsonResponse(200, ['ok' => true, 'message' => 'La nueva política fue creada exitosamente.']);
