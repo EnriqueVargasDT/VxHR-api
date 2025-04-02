@@ -49,7 +49,7 @@ class Policies {
         try {
             $sql = sprintf("
                 SELECT
-                    (SELECT COUNT(*) FROM [user].[users]) AS total_rows,
+                    (SELECT COUNT(*) FROM [user].[policies] WHERE fk_policy_id = %s) AS total_rows,
                     CEILING(CAST(COUNT(*) OVER() AS FLOAT) / 10) AS total_pages,
                     up.pk_user_policy_id,
                     p.pk_policy_id,
@@ -70,7 +70,7 @@ class Policies {
                 ORDER BY user_full_name
                 OFFSET (%s - 1) * 10 ROWS 
                 FETCH NEXT 10 ROWS ONLY;
-            ", $page);
+            ", $id, $page);
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':pk_policy_id', $id, PDO::PARAM_INT);
             $stmt->execute();
