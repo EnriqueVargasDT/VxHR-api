@@ -53,11 +53,11 @@ class Login {
                     sendJsonResponse(200, ['ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], 'has_signed_policies' => $result['has_signed_policies'], 'message' => 'Registro actualizado exitosamente.', ]);
                 }
                 else {
-                    handleError(401, ['error' => true, 'type' => 'password', 'message' => 'Error: Contraseña inválida.']);
+                    handleError(401, ['error' => true, 'type' => 'password', 'message' => 'Contraseña inválida.']);
                 }
             }
             else {
-                handleError(401, ['error' => true, 'type' => 'username', 'message' => 'Error: Usuario no encontrado.']);
+                handleError(401, ['error' => true, 'type' => 'username', 'message' => 'Usuario no encontrado.']);
             }
         }
         catch(Exception $error) {
