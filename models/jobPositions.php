@@ -53,7 +53,7 @@ class JobPositions {
                     LEFT JOIN [job_position].[admin_status] jpas ON jpp.fk_job_position_admin_status_id = jpas.pk_job_position_admin_status_id
                     LEFT JOIN [user].[users] pu ON jpp.pk_job_position_id = pu.fk_job_position_id
                     LEFT JOIN [user].[users] cu ON jpp.created_by = cu.pk_user_id
-                    ORDER BY jpp.created_at ASC
+                    ORDER BY jpp.created_at DESC
                     OFFSET (%s - 1) * 10 ROWS 
                     FETCH NEXT 10 ROWS ONLY;
                 ", $page);
