@@ -20,12 +20,10 @@ class JobPositions {
         $this->dbConnection = dbConnection();
     }
 
-    public function getAll($page) {
+    public function getAll() {
         try {
-            $sql = sprintf("
+            $sql = "
                     SELECT
-                        (SELECT COUNT(*) FROM [job_position].[positions]) AS total_rows,
-                        CEILING(CAST(COUNT(*) OVER() AS FLOAT) / 10) AS total_pages,
                         jpp.pk_job_position_id,
                         jpp.job_position,
                         jpp.fk_job_position_area_id,
@@ -53,10 +51,8 @@ class JobPositions {
                     LEFT JOIN [job_position].[admin_status] jpas ON jpp.fk_job_position_admin_status_id = jpas.pk_job_position_admin_status_id
                     LEFT JOIN [user].[users] pu ON jpp.pk_job_position_id = pu.fk_job_position_id
                     LEFT JOIN [user].[users] cu ON jpp.created_by = cu.pk_user_id
-                    ORDER BY jpp.created_at DESC
-                    OFFSET (%s - 1) * 10 ROWS 
-                    FETCH NEXT 10 ROWS ONLY;
-                ", $page);
+                    ORDER BY jpp.created_at DESC;
+                ";
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             sendJsonResponse(200, ['ok' => true, 'data' => $result]);
         }
