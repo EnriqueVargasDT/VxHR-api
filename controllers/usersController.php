@@ -8,8 +8,8 @@ class UsersController {
         $this->users = new Users();
     }
 
-    public function getAll($page) {
-        $this->users->getAll($page);
+    public function getAll() {
+        $this->users->getAll();
     }
 }
 ?>

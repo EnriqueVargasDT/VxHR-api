@@ -9,12 +9,10 @@ class Users {
         $this->dbConnection = dbConnection();
     }
 
-    public function getAll($page) {
+    public function getAll() {
         try {
             $sql = sprintf("
                 SELECT
-                    (SELECT COUNT(*) FROM [user].[users]) AS total_rows,
-                    CEILING(CAST(COUNT(*) OVER() AS FLOAT) / 10) AS total_pages,
                     u.*,
                     CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS full_name,
                     ums.marital_status,
@@ -35,12 +33,11 @@ class Users {
                 LEFT JOIN [job_position].[area] jpa ON jpp.fk_job_position_area_id = jpa.pk_job_position_area_id
                 LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
                 LEFT JOIN [job_position].[office] jpo ON jpp.fk_job_position_office_id = jpo.pk_job_position_office_id
-                ORDER BY u.first_name
-                OFFSET (%s - 1) * 10 ROWS 
-                FETCH NEXT 10 ROWS ONLY;
-            ", UserFiles::TYPE_PROFILE_PICTURE, $page);
+                ORDER BY u.first_name;
+            ", UserFiles::TYPE_PROFILE_PICTURE);
             $stmt = $this->dbConnection->query($sql);
             $users = [];
+            $i = 1;
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $users[] = $row;
             }

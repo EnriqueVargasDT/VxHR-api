@@ -144,9 +144,7 @@ function users($method, $subroutes, $body) {
     $usersController = new UsersController();
     switch ($method) {
         case 'GET':
-            if (isset($_GET['page'])) {
-                $usersController->getAll(isset($_GET['page']) ? $_GET['page'] : 1);
-            }
+            $usersController->getAll();
             pathNotFound();
             break;
         default:
