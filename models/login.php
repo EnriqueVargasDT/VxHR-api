@@ -135,11 +135,11 @@ class Login {
                     sendJsonResponse(200, ['ok' => true, 'message' => 'Correo electrónico enviado exitosamente.']);
                 }
                 else {
-                    handleError(500, 'El correo electrónico proporcionado no esta registrado en la plataforma.');
+                    handleError(500, 'El usuario proporcionado no esta registrado en la plataforma.');
                 }
             }
             else {
-                handleError(500, 'No se recibió un correo electrónico válido.');
+                handleError(500, 'No se recibió un usuario válido.');
             }
         }
         catch(Exception $error) {
