@@ -80,7 +80,18 @@ class Login {
     public function passwordRecovery($username) {
         try {
             if (trim(isset($username))) {
-                $sql1 = "SELECT UsersAuth.*, CONCAT(Users.first_name, ' ', Users.last_name_1, ' ', Users.last_name_2) AS user_full_name FROM [user].[users_auth] UsersAuth JOIN [user].[users] ON UsersAuth.fk_user_id = Users.pk_user_id WHERE UsersAuth.username = '$username'";
+                $sql1 = "
+                    SELECT
+                        UsersAuth.*,
+                        CASE 
+                            WHEN Users.institutional_email = '-' THEN Users.personal_email 
+                            ELSE Users.institutional_email 
+                        END AS email,
+                        CONCAT(Users.first_name, ' ', Users.last_name_1, ' ', Users.last_name_2) AS user_full_name
+                    FROM [user].[users_auth] UsersAuth
+                    INNER JOIN [user].[users] Users ON UsersAuth.fk_user_id = Users.pk_user_id
+                    WHERE UsersAuth.username = '$username'
+                ";
                 $result = $this->dbConnection->query($sql1)->fetch(PDO::FETCH_ASSOC);
                 if (isset($result['pk_user_auth_id'])) {
                     $this->dbConnection->beginTransaction();
@@ -105,8 +116,7 @@ class Login {
                     $email = new Email();
                     $subject = 'Solicitud de restablecimiento de contraseña';
                     $template = file_get_contents('../templates/password_recovery_email.html');
-                    $template = str_replace('{{username}}', $result['user_full_name'], $template);
-                    $template = str_replace('{{email}}', $username, $template);
+                    $template = str_replace('{{user_full_name}}', $result['user_full_name'], $template);
                     $HTTP_HOST = null;
                     if ($_SERVER['HTTP_HOST'] === 'localhost') {
                         $HTTP_HOST = 'http://localhost:3000';
@@ -116,7 +126,7 @@ class Login {
                     }
                     $template = str_replace('{{reset_link}}', $HTTP_HOST."/restablecer-contraseña?token=$token", $template);
                     $message = $template;
-                    $send = $email->send($username, $subject, $message);
+                    $send = $email->send($result['email'], $subject, $message);
                     if (!$send) {
                         throw new Exception('Error: No se pudo realizar el envío del correo electrónico.');
                     }

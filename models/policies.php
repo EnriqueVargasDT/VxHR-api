@@ -94,7 +94,6 @@ class Policies {
             $stmt->bindParam(':nom_iso', $data['nom_iso'], PDO::PARAM_STR);
             $stmt->bindParam(':fk_job_position_type_id', $data['fk_job_position_type_id'], PDO::PARAM_INT);
             $stmt->bindParam(':content', $data['content'], PDO::PARAM_STR);
-            session_start();
             $stmt->bindParam(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             if (!$stmt->execute() && $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se pudo crear la política.');
