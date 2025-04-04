@@ -5,11 +5,7 @@ function handleExceptionError($error) {
 }
 
 function handleError($statusCode, $error) {
-    if (!headers_sent()) {
-        http_response_code($statusCode);
-        header('Content-Type: application/json; charset=utf-8');
-    }
-
+    http_response_code($statusCode);
     if (is_array($error)) {
         echo json_encode($error, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
