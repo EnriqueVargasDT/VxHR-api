@@ -6,16 +6,12 @@ function handleExceptionError($error) {
 
 function handleError($statusCode, $error) {
     http_response_code($statusCode);
-    echo json_encode(['error' => true]);
-    exit;
-    /*
     if (is_array($error)) {
         echo json_encode($error, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
     else {
         echo json_encode(['error' => true, 'message' => 'Error: ' . $error], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
-    */
 }
 
 function sendJsonResponse($statusCode, $response) {
