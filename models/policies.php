@@ -61,12 +61,11 @@ class Policies {
                     p.created_at,
                     up.signing_date,
                     up.signature_file
-                FROM [dbo].[policies] p
-                INNER JOIN [user].[policies] up ON p.pk_policy_id = up.fk_policy_id
-                INNER JOIN [user].[users] u ON up.fk_user_id = u.pk_user_id
-                INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
-                INNER JOIN [user].[users_auth] ua ON u.pk_user_id = ua.fk_user_id
-                WHERE p.pk_policy_id = :pk_policy_id
+                FROM [user].[users] u
+                LEFT JOIN [user].[policies] up ON u.pk_user_id = up.fk_user_id AND fk_policy_id = :pk_policy_id
+                LEFT JOIN [dbo].[policies] p ON up.fk_policy_id = p.pk_policy_id
+                LEFT JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
+                LEFT JOIN [user].[users_auth] ua ON u.pk_user_id = ua.fk_user_id
                 ORDER BY user_full_name
                 OFFSET (%s - 1) * 10 ROWS 
                 FETCH NEXT 10 ROWS ONLY;
