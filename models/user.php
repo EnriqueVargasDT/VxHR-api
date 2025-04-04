@@ -285,14 +285,16 @@ class User {
                 throw new Exception('Error: No se realizaron cambios en los datos del usuario.');
             }
 
-            // Actualizar los datos de la cuenta.
-            $sql6 = 'UPDATE [user].[users_auth] SET [username] = :username, [fk_role_id] = :role_id WHERE fk_user_id = :fk_user_id;';
-            $stmt6 = $this->dbConnection->prepare($sql6);
-            $stmt6->bindParam(':username', $data['username'], PDO::PARAM_STR);
-            $stmt6->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
-            $stmt6->bindParam(':fk_user_id', $id, PDO::PARAM_INT);
-            if (!$stmt6->execute()) {
-                throw new Exception('Error: No se realizaron cambios en la cuenta del usuario.');
+            if (isset($data['username']) && isset($data['role_id'])) {
+                // Actualizar los datos de la cuenta.
+                $sql6 = 'UPDATE [user].[users_auth] SET [username] = :username, [fk_role_id] = :role_id WHERE fk_user_id = :fk_user_id;';
+                $stmt6 = $this->dbConnection->prepare($sql6);
+                $stmt6->bindParam(':username', $data['username'], PDO::PARAM_STR);
+                $stmt6->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
+                $stmt6->bindParam(':fk_user_id', $id, PDO::PARAM_INT);
+                if (!$stmt6->execute()) {
+                    throw new Exception('Error: No se realizaron cambios en la cuenta del usuario.');
+                }
             }
             
             $this->dbConnection->commit();
