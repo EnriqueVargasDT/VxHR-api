@@ -502,7 +502,7 @@ function unAuthorized() {
     header('HTTP/1.1 401 Unauthorized');
     http_response_code(401);
     echo json_encode(['error' => true, 'message' => 'Error: No autorizado.']);
-    exit;
+    exit();
 }
 
 function internalServerError($message = null) {

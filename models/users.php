@@ -22,7 +22,7 @@ class Users {
                     jpd.job_position_department,
                     jpo.job_position_office,
                     ua.username,
-                    -- CONCAT('data:image/', uf.file_extension, ';base64,', uf.[file]) AS profile_picture,
+                    -- uf.[file] AS profile_picture,
                     '' AS profile_picture,
                     ua.last_access_at
                 FROM [user].[users] u
