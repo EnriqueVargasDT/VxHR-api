@@ -57,7 +57,7 @@ class Login {
                 }
             }
             else {
-                handleError(401, ['error' => true, 'type' => 'username', 'message' => 'Usuario no encontrado.']);
+                handleError(401, ['error' => true, 'type' => 'username', 'message' => 'La plataforma se encuentra en mantenimiento. Favor de intentar mas tarde']);
             }
         }
         catch(Exception $error) {
