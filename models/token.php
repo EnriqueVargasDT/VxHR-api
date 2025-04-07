@@ -8,7 +8,7 @@ class Token {
     private $secretKey;
 
     public function __construct() {
-        $this->secretKey = getenv('ENCRIPT_PASSWORD_KEY');
+        $this->secretKey = getenv('ENCRYPT_PASSWORD_KEY');
     }
 
     public function validate() {

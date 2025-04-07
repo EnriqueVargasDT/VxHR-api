@@ -9,14 +9,16 @@ class Login {
 
     public function __construct() {
         $this->dbConnection = dbConnection();
-        $this->secretKey = getenv('ENCRIPT_PASSWORD_KEY');
+        $this->secretKey = getenv('ENCRYPT_PASSWORD_KEY');
     }
 
     public function validate($username, $password, $rememberMe) {
         try {
+            $HTTP_ORIGIN = $_SERVER['HTTP_ORIGIN'];
+            echo $HTTP_ORIGIN;
             $sql1 = "SELECT TOP 1 ua.*, u.has_signed_policies FROM [user].[users_auth] ua JOIN [user].[users] u ON ua.[fk_user_id] = u.[pk_user_id] WHERE ua.[username] = '$username' AND u.[is_active] = 1";
             $result = $this->dbConnection->query($sql1)->fetch(PDO::FETCH_ASSOC);
-            if (!$result) {
+            if ($result) {
                 $decryptedPassword = $this->decryptedPassword($password);
                 if (password_verify($decryptedPassword, $result['password'])) {
                     $expTime = $rememberMe ? time() + (30 * 24 * 60 * 60) : time() + (60 * 60);
@@ -57,7 +59,7 @@ class Login {
                 }
             }
             else {
-                handleError(401, ['error' => true, 'type' => 'username', 'message' => 'La plataforma se encuentra en mantenimiento. Favor de intentar mas tarde']);
+                handleError(401, ['error' => true, 'type' => 'username', 'message' => 'Usuario no encontrado.']);
             }
         }
         catch(Exception $error) {
