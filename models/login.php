@@ -16,9 +16,9 @@ class Login {
         try {
             $sql1 = "SELECT TOP 1 ua.*, u.has_signed_policies FROM [user].[users_auth] ua JOIN [user].[users] u ON ua.[fk_user_id] = u.[pk_user_id] WHERE ua.[username] = '$username' AND u.[is_active] = 1";
             $result = $this->dbConnection->query($sql1)->fetch(PDO::FETCH_ASSOC);
-            if ($_SERVER['HTTP_ORIGIN'] === 'https://vica.vittilog.com' && ($result['fk_user_id'] != 1 || $result['fk_user_id'] != 10 || $result['fk_user_id'] != 11 || $result['fk_user_id'] != 531)) {
-                handleError(401, ['error' => true, 'type' => 'username', 'message' => 'La plataforma se encuentra en mantenimiento. Favor de intentar mas tarde.']);
-                exit();
+            if ($_SERVER['HTTP_ORIGIN'] === 'https://vica.vittilog.com') {
+                // handleError(401, ['error' => true, 'type' => 'username', 'message' => 'La plataforma se encuentra en mantenimiento. Favor de intentar mas tarde.']);
+                // exit();
             }
 
             if ($result) {
