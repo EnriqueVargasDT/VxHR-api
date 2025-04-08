@@ -50,7 +50,7 @@ class Communication {
                 WHERE 
                 DATEPART(YEAR, u.date_of_hire) <> DATEPART(YEAR, GETDATE()) 
                 AND DATEPART(ISO_WEEK, u.date_of_hire) <= DATEPART(ISO_WEEK, GETDATE())
-                ORDER BY DATEPART(ISO_WEEK, u.date_of_hire), years_worked DESC;
+                ORDER BY years_worked, DATEPART(ISO_WEEK, u.date_of_hire) DESC;
             ", UserFiles::TYPE_PROFILE_PICTURE);
             $resultWorkAnniversaries = $this->dbConnection->query($sqlWorkAnniversaries)->fetchAll(PDO::FETCH_ASSOC);
             if (count($resultWorkAnniversaries) > 0) {
