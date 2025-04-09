@@ -38,9 +38,7 @@ class Communication {
                     jp.job_position,
                     jpo.job_position_office_short,
                     DATEDIFF(YEAR, u.date_of_hire, GETDATE()) AS years_worked,
-                    -- uf.[file],
-                    '' AS [file],
-                    uf.file_extension,
+                    uf.[file],
                     DATEPART(YEAR, u.date_of_hire) AS hire_year,
                     DATEPART(ISO_WEEK, u.date_of_hire) AS hire_week
                 FROM [user].[users] u
@@ -66,8 +64,7 @@ class Communication {
                     FORMAT(CAST(cb.birthday_date AS DATETIME), 'dd ''de'' MMMM', 'es-ES') AS birthday_date,
                     CONCAT('Cumpleaños ', CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2)) AS title,
                     CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS user_full_name,
-                    uf.[file],
-                    uf.file_extension
+                    uf.[file]
                 FROM [communication].[birthdays] cb
                 INNER JOIN [user].[users] u ON cb.fk_user_id = u.pk_user_id
                 INNER JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = %s
