@@ -34,7 +34,7 @@ class User {
                     jpo.job_position_office,
                     ua.username,
                     ua.fk_role_id AS role_id,
-                    CONCAT('data:image/', uf.file_extension, ';base64,', uf.[file]) AS profile_picture
+                    uf.[file] AS profile_picture
                 FROM [user].[users] u
                 LEFT JOIN [user].[users_auth] ua ON u.pk_user_id = ua.fk_user_id
                 LEFT JOIN [user].[marital_status] ums ON u.fk_marital_status_id = ums.pk_marital_status_id
