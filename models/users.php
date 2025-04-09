@@ -22,8 +22,7 @@ class Users {
                     jpd.job_position_department,
                     jpo.job_position_office,
                     ua.username,
-                    -- uf.[file] AS profile_picture,
-                    '' AS profile_picture,
+                    uf.[file] AS profile_picture,
                     ua.last_access_at
                 FROM [user].[users] u
                 LEFT JOIN [user].[users_auth] ua ON u.pk_user_id = ua.fk_user_id
