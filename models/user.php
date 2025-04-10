@@ -313,13 +313,34 @@ class User {
     public function updateStatus($id, $status) {
         try {
             $this->dbConnection->beginTransaction();
+            
+            // Obtener la vacante asociada al usuario.
+            $sql1 = 'SELECT [fk_job_position_id] FROM [user].[users] WHERE pk_user_id = :pk_user_id';
+            $stmt1 = $this->dbConnection->prepare($sql1);
+            $stmt1->bindParam(':pk_user_id', $id, PDO::PARAM_INT);
+            $stmt1->execute();
+            $userData = $stmt1->fetch(PDO::FETCH_ASSOC);
 
-            $sql = sprintf('UPDATE [user].[users] SET [is_active] = :is_active WHERE [pk_user_id] = :id;');
-            $stmt = $this->dbConnection->prepare($sql);
-            $stmt->bindParam(':is_active', $status, PDO::PARAM_INT);
-            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            if (!$stmt->execute() || $stmt->rowCount() === 0) {
+            // Afectar el usuario
+            $fields = '[is_active] = :is_active';
+            if ($status === 0) {
+                $fields .= ', [fk_job_position_id] = NULL';
+            }
+            $sql2 = "UPDATE [user].[users] SET $fields WHERE [pk_user_id] = :pk_user_id;";
+            $stmt2 = $this->dbConnection->prepare($sql2);
+            $stmt2->bindParam(':is_active', $status, PDO::PARAM_INT);
+            $stmt2->bindParam(':pk_user_id', $id, PDO::PARAM_INT);
+            if (!$stmt2->execute()) {
                 throw new Exception('Error: No se realizaron cambios en el estado del usuario.');
+            }
+
+            if ($status === 0 && isset($userData['fk_job_position_id'])) {
+                $sql3 = 'UPDATE [job_position].[positions] SET fk_job_position_status_id = 1, fk_job_position_admin_status_id = 1 WHERE [pk_job_position_id] = :pk_job_position_id;';
+                $stmt3 = $this->dbConnection->prepare($sql3);
+                $stmt3->bindParam(':pk_job_position_id', $userData['fk_job_position_id'], PDO::PARAM_INT);
+                if (!$stmt3->execute()) {
+                    throw new Exception('Error: No se realizaron cambios en el estado del usuario.');
+                }
             }
             
             $this->dbConnection->commit();

@@ -30,7 +30,7 @@ class Login {
                     $expTime = $rememberMe ? time() + (30 * 24 * 60 * 60) : time() + (60 * 60);
                     $payload = [
                         'iat' => time(),
-                        'exp' => $rememberMe ? time() + (5 * 24 * 60 * 60) /* Token válido por 5 días */ : time() + 43200 /* Token válido por 12 horas */,
+                        'exp' => $rememberMe ? time() + (5 * 24 * 60 * 60) /* Token válido por 5 días */ : time() + 28800 /* Token válido por 8 horas */,
                         'sub' => $username,
                         'role' => $result['fk_role_id'], 
                     ];

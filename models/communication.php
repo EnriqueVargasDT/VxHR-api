@@ -14,7 +14,13 @@ class Communication {
             $data = ['posts' => [], 'events' => [], 'c4' => [], 'news' => []];
 
             // Comunicados, Eventos y Espacio C4.
-            $sqlPosts = 'SELECT * FROM [communication].[posts] WHERE CAST(publish_date AS DATE) <= CAST(GETDATE() AS DATE) ORDER BY publish_date DESC';
+            $sqlPosts = "
+                SELECT *
+                FROM [communication].[posts]
+                WHERE CAST(publish_date AS DATE) <= CAST(GETDATE() AS DATE)
+                AND [status] = 1
+                ORDER BY publish_date DESC
+            ";
             $resultPosts = $this->dbConnection->query($sqlPosts)->fetchAll(PDO::FETCH_ASSOC);
             if (count($resultPosts) > 0) {
                 foreach ($resultPosts as $post) {
@@ -45,8 +51,7 @@ class Communication {
                 INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
                 INNER JOIN [job_position].[office] jpo ON jp.fk_job_position_office_id = jpo.pk_job_position_office_id
                 INNER JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = %s
-                WHERE 
-                DATEPART(YEAR, u.date_of_hire) <> DATEPART(YEAR, GETDATE()) 
+                WHERE DATEPART(YEAR, u.date_of_hire) <> DATEPART(YEAR, GETDATE()) 
                 AND DATEPART(ISO_WEEK, u.date_of_hire) <= DATEPART(ISO_WEEK, GETDATE())
                 ORDER BY DATEPART(ISO_WEEK, u.date_of_hire) DESC, years_worked DESC;
             ", UserFiles::TYPE_PROFILE_PICTURE);
@@ -68,9 +73,8 @@ class Communication {
                 FROM [communication].[birthdays] cb
                 INNER JOIN [user].[users] u ON cb.fk_user_id = u.pk_user_id
                 INNER JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = %s
-                WHERE 
-                    DATEPART(MONTH, cb.birthday_date) = DATEPART(MONTH, GETDATE())
-                    AND DATEPART(DAY, cb.birthday_date) < DATEPART(DAY, GETDATE());
+                WHERE DATEPART(MONTH, cb.birthday_date) = DATEPART(MONTH, GETDATE())
+                AND DATEPART(DAY, cb.birthday_date) < DATEPART(DAY, GETDATE());
             ", UserFiles::TYPE_PROFILE_PICTURE);
             $resultBirthdays = $this->dbConnection->query($sqlBirthdays)->fetchAll(PDO::FETCH_ASSOC);
             if (count($resultBirthdays) > 0) {
