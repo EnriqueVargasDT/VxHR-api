@@ -240,7 +240,7 @@ class Communication {
 
             // 5MB
             if ($fileSize > 5000000) {
-                throw new Exception('Error: El archivo cargado es demasiado grande.');
+                throw new Exception('Error: El archivo cargado es demasiado grande');
             }
 
             $imageType = mime_content_type($_FILES['post_file']['tmp_name']);
