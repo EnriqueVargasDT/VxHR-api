@@ -74,7 +74,8 @@ class Communication {
                 INNER JOIN [user].[users] u ON cb.fk_user_id = u.pk_user_id
                 INNER JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = %s
                 WHERE DATEPART(MONTH, cb.birthday_date) = DATEPART(MONTH, GETDATE())
-                AND DATEPART(DAY, cb.birthday_date) < DATEPART(DAY, GETDATE());
+                AND DATEPART(DAY, cb.birthday_date) <= DATEPART(DAY, GETDATE())
+                ORDER BY DATEPART(DAY, cb.birthday_date) DESC;
             ", UserFiles::TYPE_PROFILE_PICTURE);
             $resultBirthdays = $this->dbConnection->query($sqlBirthdays)->fetchAll(PDO::FETCH_ASSOC);
             if (count($resultBirthdays) > 0) {
