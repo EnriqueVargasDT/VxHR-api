@@ -62,7 +62,7 @@ class Communication {
                 }
             }
 
-            // Cumpleaños..
+            // Cumpleaños.
             $sqlBirthdays = sprintf("
                 SELECT
                     cb.pk_birthday_id,
