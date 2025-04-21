@@ -70,7 +70,7 @@ class User {
             FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_NAME = 'users'
             AND TABLE_SCHEMA = 'user'
-            AND COLUMN_NAME NOT IN('created_at', 'updated_at');
+            AND COLUMN_NAME NOT IN('created_at');
         ";
         $stmt = $this->dbConnection->query($sql);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
