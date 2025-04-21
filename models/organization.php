@@ -19,6 +19,7 @@ class Organization {
                     jpo.job_position_office,
                     jpo.job_position_office_short,
                     CONCAT(CASE WHEN CHARINDEX(' ', first_name) > 0 THEN LEFT(first_name, CHARINDEX(' ', first_name) - 1) ELSE first_name END, ' ', u.last_name_1) AS full_name,
+                    u.updated_at as user_updated_at,
                     uf.[file] AS profile_picture
                 FROM [job_position].[positions] jp
                 LEFT JOIN [job_position].[office] jpo ON jp.fk_job_position_office_id = jpo.pk_job_position_office_id
@@ -29,7 +30,9 @@ class Organization {
             ", UserFiles::TYPE_PROFILE_PICTURE);
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             $positions = [];
+            $dates = [];
             foreach ($result as $key => $value) {
+                $dates[] = $value['user_updated_at'];
                 $positions[$value['pk_job_position_id']] = array (
                     'id' => $value['pk_job_position_id'],
                     'name' => $value['full_name'],
@@ -40,7 +43,7 @@ class Organization {
                     'full_location' => $value['job_position_office'],
                     'location' => $value['job_position_office_short'],
                     'parent_id' => $value['job_position_parent_id'],
-                    'children' => [],
+                    'children' => []
                 );
             }
             
@@ -53,7 +56,7 @@ class Organization {
                     $positions[$node['parent_id']]['children'][] = &$node;
                 }
             }
-            sendJsonResponse(200, ['ok' => true, 'data' => $data, ]);
+            sendJsonResponse(200, ['ok' => true, 'data' => $data, 'last_update' => max($dates)]);
         }
         catch (Exception $error) {
             handleExceptionError($error);
