@@ -15,8 +15,9 @@ class UserController {
     public function save($data) {
         $this->user->save($data);
     }
-
+    
     public function update($id, $data) {
+        $data['updated_at'] = date('Y-m-d H:i:s');
         $this->user->update($id, $data);
     }
 
