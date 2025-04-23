@@ -60,7 +60,7 @@ Class Email {
             if($return) {
                 return "El mensaje no pudo ser enviado. Error: {$this->mail->ErrorInfo}";
             } else {
-                throw new Exception('Error: No se pudo realizar el envío del correo electrónico. Error: ' . $error->getMessage());
+                throw new Exception('Error: No se pudo realizar el envío del correo electrónico. Error: ' . $error->getMessage() . ' - ' . json_encode([$address, $addresses]));
             }	
         }
     }
