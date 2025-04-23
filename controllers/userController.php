@@ -13,6 +13,7 @@ class UserController {
     }
 
     public function save($data) {
+        $data['updated_at'] = date('Y-m-d H:i:s');
         $this->user->save($data);
     }
     
