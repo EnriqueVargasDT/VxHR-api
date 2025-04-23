@@ -80,6 +80,32 @@ class CronController {
 
     public function getBirthdays($date = null) {
         $users = $this->usersModel->getUsersWithBirthday($date);
+        $emails = $this->usersModel->getUsersEmails();
+
+        $recipients = array_map(function($user) {
+            return $user['email'];
+        }, $emails);
+        
+        if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN'])) {
+            $recipients = array_filter($recipients, function($email) {
+                $emailAllowed = ['rsalazar@vittilog.com', 'ebernal@vittilog.com', 'vmolar@vittilog.com'];
+                return in_array($email, $emailAllowed);
+            });
+            $recipients = array_values($recipients);
+        }
+
+        foreach ($users as $user) {
+            $template = file_get_contents('../templates/birthdays.html');
+            $user['birthday'] = date('d \d\e F', strtotime($user['birth_date']));
+
+            $template = str_replace('[[NAME]]', $user['full_name'], $template);
+            $template = str_replace('[[BIRTHDAY]]', $user['birthday'], $template);
+            $template = str_replace('[[PROFILE_PICTURE]]', $user['profile_picture'], $template);
+            $template = str_replace('[[JOB_POSITION]]', $user['job_position'], $template);
+            $template = str_replace('[[OFFICE_NAME]]', $user['office_name'], $template);
+            
+            $this->sendEmail($recipients, "👏 Celebramos contigo un año más vida. Feliz cumpleaños te desea Vitti Logistics. 🎂", $template);
+        }
 
         sendJsonResponse(200, [
             'ok' => true,
