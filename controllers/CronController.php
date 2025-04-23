@@ -173,7 +173,7 @@ class CronController {
     private function sendEmail($email, $subject, $template) {
         // Enviar correo de recuperación de contraseña
         $mail = new Email();
-        $send = $mail->send($email, $subject, $template);
+        $send = $mail->send($email, $subject, $template, false);
         if (!$send) {
             throw new Exception('Error: No se pudo realizar el envío del correo electrónico.');
         }

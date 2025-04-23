@@ -14,7 +14,7 @@ Class Email {
         $this->mail = new PHPMailer(true);
     }
 
-    public function send($to, $subject, $message) {
+    public function send($to, $subject, $message, $return = true) {
         if(is_string($to)){
             if(strpos($to, ',') !== false) {
                 $addresses = explode(',', $to);
@@ -57,7 +57,11 @@ Class Email {
             return $this->mail->send();
         }
         catch (Exception $error) {
-            return "El mensaje no pudo ser enviado. Error: {$this->mail->ErrorInfo}";
+            if($return) {
+                return "El mensaje no pudo ser enviado. Error: {$this->mail->ErrorInfo}";
+            } else {
+                throw new Exception('Error: No se pudo realizar el envío del correo electrónico. Error: ' . $error->getMessage());
+            }	
         }
     }
 }
