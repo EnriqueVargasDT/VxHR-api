@@ -134,7 +134,7 @@ class User {
             $columns = $this->getColumns();
 
             // Excluir columnas de valores por defecto
-            unset($columns['pk_user_id'], $columns['is_active'], $columns['has_signed_policies']);
+            unset($columns['pk_user_id'], $columns['is_active'], $columns['has_signed_policies'], $columns['updated_at']);
 
             // Antes de todo, si se asigno una vacante al usuario, validar si ya esta ocupada.
             if (isset($data['fk_job_position_id'])) {
@@ -214,6 +214,7 @@ class User {
     }
 
     public function update($id, $data) {
+        $data['updated_at'] = date('Y-m-d H:i:s');
         try {
             $SET = [];
             $columns = $this->getColumns();
