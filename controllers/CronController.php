@@ -88,7 +88,8 @@ class CronController {
                 $recipients = array_values($recipients);
             }
 
-            dd($recipients);
+            echo(json_encode($recipients));
+            die();
             
             $template = str_replace('[[EMPLOYEES]]', "<tr>" . $persons . "</tr>", $template);
             $this->sendEmail($recipients, "🥳 ¡Gracias por un año más juntos! - Semana $weekNumber", $template);
