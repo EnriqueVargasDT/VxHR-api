@@ -50,5 +50,166 @@ class Users {
 
         exit();
     }
+
+    public function getUsersEmails() {
+        try {
+            $sql = sprintf("
+                SELECT
+                    CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS full_name,
+                    CASE
+                        WHEN u.institutional_email IS NOT NULL AND u.institutional_email NOT IN ('', '-') THEN u.institutional_email
+                        WHEN u.personal_email IS NOT NULL AND u.personal_email NOT IN ('', '-') THEN u.personal_email
+                        ELSE NULL
+                    END AS email,
+                    o.job_position_office_short AS office_name,
+                    u.birth_date,
+                    f.[file] AS profile_picture
+                FROM [user].[users] u
+                INNER JOIN [user].[genders] g ON u.fk_gender_id = g.pk_gender_id
+                INNER JOIN [job_position].[positions] p ON u.fk_job_position_id = p.pk_job_position_id
+                INNER JOIN [job_position].[office] o ON p.fk_job_position_office_id = o.pk_job_position_office_id
+                LEFT JOIN [user].[files] f 
+                    ON f.fk_user_id = u.pk_user_id 
+                    AND f.type_file = 1
+                WHERE u.is_active = 1
+                ORDER BY full_name;
+            ");
+            $stmt = $this->dbConnection->query($sql);
+            $users = [];
+            $i = 1;
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $users[] = $row;
+            }
+
+            return $users;
+        }
+        catch(Exception $error) {
+            handleExceptionError($error);
+        }
+    }
+
+    public function getUsersWithAnniversary($startDate = null, $endDate = null) {
+        $startDate = $startDate ? date('Y-m-d', strtotime($startDate)) : date('Y-m-d', strtotime('last Monday'));
+        $endDate = $endDate ? date('Y-m-d', strtotime($endDate)) : date('Y-m-d', strtotime('next Sunday'));
+    
+        try {
+            if (!$startDate || !$endDate) {
+                throw new Exception('Start date and end date are required.');
+            }
+    
+            if ($startDate > $endDate) {
+                throw new Exception('Start date cannot be greater than end date.');
+            }
+    
+            $sql = "
+                SET DATEFIRST 1;
+                DECLARE @startDate DATE = :start_date;
+                DECLARE @endDate DATE = :end_date;
+    
+                SELECT
+                    CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS full_name,
+                    g.gender AS gender,
+                    CASE
+                        WHEN u.institutional_email IS NOT NULL AND u.institutional_email NOT IN ('', '-') THEN u.institutional_email
+                        WHEN u.personal_email IS NOT NULL AND u.personal_email NOT IN ('', '-') THEN u.personal_email
+                        ELSE NULL
+                    END AS email,
+                    p.job_position AS job_position,
+                    o.job_position_office_short AS office_name,
+                    u.date_of_hire,
+                    DATEDIFF(YEAR, u.date_of_hire, GETDATE()) AS years_completed,
+                    CONCAT(DATEDIFF(YEAR, u.date_of_hire, GETDATE()), '° Aniversario') AS anniversary,
+                    f.[file] AS profile_picture
+                FROM [user].[users] u
+                INNER JOIN [user].[genders] g ON u.fk_gender_id = g.pk_gender_id
+                INNER JOIN [job_position].[positions] p ON u.fk_job_position_id = p.pk_job_position_id
+                INNER JOIN [job_position].[office] o ON p.fk_job_position_office_id = o.pk_job_position_office_id
+                LEFT JOIN [user].[files] f 
+                    ON f.fk_user_id = u.pk_user_id 
+                    AND f.type_file = 1
+                WHERE
+                    u.is_active = 1
+                    AND u.date_of_hire <= DATEADD(YEAR, -1, GETDATE())
+                    AND DATEFROMPARTS(YEAR(GETDATE()), MONTH(u.date_of_hire), DAY(u.date_of_hire))
+                        BETWEEN @startDate AND @endDate
+                ORDER BY
+                    years_completed DESC,
+                    u.first_name;
+            ";
+    
+            $stmt = $this->dbConnection->prepare($sql);
+            $stmt->bindParam(':start_date', $startDate);
+            $stmt->bindParam(':end_date', $endDate);
+            $stmt->execute();
+    
+            $users = [];
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $users[] = $row;
+            }
+    
+            return $users;
+        } catch (Exception $error) {
+            handleExceptionError($error);
+        }
+    
+    }
+    
+
+    /*
+     * This function is used to get users with birthdays.
+     * It retrieves users whose birthday is today or on a specific date.
+     * @param string|null $date Format date 'Y-m-d' (optional).
+     * @return void
+     */
+    public function getUsersWithBirthday($date = null) {
+        $date = $date ? date('Y-m-d', strtotime($date)) : date('Y-m-d');
+        $currentDay = $date ? date('d', strtotime($date)) : date('d');
+        $currentMonth = $date ? date('m', strtotime($date)) : date('m');
+
+        try {
+            $sql = sprintf("
+                SELECT
+                    CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS full_name,
+                    g.gender AS gender,
+                    -- Email combinado
+                    CASE
+                        WHEN u.institutional_email IS NOT NULL AND u.institutional_email NOT IN ('', '-') THEN u.institutional_email
+                        WHEN u.personal_email IS NOT NULL AND u.personal_email NOT IN ('', '-') THEN u.personal_email
+                        ELSE NULL
+                    END AS email,
+                    p.job_position AS job_position,
+                    o.job_position_office_short AS office_name,
+                    u.birth_date,
+                    f.[file] AS profile_picture
+                FROM [user].[users] u
+                INNER JOIN [user].[genders] g ON u.fk_gender_id = g.pk_gender_id
+                INNER JOIN [job_position].[positions] p ON u.fk_job_position_id = p.pk_job_position_id
+                INNER JOIN [job_position].[office] o ON p.fk_job_position_office_id = o.pk_job_position_office_id
+                LEFT JOIN [user].[files] f 
+                    ON f.fk_user_id = u.pk_user_id 
+                    AND f.type_file = 1
+                WHERE
+                    u.is_active = 1
+                    AND u.birth_date IS NOT NULL
+                    AND MONTH(u.birth_date) = %s
+                    AND DAY(u.birth_date) = %s
+                ORDER BY
+                    full_name;
+            ", $currentMonth, $currentDay);
+            $stmt = $this->dbConnection->query($sql);
+            $users = [];
+            $i = 1;
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $users[] = $row;
+            }
+
+            return $users;
+        }
+        catch(Exception $error) {
+            handleExceptionError($error);
+        }
+
+    }
+
 }
 ?>
