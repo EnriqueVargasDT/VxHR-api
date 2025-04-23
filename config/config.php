@@ -23,4 +23,9 @@ function dbConnection() {
     
     return $connection;
 }
+
+function dd($data) {
+    var_dump($data);
+    exit();
+}
 ?>

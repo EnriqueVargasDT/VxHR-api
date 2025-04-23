@@ -15,6 +15,16 @@ Class Email {
     }
 
     public function send($to, $subject, $message) {
+        if(is_string($to)){
+            if(strpos($to, ',') !== false) {
+                $addresses = explode(',', $to);
+            } else {
+                $addresses = array($to);
+            }
+        } else {
+            $addresses = $to;
+        }
+
         try {
             $this->mail->SMTPDebug = SMTP::DEBUG_OFF;
             $this->mail->isSMTP();
@@ -25,8 +35,18 @@ Class Email {
             $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $this->mail->Port = 587;
 
-            $this->mail->setFrom('no-reply@vittilog.com', 'No-Reply VICA');
-            $this->mail->addAddress($to, $to);
+            $this->mail->setFrom('no-reply@vittilog.com', 'Equipo RH - VICA (no-reply)');
+
+            $address = array_shift($addresses);
+            $this->mail->addAddress($address, $address);
+            foreach ($addresses as $address) {
+                $to = trim($address);
+                if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                    $this->mail->addCC($to, $to);
+                } else {
+                    throw new Exception("Invalid email address: {$to}");
+                }
+            }
             
             $this->mail->CharSet = 'UTF-8';
             $this->mail->Encoding = 'base64';
