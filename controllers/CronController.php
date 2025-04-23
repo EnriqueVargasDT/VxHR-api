@@ -22,12 +22,34 @@ class CronController {
         foreach($chunks as $chunk) {
             foreach ($chunk as $index => $user) {
                 $personTemplate = file_get_contents('../templates/anniversaries_person.html');
+                $months = [
+                    'January' => 'Enero',
+                    'February' => 'Febrero',
+                    'March' => 'Marzo',
+                    'April' => 'Abril',
+                    'May' => 'Mayo',
+                    'June' => 'Junio',
+                    'July' => 'Julio',
+                    'August' => 'Agosto',
+                    'September' => 'Septiembre',
+                    'October' => 'Octubre',
+                    'November' => 'Noviembre',
+                    'December' => 'Diciembre'
+                ];
+                
+                $timestamp = strtotime($user['date_of_hire']);
+                $day = date('d', $timestamp);
+                $monthEnglish = date('F', $timestamp);
+                $monthSpanish = $months[$monthEnglish];
+                
+                $date = "$day de $monthSpanish";
     
                 $personTemplate = str_replace('[[NAME]]', $user['full_name'], $personTemplate);
                 $personTemplate = str_replace('[[ANNIVERSARY]]', $user['anniversary'], $personTemplate);
                 $personTemplate = str_replace('[[PROFILE_PICTURE]]', $user['profile_picture'], $personTemplate);
                 $personTemplate = str_replace('[[JOB_POSITION]]', $user['job_position'], $personTemplate);
                 $personTemplate = str_replace('[[OFFICE_NAME]]', $user['office_name'], $personTemplate);
+                $personTemplate = str_replace('[[DATE]]', $date, $personTemplate);
     
                 if(count($chunk) < 3 && $index == 0) {
                     $personTemplate = "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr><td align=\"center\">" . $personTemplate . "</td>";
@@ -62,10 +84,11 @@ class CronController {
                 $emailAllowed = ['rsalazar@vittilog.com', 'ebernal@vittilog.com', 'vmolar@vittilog.com'];
                 return in_array($email, $emailAllowed);
             });
+            $recipients = array_values($recipients);
         }
         
         $template = str_replace('[[EMPLOYEES]]', "<tr>" . $persons . "</tr>", $template);
-        $this->sendEmail($recipients, "🥳 ¡Gracias por un año más juntos! - Semana $weekNumber", $template);
+        $this->sendEmail($recipients[0], "🥳 ¡Gracias por un año más juntos! - Semana $weekNumber", $template);
 
         sendJsonResponse(200, [
             'ok' => true,
@@ -96,7 +119,27 @@ class CronController {
 
         foreach ($users as $user) {
             $template = file_get_contents('../templates/birthdays.html');
-            $user['birthday'] = date('d \d\e F', strtotime($user['birth_date']));
+            $months = [
+                'January' => 'Enero',
+                'February' => 'Febrero',
+                'March' => 'Marzo',
+                'April' => 'Abril',
+                'May' => 'Mayo',
+                'June' => 'Junio',
+                'July' => 'Julio',
+                'August' => 'Agosto',
+                'September' => 'Septiembre',
+                'October' => 'Octubre',
+                'November' => 'Noviembre',
+                'December' => 'Diciembre'
+            ];
+            
+            $timestamp = strtotime($user['birth_date']);
+            $day = date('d', $timestamp);
+            $monthEnglish = date('F', $timestamp);
+            $monthSpanish = $months[$monthEnglish];
+            
+            $user['birthday'] = "$day de $monthSpanish";
 
             $template = str_replace('[[NAME]]', $user['full_name'], $template);
             $template = str_replace('[[BIRTHDAY]]', $user['birthday'], $template);
@@ -104,7 +147,7 @@ class CronController {
             $template = str_replace('[[JOB_POSITION]]', $user['job_position'], $template);
             $template = str_replace('[[OFFICE_NAME]]', $user['office_name'], $template);
             
-            $this->sendEmail($recipients, "👏 Celebramos contigo un año más vida. Feliz cumpleaños te desea Vitti Logistics. 🎂", $template);
+            $this->sendEmail($recipients, "👏 Feliz cumpleaños te desea Vitti Logistics. 🎂", $template);
         }
 
         sendJsonResponse(200, [

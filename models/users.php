@@ -134,7 +134,7 @@ class Users {
                         BETWEEN @startDate AND @endDate
                 ORDER BY
                     years_completed DESC,
-                    u.first_name;
+                    u.date_of_hire;
             ";
     
             $stmt = $this->dbConnection->prepare($sql);
