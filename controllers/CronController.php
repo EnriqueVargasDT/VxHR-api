@@ -9,7 +9,7 @@ class CronController {
         $this->usersModel = new Users();
     }
 
-    public function getAnniversaries($startDate = null, $endDate = null, $noSend = false) {
+    public function getAnniversaries($startDate = null, $endDate = null, $debug = false) {
         try{
             $startDate = $startDate ? date('Y-m-d', strtotime($startDate)) : date('Y-m-d', strtotime('last Monday'));
             $weekNumber = date('W', strtotime($startDate));
@@ -84,7 +84,7 @@ class CronController {
             });
             
             // Validate environment and filter emails when is local, dev or sandbox.
-            if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN'])) {
+            if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN']) || $debug) {
                 $recipients = array_filter($recipients, function($email) {
                     $emailAllowed = ['rsalazar@vittilog.com', 'ebernal@vittilog.com', 'evargas@vittilog.com', 'vmolar@vittilog.com'];
                     return in_array($email, $emailAllowed);
@@ -113,15 +113,19 @@ class CronController {
         exit();
     }
 
-    public function getBirthdays($date = null, $noSend = false) {
+    public function getBirthdays($date = null, $debug = false) {
         try{
             $users = $this->usersModel->getUsersWithBirthday($date);
             $emails = $this->usersModel->getUsersEmails();
             $recipients = array_map(function($user) {
                 return $user['email'];
             }, $emails);
+
+            $recipients = array_filter($recipients, function($email) {
+                return filter_var($email, FILTER_VALIDATE_EMAIL);
+            });
                 
-            if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN'])) {
+            if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN']) || $debug) {
                 $recipients = array_filter($recipients, function($email) {
                     $emailAllowed = ['rsalazar@vittilog.com', 'ebernal@vittilog.com', 'evargas@vittilog.com', 'vmolar@vittilog.com'];
                     return in_array($email, $emailAllowed);

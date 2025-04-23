@@ -49,11 +49,11 @@ else {
         switch ($route) {
             case 'anniversaries':
                 $cronController = new CronController();
-                $cronController->getAnniversaries($queryParameters['start_date'] ?? null, $queryParameters['end_date'] ?? null, $queryParameters['no_send'] ?? null);
+                $cronController->getAnniversaries($queryParameters['start_date'] ?? null, $queryParameters['end_date'] ?? null, $queryParameters['debug'] ?? null);
                 break;
             case 'birthdays':
                 $cronController = new CronController();
-                $cronController->getBirthdays($queryParameters['date'] ?? null, $queryParameters['no_send'] ?? null);
+                $cronController->getBirthdays($queryParameters['date'] ?? null, $queryParameters['debug'] ?? null);
                 break;
             default:
                 pathNotFound();
