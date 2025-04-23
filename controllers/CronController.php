@@ -78,6 +78,10 @@ class CronController {
             $recipients = array_map(function($user) {
                 return $user['email'];
             }, $emails);
+
+            $recipients = array_filter($recipients, function($email) {
+                return filter_var($email, FILTER_VALIDATE_EMAIL);
+            });
             
             // Validate environment and filter emails when is local, dev or sandbox.
             if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN'])) {
