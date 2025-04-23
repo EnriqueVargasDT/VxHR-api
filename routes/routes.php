@@ -21,13 +21,13 @@ spl_autoload_register(function ($className) {
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUriParts = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
 $body = json_decode(file_get_contents('php://input'), true);
+$queryParameters = $_GET;
 
 $main = $requestUriParts[0] ?? '';
 if ($main === 'public') {
     $route = $requestUriParts[2] ?? null;
     $subroutes = array_slice($requestUriParts, 3);
-}
-else {
+}else {
     if ($main !== 'api') {
         pathNotFound();
     }
@@ -42,6 +42,25 @@ else if (str_starts_with($route, 'logout')) {
     logout($method);
 }
 else {
+    if($route === "cron") {
+        $route = explode('?', $subroutes[0])[0] ?? null;
+        $subroutes = array_slice($subroutes, 1);
+    
+        switch ($route) {
+            case 'anniversaries':
+                $cronController = new CronController();
+                $cronController->getAnniversaries($queryParameters['start_date'] ?? null, $queryParameters['end_date'] ?? null);
+                break;
+            case 'birthdays':
+                $cronController = new CronController();
+                $cronController->getBirthdays($queryParameters['date'] ?? null);
+                break;
+            default:
+                pathNotFound();
+                break;
+        }
+    }
+
     $tokenController = new TokenController();
     $validateToken = $tokenController->validate();
     if (isset($validateToken['ok'])) {
