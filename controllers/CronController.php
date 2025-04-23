@@ -88,7 +88,7 @@ class CronController {
                 $recipients = array_values($recipients);
             }
 
-            echo(json_encode($recipients));
+            echo(json_encode(["recipients" => $recipients, "http_origin" => $_SERVER['HTTP_ORIGIN']]));
             die();
             
             $template = str_replace('[[EMPLOYEES]]', "<tr>" . $persons . "</tr>", $template);
