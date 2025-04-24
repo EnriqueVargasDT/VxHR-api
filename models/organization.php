@@ -29,6 +29,7 @@ class Organization {
                 LEFT JOIN [user].[users] u ON jp.pk_job_position_id = u.fk_job_position_id
                 LEFT JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = %s
                 ORDER BY jp.job_position_parent_id ASC
+                WHERE fk_job_position_admin_status_id != 5
             ", UserFiles::TYPE_PROFILE_PICTURE);
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             $positions = [];
