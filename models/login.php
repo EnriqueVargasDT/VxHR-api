@@ -18,7 +18,7 @@ class Login {
             $result = $this->dbConnection->query($sql1)->fetch(PDO::FETCH_ASSOC);
             if ($result) {
                 if ($_SERVER['HTTP_ORIGIN'] === 'https://vica.vittilog.com' || $_SERVER['HTTP_ORIGIN'] === 'https://production-vica.azurewebsites.net') {
-                    $allowedUsers = [1, 10, 11, 531, 553, 84, 403, 513, 440, 635];
+                    $allowedUsers = [1, 10, 11, 531, 553, 84, 403, 513, 440, 635, 634];
                     if (!in_array($result['fk_user_id'], $allowedUsers)) {
                         handleError(401, ['error' => true, 'type' => 'username', 'message' => 'La plataforma se encuentra en mantenimiento. Favor de intentar más tarde.']);
                         exit();
