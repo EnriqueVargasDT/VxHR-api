@@ -1,18 +1,23 @@
 <?php
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    header('Access-Control-Allow-Origin: http://localhost:3000');
+$allowedOrigins = [
+    'https://dev-vica.azurewebsites.net',
+    'https://vica.vittilog.com',
+    'https://production-vica.azurewebsites.net'
+];
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+$isLocalhost = preg_match('/^http:\/\/localhost(:\d+)?$/', $origin);
+
+// Si el origen está en la lista o es localhost con cualquier puerto
+if (in_array($origin, $allowedOrigins) || $isLocalhost) {
+    header("Access-Control-Allow-Origin: " . $origin);
+    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
     header("Access-Control-Allow-Credentials: true");
-    header('Access-Control-Allow-Methods: OPTIONS,GET,POST,PUT,DELETE');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization');
-    header('Content-Type: application/json; charset=UTF-8');
-    header('HTTP/1.1 200 OK');
-    exit(0);
 }
 
-header('Access-Control-Allow-Origin: http://localhost:3000');
-header("Access-Control-Allow-Credentials: true");
-header('Access-Control-Allow-Methods: OPTIONS,GET,POST,PUT,DELETE');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json; charset=UTF-8');
-header('HTTP/1.1 200 OK');
-?>
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit();
+}

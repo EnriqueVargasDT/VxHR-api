@@ -1,4 +1,6 @@
 <?php
+// TODO: Validate if email is sent successfully and return the result in the response for both methods.
+
 require_once '../models/email.php';
 require_once '../models/users.php';
 
