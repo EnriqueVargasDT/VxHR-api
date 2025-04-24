@@ -47,9 +47,10 @@ class CronController {
                     
                     $date = "$day de $monthSpanish";
         
+                    $dummyImage = "https://vicafiles.blob.core.windows.net/files/dummy_avatar.png";
                     $personTemplate = str_replace('[[NAME]]', $user['full_name'], $personTemplate);
                     $personTemplate = str_replace('[[ANNIVERSARY]]', $user['anniversary'], $personTemplate);
-                    $personTemplate = str_replace('[[PROFILE_PICTURE]]', $user['profile_picture'], $personTemplate);
+                    $personTemplate = str_replace('[[PROFILE_PICTURE]]', $user['profile_picture'] ?? $dummyImage, $personTemplate);
                     $personTemplate = str_replace('[[JOB_POSITION]]', $user['job_position'], $personTemplate);
                     $personTemplate = str_replace('[[OFFICE_NAME]]', $user['office_name'], $personTemplate);
                     $personTemplate = str_replace('[[DATE]]', $date, $personTemplate);
@@ -156,9 +157,10 @@ class CronController {
                 
                 $user['birthday'] = "$day de $monthSpanish";
                 
+                $dummyImage = "https://vicafiles.blob.core.windows.net/files/dummy_avatar.png";
                 $template = str_replace('[[NAME]]', $user['full_name'], $template);
                 $template = str_replace('[[BIRTHDAY]]', $user['birthday'], $template);
-                $template = str_replace('[[PROFILE_PICTURE]]', $user['profile_picture'], $template);
+                $template = str_replace('[[PROFILE_PICTURE]]', $user['profile_picture'] ?? $dummyImage, $template);
                 $template = str_replace('[[JOB_POSITION]]', $user['job_position'], $template);
                 $template = str_replace('[[OFFICE_NAME]]', $user['office_name'], $template);
                 

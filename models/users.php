@@ -129,7 +129,7 @@ class Users {
                     AND f.type_file = 1
                 WHERE
                     u.is_active = 1
-                    AND u.date_of_hire <= DATEADD(YEAR, -1, GETDATE())
+                    AND u.date_of_hire <= DATEADD(YEAR, -1, DATEADD(DAY, 7 - DATEPART(WEEKDAY, GETDATE()), CAST(GETDATE() AS DATE)))
                     AND DATEFROMPARTS(YEAR(GETDATE()), MONTH(u.date_of_hire), DAY(u.date_of_hire))
                         BETWEEN @startDate AND @endDate
                 ORDER BY
