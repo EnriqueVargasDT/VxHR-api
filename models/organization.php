@@ -1,4 +1,6 @@
 <?php
+// TODO: Filter organization data to get only the active positions.
+
 require_once '../config/config.php';
 require_once '../models/userFiles.php';
 

@@ -7,11 +7,11 @@ AddHandler application/x-httpd-php .php
 # Reescribe las URL para que apunten a index.php sin necesidad de poner .php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ public/index.php/$1 [QSA,L]
+RewriteRule ^(.*)$ public/index.php [QSA,L]
 
-SetEnv DB_SERVER localhost
-SetEnv DB_USERNAME sa
-SetEnv DB_PASSWORD Kingdiamond2025*
+SetEnv DB_SERVER aorokag8pb.database.windows.net,1433
+SetEnv DB_USERNAME traacedb
+SetEnv DB_PASSWORD Traace2014
 SetEnv ENCRYPT_PASSWORD_KEY oc7yqqXqiaNOqFAMhRUbPo3dGqDI8wIB
 SetEnv NOREPLY_MAIL_PASSWORD Reply.2025%
 SetEnv SAS_TOKEN sp=rw&st=2025-04-06T06:40:20Z&se=2026-04-06T14:40:20Z&spr=https&sv=2024-11-04&sr=c&sig=dU%2FTdwXmLkFBzdX09b3AWCRGLMKtGVLAU141I6TnP14%3D
