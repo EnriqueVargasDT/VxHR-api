@@ -13,7 +13,16 @@ class CronController {
 
     public function getAnniversaries($startDate = null, $endDate = null, $debug = false) {
         try{
-            $startDate = $startDate ? date('Y-m-d', strtotime($startDate)) : date('Y-m-d', strtotime('last Monday'));
+            if($startDate){
+                $startDate = date('Y-m-d', strtotime($startDate));
+            } else {
+                $today = date('Y-m-d');
+                if (date('N', strtotime($today)) == 1) {
+                    $startDate = date('Y-m-d', strtotime($today));
+                } else {
+                    $startDate = date('Y-m-d', strtotime('last Monday'));
+                }
+            }
             $weekNumber = date('W', strtotime($startDate));
 
             $persons = "";
