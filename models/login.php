@@ -58,7 +58,7 @@ class Login {
                     
                     $this->dbConnection->commit();
                     $_SESSION['pk_user_id'] = $result['fk_user_id'];
-                    sendJsonResponse(200, ['ok' => true, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], 'has_signed_policies' => $result['has_signed_policies'], 'message' => 'Registro actualizado exitosamente.', ]);
+                    sendJsonResponse(200, ['ok' => true, 'jwt' => $jwt, 'pk_user_id' => $result['fk_user_id'], 'pk_role_id' => $result['fk_role_id'], 'has_signed_policies' => $result['has_signed_policies'], 'message' => 'Registro actualizado exitosamente.', ]);
                 }
                 else {
                     handleError(401, ['error' => true, 'type' => 'password', 'message' => 'Contraseña inválida.']);
