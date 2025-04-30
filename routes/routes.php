@@ -5,7 +5,7 @@ session_set_cookie_params([
     'domain' => '.azurewebsites.net',
     'secure' => true,
     'httponly' => true,
-    'samesite' => 'Strict'
+    'samesite' => 'Lax'
 ]);
 session_start();
 
