@@ -196,6 +196,13 @@ class User {
             
             $this->dbConnection->commit();
             $send = $this->sendWelcomeEmail($data);
+
+            $birthdateInsertQuery = sprintf("INSERT INTO [communication].[birthdays] ([fk_user_id], [birthday_date]) VALUES (%s, %s);", $newUserId, $columns['birth_date']);
+            $stmt5 = $this->dbConnection->prepare($birthdateInsertQuery);
+            if (!$stmt5->execute()) {
+                throw new Exception('Error: No se pudo crear el cumpleaños del nuevo usuario.');
+            }
+
             if ($send) {
                 sendJsonResponse(200, ['ok' => true, 'new_user_id' => $newUserId, 'message' => 'Usuario creado exitosamente.']);
             }
