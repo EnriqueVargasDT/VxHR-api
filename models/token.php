@@ -12,12 +12,18 @@ class Token {
     }
 
     public function validate() {
+        $token = $_COOKIE['token'] ?? null;
+        $headers = apache_request_headers();
+        if (isset($headers['Authorization'])) {
+            $token = str_replace('Bearer ', '', $headers['Authorization']);
+        }
+
         try {
-            if (!isset($_COOKIE['token'])) {
+            if (!isset($token)) {
                 return ['error' => true, 'message' => 'Usuario no autenticado.'];
             }
             
-            $decoded = JWT::decode($_COOKIE['token'], new Key($this->secretKey, 'HS256'));
+            $decoded = JWT::decode($token, new Key($this->secretKey, 'HS256'));
             return ['ok' => true, 'message' => 'Token válido.', 'role' => $decoded->role, ];
         }
         catch (Exception $error) {
