@@ -42,7 +42,7 @@ Class Email {
             foreach ($addresses as $address) {
                 $to = trim($address);
                 if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
-                    $this->mail->addCC($to, $to);
+                    $this->mail->addBCC($to, $to);
                 } else {
                     throw new Exception("Invalid email address: {$to}");
                 }

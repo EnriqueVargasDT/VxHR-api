@@ -193,7 +193,12 @@ class CronController {
     }
 
     private function sendEmail($email, $subject, $template) {
-        // Enviar correo de recuperación de contraseña
+        array_unshift($email, 'no-reply@vittilog.com');
+        $email = array_unique($email);
+        $email = array_filter($email, function($email) {
+            return filter_var($email, FILTER_VALIDATE_EMAIL);
+        });
+        
         $mail = new Email();
         $send = $mail->send($email, $subject, $template, false);
         if (!$send) {
