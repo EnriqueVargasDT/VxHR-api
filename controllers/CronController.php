@@ -1,5 +1,6 @@
 <?php
 // TODO: Validate if email is sent successfully and return the result in the response for both methods.
+// TODO: Create a method to validate if any pulbication is schedule to show today and send the email to the marketing team with the publication.
 
 require_once '../models/email.php';
 require_once '../models/users.php';

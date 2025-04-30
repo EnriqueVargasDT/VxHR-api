@@ -65,17 +65,23 @@ class Communication {
             // Cumpleaños.
             $sqlBirthdays = sprintf("
                 SELECT
-                    cb.pk_birthday_id,
-                    FORMAT(CAST(cb.birthday_date AS DATETIME), 'dd ''de'' MMMM', 'es-ES') AS birthday_date,
-                    CONCAT('Cumpleaños ', CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2)) AS title,
-                    CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS user_full_name,
-                    uf.[file]
-                FROM [communication].[birthdays] cb
-                INNER JOIN [user].[users] u ON cb.fk_user_id = u.pk_user_id
-                INNER JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = %s
-                WHERE DATEPART(MONTH, cb.birthday_date) = DATEPART(MONTH, GETDATE())
-                AND DATEPART(DAY, cb.birthday_date) <= DATEPART(DAY, GETDATE())
-                ORDER BY DATEPART(DAY, cb.birthday_date) DESC;
+                    u.pk_user_id AS pk_birthday_id,
+                    FORMAT(CAST(u.birth_date AS DATETIME), 'dd ''de'' MMMM', 'es-ES') AS birthday_date,
+                    CONCAT('Cumpleaños ', u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS title,
+                    CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS user_full_name,
+                    f.[file] AS profile_picture
+                FROM [user].[users] u
+                LEFT JOIN [user].[files] f 
+                    ON f.fk_user_id = u.pk_user_id 
+                    AND f.type_file = %s
+                WHERE
+                    u.is_active = 1
+                    AND u.birth_date IS NOT NULL
+                    AND MONTH(u.birth_date) = MONTH(GETDATE())
+                    AND DAY(u.birth_date) <= DAY(GETDATE())
+                ORDER BY
+                    DAY(u.birth_date) DESC;
+;
             ", UserFiles::TYPE_PROFILE_PICTURE);
             $resultBirthdays = $this->dbConnection->query($sqlBirthdays)->fetchAll(PDO::FETCH_ASSOC);
             if (count($resultBirthdays) > 0) {
