@@ -2,7 +2,7 @@
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
-    'domain' => '.vittilog.com',
+    'domain' => '.azurewebsites.net',
     'secure' => true,
     'httponly' => true,
     'samesite' => 'Strict'
