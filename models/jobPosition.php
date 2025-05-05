@@ -127,7 +127,7 @@ class JobPosition {
             if ($this->dbConnection->inTransaction()) {
                 $this->dbConnection->rollBack();
             }
-            sendJsonResponse(400, ["error" => $error, "session" => json_encode($_SESSION)]);
+            sendJsonResponse(400, ["error" => $error, "session" => json_encode($_SERVER)]);
             // handleExceptionError($error->getMessage());
         }
 
