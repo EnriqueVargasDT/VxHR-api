@@ -24,8 +24,9 @@ function dbConnection() {
     return $connection;
 }
 
-function dd($data) {
-    var_dump($data);
+function dd($data, $json = true) {
+    if($json) echo json_encode($data);
+    else var_dump($data);
     exit();
 }
 ?>

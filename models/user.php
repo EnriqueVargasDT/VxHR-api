@@ -62,6 +62,34 @@ class User {
         exit();
     }
 
+    public function getByUsername($username) {
+        try {
+            $sql = "
+                SELECT
+                    u.*,
+                    jpt.job_position_type
+                FROM [user].[users] u
+                LEFT JOIN [user].[users_auth] ua ON u.pk_user_id = ua.fk_user_id
+                LEFT JOIN [job_position].[positions] jpp ON u.fk_job_position_id = jpp.pk_job_position_id
+                LEFT JOIN [job_position].[type] jpt ON jpp.fk_job_position_type_id = jpt.pk_job_position_type_id
+                WHERE ua.username = '%s'
+            ";
+            $sql = sprintf($sql, addslashes($username));
+            $user = $this->dbConnection->query($sql)->fetch(PDO::FETCH_ASSOC);
+            if ($user) {
+                return $user;
+            }
+            else {
+                handleError(500, 'No se encontró al usuario en la base de datos.');
+            }
+        }
+        catch(Exception $error) {
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
     private function getColumns() {
         $sql = "
             SELECT

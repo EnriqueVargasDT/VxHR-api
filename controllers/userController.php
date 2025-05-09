@@ -12,6 +12,10 @@ class UserController {
         $this->user->getById($pk_user_id);
     }
 
+    public function getByUsername($userName) {
+        return $this->user->getByUsername($userName);
+    }
+
     public function save($data) {
         $this->user->save($data);
     }

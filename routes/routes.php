@@ -64,6 +64,11 @@ else {
     $tokenController = new TokenController();
     $validateToken = $tokenController->validate();
     if (isset($validateToken['ok'])) {
+        $userController = new UserController();
+        $user = null;
+        if(isset($validateToken["sub"])) $user = $userController->getByUsername($validateToken["sub"]);
+        $_SESSION["user"] = $user;
+        
         switch ($route) {
             case 'role':
                 role($method, $subroutes, $body);

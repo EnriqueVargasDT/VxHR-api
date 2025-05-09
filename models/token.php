@@ -24,7 +24,7 @@ class Token {
             }
             
             $decoded = JWT::decode($token, new Key($this->secretKey, 'HS256'));
-            return ['ok' => true, 'message' => 'Token válido.', 'role' => $decoded->role, ];
+            return ['ok' => true, 'message' => 'Token válido.', 'role' => $decoded->role, "sub" => $decoded->sub ];
         }
         catch (Exception $error) {
             return ['error' => true, 'message' => 'Token inválido.'];
