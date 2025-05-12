@@ -33,15 +33,18 @@ class JobPositions {
                         jpp.fk_job_position_office_id,
                         jpo.job_position_office,
                         jpt.job_position_type,
+                        jpp.fk_job_position_type_id,
                         jpp.fk_job_position_status_id,
                         jps.job_position_status,
                         jpp.fk_job_position_admin_status_id,
                         jpas.job_position_admin_status,
                         jpp.publish_date,
+                        jpp.created_at,
                         jpp.fk_job_position_area_id AS parent_id,
                         jpp.created_by,
                         CONCAT('VC-#', RIGHT('00000' + CAST(jpp.pk_job_position_id AS VARCHAR), 5), ' - ', jpp.job_position, ' - ', CASE WHEN pu.first_name = '' OR pu.first_name IS NULL THEN '[Vacante]' ELSE CONCAT(pu.first_name, ' ', pu.last_name_1, ' ', pu.last_name_2) END) AS inmediate_supervisor_full_name,
-                        CONCAT(cu.first_name, ' ', cu.last_name_1, ' ', cu.last_name_2) AS created_by_full_name
+                        CONCAT(cu.first_name, ' ', cu.last_name_1, ' ', cu.last_name_2) AS created_by_full_name,
+                        CONCAT(pu.first_name, ' ', pu.last_name_1, ' ', pu.last_name_2) AS user_full_name
                     FROM [job_position].[positions] jpp
                     LEFT JOIN [job_position].[area] jpa ON jpp.fk_job_position_area_id = jpa.pk_job_position_area_id
                     LEFT JOIN [job_position].[department] jpd ON jpp.fk_job_position_department_id = jpd.pk_job_position_department_id
