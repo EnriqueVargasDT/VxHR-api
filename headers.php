@@ -3,7 +3,7 @@ $allowedOrigins = [
     'https://dev-vica.azurewebsites.net',
     'https://vica.vittilog.com',
     'https://production-vica.azurewebsites.net',
-    'https://lively-glacier-076b0c40f.6.azurestaticapps.net/'
+    'https://lively-glacier-076b0c40f.6.azurestaticapps.net'
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
