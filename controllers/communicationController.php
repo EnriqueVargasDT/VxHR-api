@@ -12,6 +12,14 @@ class CommunicationController {
         $this->communication->dashboard();
     }
 
+    public function birthdays() {
+        $this->communication->birthdays();
+    }
+
+    public function anniversaries() {
+        $this->communication->anniversaries();
+    }
+
     public function getAllPosts() {
         $this->communication->getAllPosts();
     }

@@ -69,6 +69,7 @@ else {
         if(isset($validateToken["sub"])) $user = $userController->getByUsername($validateToken["sub"]);
         $_SESSION["user"] = $user;
         
+        
         switch ($route) {
             case 'role':
                 role($method, $subroutes, $body);
@@ -104,6 +105,9 @@ else {
                 organization($method);
                 break;
             case 'communication':
+                communication($method, $subroutes, $body);
+                break;
+            case 'home':
                 communication($method, $subroutes, $body);
                 break;
             default:
@@ -440,6 +444,12 @@ function communication($method, $subroutes, $body) {
                 if (isset($subroutes[0])) {
                     if ($subroutes[0] === 'dashboard') {
                         $communicationController->dashboard();
+                    }
+                    else if ($subroutes[0] === 'birthdays') {
+                        $communicationController->birthdays();
+                    }
+                    else if ($subroutes[0] === 'anniversaries') {
+                        $communicationController->anniversaries();
                     }
                     else if ($subroutes[0] === 'post') {
                         if (isset($_GET['id'])) {

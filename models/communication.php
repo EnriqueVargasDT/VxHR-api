@@ -96,6 +96,76 @@ class Communication {
         exit();
     }
 
+    public function birthdays () {
+        try {
+            $sql = "SELECT
+                        u.pk_user_id as id,
+                        u.birth_date AS birthday,
+                        u.first_name,
+                        u.last_name_1,
+                        u.last_name_2,
+                        CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS full_name,
+                        uf.[file] as profile_picture,
+                        jp.job_position as position
+                    FROM [user].[users] u
+                    INNER JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = :type_file
+                    INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
+                    WHERE DATEPART(MONTH, u.birth_date) = DATEPART(MONTH, GETDATE())
+                    AND DATEPART(DAY, u.birth_date) <= DATEPART(DAY, GETDATE())
+                    AND u.is_active = 1
+                    ORDER BY DATEPART(DAY, u.birth_date) DESC";
+            $stmt = $this->dbConnection->prepare($sql);
+            $stmt->bindValue(':type_file', UserFiles::TYPE_PROFILE_PICTURE, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            sendJsonResponse(200, ['ok' => true, 'data' => $result]);
+        }
+        catch(Exception $error) {
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
+    public function anniversaries () {
+        try {
+            $sql = "SET DATEFIRST 1;
+                DECLARE @startOfWeek DATE = DATEADD(DAY, 1 - DATEPART(WEEKDAY, GETDATE()), CAST(GETDATE() AS DATE));
+                DECLARE @endOfWeek DATE = DATEADD(DAY, 7 - DATEPART(WEEKDAY, GETDATE()), CAST(GETDATE() AS DATE));
+
+                SELECT
+                    u.pk_user_id AS id,
+                    u.date_of_hire AS birthday,
+                    u.first_name,
+                    u.last_name_1,
+                    u.last_name_2,
+                    CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS full_name,
+                    uf.[file] AS profile_picture,
+                    DATEDIFF(YEAR, u.date_of_hire, GETDATE()) AS years,
+                    jp.job_position AS position
+                FROM [user].[users] u
+                INNER JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = :type_file
+                INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
+                WHERE 
+                    u.is_active = 1
+                    AND DATEFROMPARTS(YEAR(GETDATE()), MONTH(u.date_of_hire), DAY(u.date_of_hire)) BETWEEN @startOfWeek AND @endOfWeek
+                    AND DATEDIFF(YEAR, u.date_of_hire, GETDATE()) > 0 -- Excluye contrataciones de este año
+                ORDER BY
+                    -- years DESC,
+                    DATEFROMPARTS(YEAR(GETDATE()), MONTH(u.date_of_hire), DAY(u.date_of_hire)) DESC";
+            $stmt = $this->dbConnection->prepare($sql);
+            $stmt->bindValue(':type_file', UserFiles::TYPE_PROFILE_PICTURE, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            sendJsonResponse(200, ['ok' => true, 'data' => $result]);
+        }
+        catch(Exception $error) {
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
     public function getAllPosts() {
         try {
             $sql = "SELECT p.*, pt.post_type, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name
