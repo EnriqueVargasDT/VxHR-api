@@ -242,7 +242,6 @@ class User {
             if ($this->dbConnection->inTransaction()) {
                 $this->dbConnection->rollBack();
             }
-            dd($error);
             handleExceptionError($error);
         }
 
