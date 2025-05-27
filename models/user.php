@@ -152,7 +152,7 @@ class User {
 
             foreach ($fieldsToValidate as $field => $message) {
                 if ($this->validateExistence($field, $data[$field])) {
-                    handleError(500, ['type' => $field, 'message' => "Error: El $message ya existe en la base de datos."]);
+                    handleError(400, ['type' => $field, 'message' => "Error: El $message ya existe en la base de datos."]);
                     return;
                 }
             }
@@ -235,13 +235,14 @@ class User {
                 sendJsonResponse(200, ['ok' => true, 'new_user_id' => $newUserId, 'message' => 'Usuario creado exitosamente.']);
             }
             else {
-                handleError(500, 'Usuario creado exitosamente, pero no se pudo enviar el correo de bienvenida.');
+                handleError(400, 'Usuario creado exitosamente, pero no se pudo enviar el correo de bienvenida.');
             }
         }
         catch(Exception $error) {
             if ($this->dbConnection->inTransaction()) {
                 $this->dbConnection->rollBack();
             }
+            dd($error);
             handleExceptionError($error);
         }
 
