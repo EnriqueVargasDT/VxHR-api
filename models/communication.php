@@ -70,10 +70,12 @@ class Communication {
                     FORMAT(CAST(cb.birthday_date AS DATETIME), 'dd ''de'' MMMM', 'es-ES') AS birthday_date,
                     CONCAT('Cumpleaños ', CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2)) AS title,
                     CONCAT(u.first_name, ' ' , u.last_name_1, ' ', u.last_name_2) AS user_full_name,
-                    uf.[file]
+                    uf.[file],
+                    jp.job_position AS position
                 FROM [communication].[birthdays] cb
                 INNER JOIN [user].[users] u ON cb.fk_user_id = u.pk_user_id
                 INNER JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = %s
+                INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
                 WHERE DATEPART(MONTH, cb.birthday_date) = DATEPART(MONTH, GETDATE())
                 AND DATEPART(DAY, cb.birthday_date) <= DATEPART(DAY, GETDATE())
                 ORDER BY DATEPART(DAY, cb.birthday_date) DESC;

@@ -137,14 +137,19 @@ class CronController {
                 
             if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN']) || $debug) {
                 $recipients = array_filter($recipients, function($email) {
-                    $emailAllowed = ['rsalazar@vittilog.com', 'ebernal@vittilog.com', 'evargas@vittilog.com', 'vmolar@vittilog.com'];
+                    $emailAllowed = [
+                        'rsalazar@vittilog.com',
+                        // 'ebernal@vittilog.com',
+                        // 'evargas@vittilog.com',
+                        // 'vmolar@vittilog.com'
+                    ];
                     return in_array($email, $emailAllowed);
                 });
                 $recipients = array_values($recipients);
             }
             
             foreach ($users as $user) {
-                $template = file_get_contents('../templates/birthdays.html');
+                // $template = file_get_contents('../templates/birthdays.html');
                 $months = [
                     'January' => 'Enero',
                     'February' => 'Febrero',
@@ -168,13 +173,39 @@ class CronController {
                 $user['birthday'] = "$day de $monthSpanish";
                 
                 $dummyImage = "https://vicafiles.blob.core.windows.net/files/dummy_avatar.png";
-                $template = str_replace('[[NAME]]', $user['full_name'], $template);
-                $template = str_replace('[[BIRTHDAY]]', $user['birthday'], $template);
-                $template = str_replace('[[PROFILE_PICTURE]]', $user['profile_picture'] ?? $dummyImage, $template);
-                $template = str_replace('[[JOB_POSITION]]', $user['job_position'], $template);
-                $template = str_replace('[[OFFICE_NAME]]', $user['office_name'], $template);
+                $outputPath = __DIR__ . "/../public/birthday-cards/user-{$user["id"]}.png";
+
+                $this->generateImage(
+                    __DIR__ . '/../public/birthday_base.png',
+                    $user['profile_picture'] ?? $dummyImage,
+                    explode(" ", $user['first_name'])[0] . ' ' . $user['last_name_1'],
+                    $user['job_position'],
+                    $user['birthday'],
+                    $outputPath
+                );
+
+                $template = "<p style='font-size: 0px; color: transparent; margin: 0; padding: 0; line-height: 0;'>Feliz cumpleaños {$user["full_name"]}. En este día especial, queremos felicitarte y agradecerte por tu esfuerzo y dedicación. Esperamos que este nuevo año de vida esté lleno de grandes logros, alegría y momento inolvidables junto a tus seres queridos . ¡Disfruta tu día al máximo!</p>
+                    <table border='0' celspacing='0' width='100%'>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td width='600'>
+                                <img src='cid:user-{$user["id"]}' alt='Feliz cumpleaños {$user["full_name"]}' style='width: 100%; height: auto; max-width: 600px; margin: 0 auto; display: block;' width='600'>
+                            </td>
+                            <td>&nbsp;</td>
+                        </tr>
+                    </table>";
+
+                // $template = str_replace('[[NAME]]', $user['full_name'], $template);
+                // $template = str_replace('[[BIRTHDAY]]', $user['birthday'], $template);
+                // $template = str_replace('[[PROFILE_PICTURE]]', $user['profile_picture'] ?? $dummyImage, $template);
+                // $template = str_replace('[[JOB_POSITION]]', $user['job_position'], $template);
+                // $template = str_replace('[[OFFICE_NAME]]', $user['office_name'], $template);
                 
-                $this->sendEmail($recipients, "👏 Feliz cumpleaños te desea Vitti Logistics. 🎂", $template);
+                $this->sendEmail($recipients, "👏 Feliz cumpleaños te desea Vitti Logistics. 🎂", $template, $outputPath, "user-{$user["id"]}");
+
+                if (file_exists($outputPath)) {
+                    unlink($outputPath);
+                }
             }
     
             sendJsonResponse(200, [
@@ -192,7 +223,7 @@ class CronController {
         exit();
     }
 
-    private function sendEmail($email, $subject, $template) {
+    private function sendEmail($email, $subject, $template, $attachmentPath = null, $attachmentEmbeddedName = null) {
         array_unshift($email, 'no-reply@vittilog.com');
         $email = array_unique($email);
         $email = array_filter($email, function($email) {
@@ -200,11 +231,112 @@ class CronController {
         });
         
         $mail = new Email();
-        $send = $mail->send($email, $subject, $template, false);
+        $send = $mail->send($email, $subject, $template, $attachmentPath, $attachmentEmbeddedName, false);
         if (!$send) {
             throw new Exception('Error: No se pudo realizar el envío del correo electrónico.');
         }
     }
+
+    private function generateImage(string $basePath, string $photoUrl, string $name, string $position, string $date, string $outputPath){
+        $base = imagecreatefrompng($basePath);
+        imagealphablending($base, true);
+        imagesavealpha($base, true);
+
+        $photoData = @file_get_contents($photoUrl);
+        if (!$photoData) {
+            http_response_code(400);
+            exit("No se pudo cargar la imagen desde la URL.");
+        }
+
+        $photo = @imagecreatefromstring($photoData);
+        if (!$photo) {
+            http_response_code(400);
+            exit("Formato de imagen no soportado o corrupto.");
+        }
+
+        $size = 435;
+        $photoResized = imagescale($photo, $size, $size);
+
+        $circle = imagecreatetruecolor($size, $size);
+        imagesavealpha($circle, true);
+        $transparent = imagecolorallocatealpha($circle, 0, 0, 0, 127);
+        imagefill($circle, 0, 0, $transparent);
+
+        for ($x = 0; $x < $size; $x++) {
+            for ($y = 0; $y < $size; $y++) {
+                $dx = $x - $size / 2;
+                $dy = $y - $size / 2;
+                if (sqrt($dx * $dx + $dy * $dy) <= $size / 2) {
+                    $color = imagecolorat($photoResized, $x, $y);
+                    imagesetpixel($circle, $x, $y, $color);
+                }
+            }
+        }
+        imagecopy($base, $circle, 645, 368, 0, 0, $size, $size);
+
+        $white = imagecolorallocate($base, 255, 255, 255);
+        $fontBoldPath = __DIR__ . '/../public/Raleway-Bold.ttf';
+        $fontPath = __DIR__ . '/../public/Raleway-Regular.ttf';
+
+        $this->drawCenteredText($base, $name, 40, 1380, $white, $fontBoldPath);
+        $maxWidth = 1000; // píxeles permitidos
+        $lineSpacing = 10;
+
+        $lines = $this->wrapTextByWidth($position, $fontPath, 35, $maxWidth);
+        $countLines = count($lines);
+        $this->drawMultilineCenteredText($base, $lines, 35, 1490, $lineSpacing, $white, $fontBoldPath);
+        $this->drawCenteredText($base, $date, 35, 1490 + (50 * $countLines), $white, $fontPath);
+
+        imagepng($base, $outputPath);
+
+        imagedestroy($base);
+        imagedestroy($photo);
+        imagedestroy($photoResized);
+    }
+
+    private function drawCenteredText($image, $text, $fontSize, $y, $color, $fontPath) {
+        $bbox = imagettfbbox($fontSize, 0, $fontPath, $text);
+        $textWidth = $bbox[2] - $bbox[0];
+        $x = (imagesx($image) - $textWidth) / 2;
+        imagettftext($image, $fontSize, 0, $x, $y, $color, $fontPath, $text);
+    }
+
+    private function wrapTextByWidth($text, $fontPath, $fontSize, $maxWidth){
+        $words = explode(' ', $text);
+        $lines = [];
+        $currentLine = '';
+
+        foreach ($words as $word) {
+            $testLine = $currentLine ? $currentLine . ' ' . $word : $word;
+            $bbox = imagettfbbox($fontSize, 0, $fontPath, $testLine);
+            $lineWidth = $bbox[2] - $bbox[0];
+
+            if ($lineWidth > $maxWidth && $currentLine) {
+                $lines[] = $currentLine;
+                $currentLine = $word;
+            } else {
+                $currentLine = $testLine;
+            }
+        }
+
+        if ($currentLine) {
+            $lines[] = $currentLine;
+        }
+
+        return $lines;
+    }
+
+    private function drawMultilineCenteredText($image, $lines, $fontSize, $startY, $lineSpacing, $color, $fontPath) {
+        $imageWidth = imagesx($image);
+        foreach ($lines as $i => $line) {
+            $bbox = imagettfbbox($fontSize, 0, $fontPath, $line);
+            $textWidth = $bbox[2] - $bbox[0];
+            $x = ($imageWidth - $textWidth) / 2;
+            $y = $startY + $i * ($fontSize + $lineSpacing);
+            imagettftext($image, $fontSize, 0, $x, $y, $color, $fontPath, $line);
+        }
+    }
+
 }
 
 ?>

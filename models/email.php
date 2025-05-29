@@ -14,7 +14,7 @@ Class Email {
         $this->mail = new PHPMailer(true);
     }
 
-    public function send($to, $subject, $message, $return = true) {
+    public function send($to, $subject, $message, $attachmentPath = null, $attachmentEmbeddedName = null,  $return = true) {
         if(is_string($to)){
             if(strpos($to, ',') !== false) {
                 $addresses = explode(',', $to);
@@ -46,6 +46,16 @@ Class Email {
                 } else {
                     throw new Exception("Invalid email address: {$to}");
                 }
+            }
+
+            if ($attachmentPath && file_exists($attachmentPath)) {
+                if($attachmentEmbeddedName) {
+                    $this->mail->addEmbeddedImage($attachmentPath, $attachmentEmbeddedName);
+                } else {
+                    $this->mail->addAttachment($attachmentPath);
+                }
+            } elseif ($attachmentPath) {
+                throw new Exception("Attachment file does not exist: {$attachmentPath}");
             }
             
             $this->mail->CharSet = 'UTF-8';

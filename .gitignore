@@ -8,3 +8,9 @@
 
 # misc
 .env
+
+# Ignorar todos los archivos dentro de la carpeta
+/public/birthday-cards/*
+
+# ¡Excepto el archivo .gitkeep si deseas mantener la carpeta vacía!
+!/public/birthday-cards/.gitkeep

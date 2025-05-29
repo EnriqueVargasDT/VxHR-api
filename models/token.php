@@ -1,8 +1,11 @@
 <?php
+require_once '../libs/php-jwt/src/JWTExceptionWithPayloadInterface.php';
+require_once '../libs/php-jwt/src/ExpiredException.php';
 require_once '../libs/php-jwt/src/JWT.php';
 require_once '../libs/php-jwt/src/Key.php';
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+
 
 class Token {
     private $secretKey;

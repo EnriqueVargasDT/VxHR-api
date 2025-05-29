@@ -11,7 +11,7 @@ class UserPolicies {
     public function getAll($userId, $signed) {
         try {
             if ($signed) {
-                $sql = 'SELECT p.pk_policy_id, p.policy, p.content, up.*
+                $sql = 'SELECT p.pk_policy_id, p.policy, p.content, up.*, p.nom_iso
                         FROM [user].[policies] up
                         LEFT JOIN [dbo].[policies] p ON up.fk_policy_id = p.pk_policy_id AND p.[status] = 1
                         WHERE up.fk_user_id = :fk_user_id;';

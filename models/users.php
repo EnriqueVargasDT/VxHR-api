@@ -177,7 +177,11 @@ class Users {
         try {
             $sql = sprintf("
                 SELECT
+                    u.pk_user_id as id,
                     CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS full_name,
+                    u.first_name,
+                    u.last_name_1,
+                    u.last_name_2,
                     g.gender AS gender,
                     -- Email combinado
                     CASE
