@@ -99,7 +99,12 @@ class CronController {
             // Validate environment and filter emails when is local, dev or sandbox.
             if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN']) || $debug) {
                 $recipients = array_filter($recipients, function($email) {
-                    $emailAllowed = ['rsalazar@vittilog.com', 'ebernal@vittilog.com', 'evargas@vittilog.com', 'vmolar@vittilog.com'];
+                    $emailAllowed = [
+                        'rsalazar@vittilog.com',
+                        'ebernal@vittilog.com',
+                        'evargas@vittilog.com',
+                        'vmolar@vittilog.com'
+                    ];
                     return in_array($email, $emailAllowed);
                 });
                 $recipients = array_values($recipients);
@@ -139,9 +144,9 @@ class CronController {
                 $recipients = array_filter($recipients, function($email) {
                     $emailAllowed = [
                         'rsalazar@vittilog.com',
-                        // 'ebernal@vittilog.com',
-                        // 'evargas@vittilog.com',
-                        // 'vmolar@vittilog.com'
+                        'ebernal@vittilog.com',
+                        'evargas@vittilog.com',
+                        'vmolar@vittilog.com'
                     ];
                     return in_array($email, $emailAllowed);
                 });
