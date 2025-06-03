@@ -26,6 +26,7 @@ class Users {
                     ua.last_access_at,
                     jpb.job_position AS boss_position,
                     CONCAT(ub.first_name, ' ' , ub.last_name_1, ' ', ub.last_name_2) AS boss,
+                    ubf.[file] AS boss_profile_picture,
                     ur.role AS user_type,
                     jt.job_position_type AS job_type
                 FROM [user].[users] u
@@ -39,6 +40,7 @@ class Users {
                 LEFT JOIN [job_position].[office] jpo ON jpp.fk_job_position_office_id = jpo.pk_job_position_office_id
                 LEFT JOIN [job_position].[positions] jpb ON jpp.job_position_parent_id = jpb.pk_job_position_id
                 LEFT JOIN [user].[users] ub ON jpb.pk_job_position_id = ub.fk_job_position_id
+                LEFT JOIN [user].[files] ubf ON ub.pk_user_id = ubf.fk_user_id AND ubf.type_file = 1
                 LEFT JOIN [user].[roles] ur ON ua.fk_role_id = ur.pk_role_id
                 LEFT JOIN [job_position].[type] jt ON jpp.fk_job_position_type_id = jt.pk_job_position_type_id
                 ORDER BY u.first_name;
