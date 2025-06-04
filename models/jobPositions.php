@@ -20,7 +20,7 @@ class JobPositions {
         $this->dbConnection = dbConnection();
     }
 
-    public function getAll() {
+    public function getAll($available = null) {
         try {
             $sql = "
                     SELECT
@@ -42,6 +42,7 @@ class JobPositions {
                         jpp.created_at,
                         jpp.fk_job_position_area_id AS parent_id,
                         jpp.created_by,
+                        CONCAT('VC-#', RIGHT('00000' + CAST(jpp.pk_job_position_id AS VARCHAR), 5)) AS job_position_code,
                         CONCAT('VC-#', RIGHT('00000' + CAST(jpp.pk_job_position_id AS VARCHAR), 5), ' - ', jpp.job_position, ' - ', CASE WHEN pu.first_name = '' OR pu.first_name IS NULL THEN '[Vacante]' ELSE CONCAT(pu.first_name, ' ', pu.last_name_1, ' ', pu.last_name_2) END) AS inmediate_supervisor_full_name,
                         CONCAT(cu.first_name, ' ', cu.last_name_1, ' ', cu.last_name_2) AS created_by_full_name,
                         CONCAT(pu.first_name, ' ', pu.last_name_1, ' ', pu.last_name_2) AS user_full_name
@@ -54,6 +55,8 @@ class JobPositions {
                     LEFT JOIN [job_position].[admin_status] jpas ON jpp.fk_job_position_admin_status_id = jpas.pk_job_position_admin_status_id
                     LEFT JOIN [user].[users] pu ON jpp.pk_job_position_id = pu.fk_job_position_id
                     LEFT JOIN [user].[users] cu ON jpp.created_by = cu.pk_user_id
+                    WHERE 1=1
+                    " . ($available ? "AND jpp.fk_job_position_admin_status_id = " . $available : "") . "
                     ORDER BY jpp.created_at DESC;
                 ";
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);

@@ -346,7 +346,7 @@ function job_positions($method, $subroutes, $body) {
     $jobPositionsController = new JobPositionsController();
     switch ($method) {
         case 'GET':
-            $jobPositionsController->getAll(isset($_GET['page']) ? $_GET['page'] : 1);
+            $jobPositionsController->getAll(isset($_GET['available']) ? $_GET['available'] : 1);
             pathNotFound();
             break;
         default:
