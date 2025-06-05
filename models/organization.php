@@ -69,13 +69,30 @@ class Organization {
             
             $data = null;
             foreach ($positions as &$node) {
-                if ($node['parent_id'] == 0) {
-                    $data = &$node;
-                }
-                else {
-                    $positions[$node['parent_id']]['children'][] = &$node;
+                if (isset($node['parent_id'])) {
+                    if ($node['parent_id'] == 0) {
+                        $data = &$node;
+                    }
+                    else {
+                        $positions[$node['parent_id']]['children'][] = &$node;;
+                    }
                 }
             }
+
+            // Cuenta todos los nodos descendientes para acomularlos en cada nodo padre incluyendo nietos, bisnietos, etc de manera recursiva.
+            $countDescendants = function(&$node) use (&$countDescendants) {
+                $count = count($node['children']);
+                foreach ($node['children'] as &$child) {
+                    $count += $countDescendants($child);
+                }
+                $node['descendants_count'] = $count;
+                return $count;
+            };
+
+            foreach ($positions as &$node) {
+                $countDescendants($node);
+            }
+
             sendJsonResponse(200, ['ok' => true, 'data' => $data, 'last_update' => max($dates)]);
         }
         catch (Exception $error) {
