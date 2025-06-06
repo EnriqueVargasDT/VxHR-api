@@ -454,6 +454,15 @@ function communication($method, $subroutes, $body) {
                     else if ($subroutes[0] === 'anniversaries') {
                         $communicationController->anniversaries();
                     }
+                    else if ($subroutes[0] === 'announcements') {
+                        $communicationController->communication();
+                    }
+                    else if ($subroutes[0] === 'c4') {
+                        $communicationController->c4();
+                    }
+                    else if ($subroutes[0] === 'events') {
+                        $communicationController->events();
+                    }
                     else if ($subroutes[0] === 'post') {
                         if (isset($_GET['id'])) {
                             $communicationController->getPostById($_GET['id']);

@@ -24,6 +24,18 @@ class CommunicationController {
         $this->communication->getAllPosts();
     }
 
+     public function communication() {
+        $this->communication->communication();
+    }
+
+    public function events() {
+        $this->communication->events();
+    }
+
+    public function c4() {
+        $this->communication->c4();
+    }
+
     public function getAllPostTypes() {
         $this->communication->getAllPostTypes();
     }

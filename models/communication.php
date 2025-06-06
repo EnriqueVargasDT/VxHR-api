@@ -168,6 +168,66 @@ class Communication {
         exit();
     }
 
+    public function communication () {
+        try {
+            $sqlPosts = "
+                SELECT *
+                FROM [communication].[posts]
+                WHERE CAST(publish_date AS DATE) <= CAST(GETDATE() AS DATE)
+                AND [status] = 1
+                AND [fk_post_type_id] = 1
+                ORDER BY publish_date DESC
+            ";
+
+            $data = $this->dbConnection->query($sqlPosts)->fetchAll(PDO::FETCH_ASSOC);
+            sendJsonResponse(200, ['ok' => true, 'data' => $data, 'count' => count($data)]);
+        } catch (Exception $error) {
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
+    public function events () {
+        try {
+            $sqlPosts = "
+                SELECT *
+                FROM [communication].[posts]
+                WHERE CAST(publish_date AS DATE) <= CAST(GETDATE() AS DATE)
+                AND [status] = 1
+                AND [fk_post_type_id] = 2
+                ORDER BY publish_date DESC
+            ";
+
+            $data = $this->dbConnection->query($sqlPosts)->fetchAll(PDO::FETCH_ASSOC);
+            sendJsonResponse(200, ['ok' => true, 'data' => $data, 'count' => count($data)]);
+        } catch (Exception $error) {
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
+    public function c4 () {
+        try {
+            $sqlPosts = "
+                SELECT *
+                FROM [communication].[posts]
+                WHERE CAST(publish_date AS DATE) <= CAST(GETDATE() AS DATE)
+                AND [status] = 1
+                AND [fk_post_type_id] = 3
+                ORDER BY publish_date DESC
+            ";
+
+            $data = $this->dbConnection->query($sqlPosts)->fetchAll(PDO::FETCH_ASSOC);
+            sendJsonResponse(200, ['ok' => true, 'data' => $data, 'count' => count($data)]);
+        } catch (Exception $error) {
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
     public function getAllPosts() {
         try {
             $sql = "SELECT p.*, pt.post_type, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name
