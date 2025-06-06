@@ -230,7 +230,14 @@ class Communication {
 
     public function getAllPosts() {
         try {
-            $sql = "SELECT p.*, pt.post_type, CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name
+            $sql = "SELECT
+                        p.pk_post_id,
+                        p.fk_post_type_id,
+                        p.publish_date,
+                        p.title,
+                        pt.post_type,
+                        p.status,
+                        CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name
                     FROM [communication].[posts] p
                     INNER JOIN [communication].[post_types] pt ON p.fk_post_type_id = pt.pk_post_type_id
                     LEFT JOIN [user].[users] u ON p.created_by = u.pk_user_id

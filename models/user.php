@@ -172,7 +172,7 @@ class User {
                 $stmt2->execute();
                 $exists = $stmt2->fetchColumn();
                 if ($exists > 0) {
-                    throw new Exception('Error: El puesto asignado al nuevo usuario ya está ocupado.');
+                    handleError(400, 'Error: El puesto asignado al nuevo usuario ya está ocupado.');
                 } 
 
                 $sql3 = 'UPDATE [job_position].[positions] SET [fk_job_position_status_id] = :job_position_status_id, [fk_job_position_admin_status_id] = :job_position_admin_status_id WHERE pk_job_position_id = :pk_job_position_id';
@@ -184,7 +184,7 @@ class User {
                 $stmt3->bindParam(':job_position_status_id', $JOB_POSITION_STATUS_BUSY, PDO::PARAM_INT);
                 $stmt3->bindParam(':job_position_admin_status_id', $JOB_POSITION_ADMIN_STATUS_BUSY, PDO::PARAM_INT);
                 if (!$stmt3->execute() || $stmt3->rowCount() === 0) {
-                    throw new Exception('Error: No se pudo actualizar el estado del puesto asignado al nuevo usuario.');
+                    handleError(400, 'Error: No se pudo actualizar el estado del puesto asignado al nuevo usuario.');
                 }
             }
 
@@ -206,7 +206,7 @@ class User {
             $stmt1->bindValue(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             $stmt1->bindValue(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             if (!$stmt1->execute() || $stmt1->rowCount() === 0) {
-                throw new Exception('Error: No fue posible crear el usuario.');
+                handleError(400, 'Error: No fue posible crear el usuario.');
             }
             
             $newUserId = $this->dbConnection->lastInsertId();
@@ -219,7 +219,7 @@ class User {
             $stmt4->bindParam(':user_id', $newUserId, PDO::PARAM_INT);
             $stmt4->bindParam(':role_id', $data['role_id'], PDO::PARAM_INT);
             if (!$stmt4->execute() || $stmt4->rowCount() === 0) {
-                throw new Exception('Error: No se pudo crear la cuenta de acceso a plataforma para el nuevo usuario.');
+                handleError(400, 'Error: No se pudo crear la cuenta de acceso a plataforma para el nuevo usuario.');
             }
             
             $this->dbConnection->commit();
@@ -228,7 +228,7 @@ class User {
             $birthdateInsertQuery = sprintf("INSERT INTO [communication].[birthdays] ([fk_user_id], [birthday_date]) VALUES (%s, %s);", $newUserId, $columns['birth_date']);
             $stmt5 = $this->dbConnection->prepare($birthdateInsertQuery);
             if (!$stmt5->execute()) {
-                throw new Exception('Error: No se pudo crear el cumpleaños del nuevo usuario.');
+                handleError(400, 'Error: No se pudo crear el cumpleaños del nuevo usuario.');
             }
 
             if ($send) {
