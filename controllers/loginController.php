@@ -16,6 +16,10 @@ class LoginController {
         $this->login->passwordRecovery($username);
     }
 
+    public function recoveryPassword($token) {
+        $this->login->recoveryPassword($token);
+    }
+
     public function passwordUpdate($token, $newPassword, $confirmPassword) {
         $this->login->passwordUpdate($token, $newPassword, $confirmPassword);
     }

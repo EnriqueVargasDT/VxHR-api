@@ -129,6 +129,9 @@ function login($method, $subroutes, $body) {
                     if ($subroutes[0] === 'password_recovery') {
                         $loginController->passwordRecovery($body['username']);
                     }
+                    else if ($subroutes[0] === 'recovery_password') {
+                        $loginController->recoveryPassword($body['username']);
+                    }
                     else if ($subroutes[0] === 'password_update') {
                         $loginController->passwordUpdate($body['token'], $body['newPassword'], $body['confirmPassword']);
                     }

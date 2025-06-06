@@ -160,6 +160,75 @@ class Login {
         exit();
     }
 
+    public function recoveryPassword($username) {
+        try {
+            if (trim(isset($username))) {
+                $sql1 = "
+                    SELECT
+                        UsersAuth.*,
+                        CASE 
+                            WHEN Users.institutional_email = '-' THEN Users.personal_email 
+                            ELSE Users.institutional_email 
+                        END AS email,
+                        CONCAT(Users.first_name, ' ', Users.last_name_1, ' ', Users.last_name_2) AS user_full_name
+                    FROM [user].[users_auth] UsersAuth
+                    INNER JOIN [user].[users] Users ON UsersAuth.fk_user_id = Users.pk_user_id
+                    WHERE UsersAuth.username = '$username'
+                ";
+                $result = $this->dbConnection->query($sql1)->fetch(PDO::FETCH_ASSOC);
+                if (isset($result['pk_user_auth_id'])) {
+                    $this->dbConnection->beginTransaction();
+
+                    $sql2 = 'DELETE FROM [user].[password_resets] WHERE username = :username;';
+                    $stmt2 = $this->dbConnection->prepare($sql2);
+                    $stmt2->bindParam(':username', $username, PDO::PARAM_STR);
+                    $stmt2->execute();
+                    
+                    // Crear el token de recuperación de contraseña.
+                    $token = password_hash($username, PASSWORD_BCRYPT);
+                    $sql3 = 'INSERT INTO [user].[password_resets] ([username], [token], [created_at]) VALUES(:username, :token, GETDATE());';
+                    $stmt3 = $this->dbConnection->prepare($sql3);
+                    $stmt3->bindParam(':username', $username, PDO::PARAM_STR);
+                    $stmt3->bindParam(':token', $token, PDO::PARAM_STR);
+                    if (!$stmt3->execute() || $stmt3->rowCount() === 0) {
+                        throw new Exception('Error: No se pudo crear el token de recuperación de contraseña.');
+                    }
+
+                    // Enviar correo de recuperación de contraseña
+                    require_once '../models/email.php';
+                    $email = new Email();
+                    $subject = 'Solicitud de restablecimiento de contraseña';
+                    $template = file_get_contents('../templates/recoveryPassword.html');
+                    $template = str_replace('{{user_full_name}}', $result['user_full_name'], $template);
+                    $HTTP_HOST = $_SERVER['HTTP_ORIGIN'];
+                    $template = str_replace('{{reset_link}}', $HTTP_HOST."/recovery-password/new-password?token=$token", $template);
+                    $message = $template;
+                    $send = $email->send($result['email'], $subject, $message);
+                    if (!$send) {
+                        throw new Exception('Error: No se pudo realizar el envío del correo electrónico.');
+                    }
+                    
+                    $this->dbConnection->commit();
+                    sendJsonResponse(200, ['ok' => true, 'message' => 'Correo electrónico enviado exitosamente.']);
+                }
+                else {
+                    handleError(500, 'El usuario proporcionado no esta registrado en la plataforma.');
+                }
+            }
+            else {
+                handleError(500, 'No se recibió un usuario válido.');
+            }
+        }
+        catch(Exception $error) {
+            if ($this->dbConnection->inTransaction()) {
+                $this->dbConnection->rollBack();
+            }
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
     public function passwordUpdate($token, $newPassword, $confirmPassword) {
         try {
             if (isset($token)) {
@@ -188,19 +257,19 @@ class Login {
                             sendJsonResponse(200, ['ok' => true, 'message' => 'La contraseña ha sido actualizada exitosamente.']);
                         }
                         else {
-                            handleError(500, 'La contraseña no coincide.');
+                            handleError(400, 'La contraseña no coincide.');
                         }
                     }
                     else {
-                        handleError(500, 'La contraseña proporcionada no es válida.');
+                        handleError(400, 'La contraseña proporcionada no es válida.');
                     }
                 }
                 else {
-                    handleError(500, 'El token ha caducado.');
+                    handleError(400, 'El token ha caducado.');
                 }
             }
             else {
-                handleError(500, 'El token es inválido.');
+                handleError(400, 'El token es inválido.');
             }
         }
         catch(Exception $error) {
