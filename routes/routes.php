@@ -87,7 +87,7 @@ else {
                 users($method, $subroutes, $body);
                 break;
             case 'user':
-                user($method, $subroutes, $body);
+                user($method, $subroutes, $body, );
                 break;
             case 'temperature':
                 temperature($method);
@@ -191,7 +191,11 @@ function user($method, $subroutes, $body) {
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
                     if ($subroutes[0] === 'has_signed_policies') {
-                        $userController->hasSignedPolicies();
+                        if (isset($_GET['user'])) {
+                            $userController->hasSignedPolicies($_GET['user']);
+                        } else {
+                            $userController->hasSignedPolicies();
+                        }
                     }
                 }
             }
