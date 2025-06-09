@@ -192,11 +192,8 @@ function user($method, $subroutes, $body) {
             if (count($subroutes) > 0) {
                 if (isset($subroutes[0])) {
                     if ($subroutes[0] === 'has_signed_policies') {
-                        if (isset($_GET['user'])) {
-                            $userController->hasSignedPolicies($_GET['user']);
-                        } else {
-                            $userController->hasSignedPolicies();
-                        }
+                        if(isset($_GET["user"])) $_SESSION["pk_user_id"] = $_GET["user"];
+                        $userController->hasSignedPolicies();
                     }
                 }
             }

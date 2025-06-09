@@ -28,8 +28,8 @@ class UserController {
         $this->user->updateStatus($id, $status);
     }
 
-    public function hasSignedPolicies($userId = null) {
-        $this->user->hasSignedPolicies($userId);
+    public function hasSignedPolicies() {
+        $this->user->hasSignedPolicies();
     }
 }
 ?>

@@ -124,9 +124,9 @@ class User {
         return $columns;
     }
 
-    public function hasSignedPolicies($userId) {
+    public function hasSignedPolicies() {
         try {
-            $sql = sprintf('SELECT has_signed_policies FROM [user].[users] WHERE pk_user_id = %s;', $userId ?? $_SESSION['pk_user_id']);
+            $sql = sprintf('SELECT has_signed_policies FROM [user].[users] WHERE pk_user_id = %s;', $_SESSION['pk_user_id']);
             $result = $this->dbConnection->query($sql)->fetch(PDO::FETCH_ASSOC);
             sendJsonResponse(200, ['ok' => true, 'has_signed_policies' => $result['has_signed_policies'], ]);
         }
