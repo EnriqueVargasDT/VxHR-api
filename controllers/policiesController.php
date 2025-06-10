@@ -8,8 +8,8 @@ class PoliciesController {
         $this->policies = new Policies();
     }
 
-    public function getAll() {
-        $this->policies->getAll();
+    public function getAll($available = null) {
+        $this->policies->getAll($available);
     }
 
     public function getById($id) {

@@ -138,6 +138,7 @@ class User {
     }
 
     public function save($data) {
+        // dd($data);
         try {
             $fieldsToValidate = [
                 'curp' => 'CURP',
@@ -191,18 +192,26 @@ class User {
             $insert = sprintf('INSERT INTO [user].[users](%s)', implode(',', array_keys($columns)));
             $values = [];
             foreach ($columns as $column => $pdoParam) {
-                if (array_key_exists($column, $data)) {
+                // if (array_key_exists($column, $data)) {
                     $values[":$column"] = $pdoParam;
-                }
+                // }
             }
-
-            $sql1 = sprintf("$insert VALUES(%s)", implode(',', array_merge(array_keys($values), [':created_by',])));
+            // $sql1 = sprintf("$insert VALUES(%s)", implode(',', array_merge(array_keys($values), [':created_by',])));
+            $sql1 = sprintf("$insert VALUES(%s)", implode(',', array_keys($values)));
+            
             $stmt1 = $this->dbConnection->prepare($sql1);
+            $prepare = [];
             foreach ($values as $placeholder => $pdoParam) {
                 $columnName = ltrim($placeholder, ':');
-                $columnValue = trim($data[$columnName]);
+                if(isset($data[$columnName])) {
+                    $columnValue = trim($data[$columnName]);
+                }  else {
+                    $columnValue = in_array($columnName, ["work_phone", "institutional_email", "int_number"]) ? "" : null;
+                }
+                $prepare[$columnName] = [$placeholder, $columnValue, $pdoParam];
                 $stmt1->bindValue($placeholder, $columnValue, $pdoParam);
             }
+            // dd($prepare);
             $stmt1->bindValue(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             $stmt1->bindValue(':created_by', $_SESSION['pk_user_id'], PDO::PARAM_INT);
             if (!$stmt1->execute() || $stmt1->rowCount() === 0) {

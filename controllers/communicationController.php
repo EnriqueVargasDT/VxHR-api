@@ -12,12 +12,12 @@ class CommunicationController {
         $this->communication->dashboard();
     }
 
-    public function birthdays() {
-        $this->communication->birthdays();
+    public function birthdays($all = null) {
+        $this->communication->birthdays($all);
     }
 
-    public function anniversaries() {
-        $this->communication->anniversaries();
+    public function anniversaries($all = null) {
+        $this->communication->anniversaries($all);
     }
 
     public function getAllPosts() {

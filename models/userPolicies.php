@@ -13,7 +13,7 @@ class UserPolicies {
             if ($signed) {
                 $sql = 'SELECT p.pk_policy_id, p.policy, p.content, up.*, p.nom_iso
                         FROM [user].[policies] up
-                        LEFT JOIN [dbo].[policies] p ON up.fk_policy_id = p.pk_policy_id AND p.[status] = 1
+                        INNER JOIN [dbo].[policies] p ON up.fk_policy_id = p.pk_policy_id AND p.[status] = 1
                         WHERE up.fk_user_id = :fk_user_id;';
                 $stmt = $this->dbConnection->prepare($sql);
                 $stmt->bindParam('fk_user_id', $userId, PDO::PARAM_INT);

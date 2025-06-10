@@ -98,7 +98,7 @@ class Communication {
         exit();
     }
 
-    public function birthdays () {
+    public function birthdays ($all = null) {
         try {
             $sql = "SELECT
                         u.pk_user_id as id,
@@ -112,10 +112,12 @@ class Communication {
                     FROM [user].[users] u
                     INNER JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = :type_file
                     INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
-                    WHERE DATEPART(MONTH, u.birth_date) = DATEPART(MONTH, GETDATE())
-                    AND DATEPART(DAY, u.birth_date) <= DATEPART(DAY, GETDATE())
-                    AND u.is_active = 1
+                WHERE 1=1";
+            if($all == null) $sql .= " AND DATEPART(MONTH, u.birth_date) = DATEPART(MONTH, GETDATE())
+                    AND DATEPART(DAY, u.birth_date) <= DATEPART(DAY, GETDATE())";
+            $sql .= " AND u.is_active = 1
                     ORDER BY DATEPART(DAY, u.birth_date) DESC";
+
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindValue(':type_file', UserFiles::TYPE_PROFILE_PICTURE, PDO::PARAM_INT);
             $stmt->execute();
@@ -129,7 +131,7 @@ class Communication {
         exit();
     }
 
-    public function anniversaries () {
+    public function anniversaries ($all = null) {
         try {
             $sql = "SET DATEFIRST 1;
                 DECLARE @startOfWeek DATE = DATEADD(DAY, 1 - DATEPART(WEEKDAY, GETDATE()), CAST(GETDATE() AS DATE));
@@ -149,12 +151,15 @@ class Communication {
                 INNER JOIN [user].[files] uf ON u.pk_user_id = uf.fk_user_id AND uf.type_file = :type_file
                 INNER JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
                 WHERE 
-                    u.is_active = 1
+                    u.is_active = 1 ";
+                    if($all == null) $sql .= "
                     AND DATEFROMPARTS(YEAR(GETDATE()), MONTH(u.date_of_hire), DAY(u.date_of_hire)) BETWEEN @startOfWeek AND @endOfWeek
                     AND DATEDIFF(YEAR, u.date_of_hire, GETDATE()) > 0 -- Excluye contrataciones de este año
-                ORDER BY
+                    ";
+                    $sql .= "ORDER BY
                     -- years DESC,
                     DATEFROMPARTS(YEAR(GETDATE()), MONTH(u.date_of_hire), DAY(u.date_of_hire)) DESC";
+
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindValue(':type_file', UserFiles::TYPE_PROFILE_PICTURE, PDO::PARAM_INT);
             $stmt->execute();

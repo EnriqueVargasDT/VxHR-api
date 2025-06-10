@@ -9,8 +9,14 @@ class Policies {
         $this->dbConnection = dbConnection();
     }
 
-    public function getAll() {
+    public function getAll($available = null) {
         try {
+            $WHERE = '';
+            if ($available) {
+                $WHERE .= '
+                    WHERE p.status = 1
+                ';
+            }
             $sql = "SELECT
                     p.*,
                     CONCAT(u1.first_name, ' ' , u1.last_name_1, ' ', u1.last_name_2) AS created_by_full_name,
@@ -18,6 +24,7 @@ class Policies {
                     FROM [dbo].[policies] p
                     LEFT JOIN [user].[users] u1 ON p.created_by = u1.pk_user_id
                     LEFT JOIN [user].[users] u2 ON p.updated_by = u2.pk_user_id
+                    $WHERE
                     ORDER BY created_at DESC";
             $result = $this->dbConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             sendJsonResponse(200, ['ok' => true, 'data' => $result, ]);

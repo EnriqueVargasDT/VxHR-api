@@ -351,7 +351,7 @@ function job_positions($method, $subroutes, $body) {
     $jobPositionsController = new JobPositionsController();
     switch ($method) {
         case 'GET':
-            $jobPositionsController->getAll(isset($_GET['available']) ? $_GET['available'] : 1);
+            $jobPositionsController->getAll(isset($_GET['available']) ? $_GET['available'] : null);
             pathNotFound();
             break;
         default:
@@ -417,7 +417,7 @@ function policies($method, $subroutes, $body) {
                 }
                 $policiesController->getById($_GET['id']);
             }
-            $policiesController->getAll();
+            $policiesController->getAll(isset($_GET['available']) ? $_GET['available'] : null);
             break;
         case 'POST':
             $policiesController->save($body);
@@ -451,10 +451,12 @@ function communication($method, $subroutes, $body) {
                         $communicationController->dashboard();
                     }
                     else if ($subroutes[0] === 'birthdays') {
-                        $communicationController->birthdays();
+                        $all = isset($_GET["all"]) ? true : null;
+                        $communicationController->birthdays($all);
                     }
                     else if ($subroutes[0] === 'anniversaries') {
-                        $communicationController->anniversaries();
+                        $all = isset($_GET["all"]) ? true : null;
+                        $communicationController->anniversaries($all);
                     }
                     else if ($subroutes[0] === 'announcements') {
                         $communicationController->communication();
