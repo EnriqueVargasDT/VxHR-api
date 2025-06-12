@@ -10,6 +10,7 @@ session_set_cookie_params([
 session_start();
 
 require_once '../utils/response.php';
+require_once '../utils/ModelUtils.php';
 
 spl_autoload_register(function ($className) {
     $controllerPath = __DIR__ . '/../controllers/' . $className . '.php';
@@ -110,6 +111,18 @@ else {
                 break;
             case 'home':
                 communication($method, $subroutes, $body);
+                break;
+            case 'posts':
+                require_once '../routes/posts.php';
+                posts($method, $subroutes, $body);
+                break;
+            case 'post_types':
+                require_once '../routes/post_types.php';
+                post_types($method, $subroutes, $body);
+                break;
+            case 'reactions_catalog':
+                require_once '../routes/reactions_catalog.php';
+                reactions_catalog($method, $subroutes, $body);
                 break;
             default:
                 pathNotFound();
