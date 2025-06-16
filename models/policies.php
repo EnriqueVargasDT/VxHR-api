@@ -20,7 +20,12 @@ class Policies {
             $sql = "SELECT
                     p.*,
                     CONCAT(u1.first_name, ' ' , u1.last_name_1, ' ', u1.last_name_2) AS created_by_full_name,
-                    CONCAT(u2.first_name, ' ' , u2.last_name_1, ' ', u2.last_name_2) AS updated_by_full_name
+                    CONCAT(u2.first_name, ' ' , u2.last_name_1, ' ', u2.last_name_2) AS updated_by_full_name,
+                    (
+                        SELECT COUNT(*)
+                        FROM [user].[policies] up
+                        WHERE up.fk_policy_id = p.pk_policy_id
+                    ) AS signed_users_count
                     FROM [dbo].[policies] p
                     LEFT JOIN [user].[users] u1 ON p.created_by = u1.pk_user_id
                     LEFT JOIN [user].[users] u2 ON p.updated_by = u2.pk_user_id
@@ -36,16 +41,25 @@ class Policies {
         exit();
     }
 
-    public function getById($id) {
+    public function getById($id, $return = false) {
         try {
-            $sql = 'SELECT * FROM [dbo].[policies] WHERE pk_policy_id = :pk_policy_id';
+            $sql = 'SELECT
+                *,
+                (
+                    SELECT COUNT(*)
+                    FROM [user].[policies] up
+                    WHERE up.fk_policy_id = p.pk_policy_id
+                ) AS signed_users_count
+            FROM [dbo].[policies] p WHERE pk_policy_id = :pk_policy_id';
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':pk_policy_id', $id, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if($return) return ['ok' => true, 'data' => $result]; 
             sendJsonResponse(200, ['ok' => true, 'data' => $result]);
         }
         catch (Exception $error) {
+            if($return) return ['ok' => false, 'message' => $error->getMessage()];
             handleExceptionError($error);
         }
 
@@ -53,7 +67,15 @@ class Policies {
     }
 
     public function getAllUsersById($id, $page) {
+        $PAGES = '';
+        if($page != "all") 
+            $PAGES = "OFFSET (%s - 1) * 10 ROWS FETCH NEXT 10 ROWS ONLY";
+        
         try {
+            $policyData = $this->getById($id, true);
+            if (empty($policyData['data'])) {
+                sendJsonResponse(404, ['ok' => false, 'message' => 'No se encontró la política especificada.']);
+            }
             $sql = sprintf("
                 SELECT
                     (SELECT COUNT(*) FROM [user].[policies] WHERE fk_policy_id = %s) AS total_rows,
@@ -61,27 +83,29 @@ class Policies {
                     up.pk_user_policy_id,
                     p.pk_policy_id,
                     p.policy,
+                    u.pk_user_id,
                     CASE WHEN TRIM(CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2)) = '' THEN '~Sin Asignar' ELSE TRIM(CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2)) END AS user_full_name,
                     ua.username,
                     jp.job_position,
                     p.content,
                     p.created_at,
+                    p.updated_at,
                     up.signing_date,
-                    up.signature_file
+                    up.signature_file,
+                    p.nom_iso
                 FROM [user].[users] u
                 LEFT JOIN [user].[policies] up ON u.pk_user_id = up.fk_user_id AND fk_policy_id = :pk_policy_id
                 LEFT JOIN [dbo].[policies] p ON up.fk_policy_id = p.pk_policy_id
                 LEFT JOIN [job_position].[positions] jp ON u.fk_job_position_id = jp.pk_job_position_id
                 LEFT JOIN [user].[users_auth] ua ON u.pk_user_id = ua.fk_user_id
                 ORDER BY user_full_name
-                OFFSET (%s - 1) * 10 ROWS 
-                FETCH NEXT 10 ROWS ONLY;
+                $PAGES;
             ", $id, $page);
             $stmt = $this->dbConnection->prepare($sql);
             $stmt->bindParam(':pk_policy_id', $id, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            sendJsonResponse(200, ['ok' => true, 'data' => $result]);
+            sendJsonResponse(200, ['ok' => true, 'data' => $result, 'policy' => $policyData["data"][0]]);
         }
         catch (Exception $error) {
             handleExceptionError($error);

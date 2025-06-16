@@ -18,7 +18,8 @@ function handleError($statusCode, $error) {
 function sendJsonResponse($statusCode, $response) {
     http_response_code($statusCode);
     echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-}
+
+    exit;}
 
 function jsonResponse($data = null, $message = null, $status = 200) {
     http_response_code($status);
