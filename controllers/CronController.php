@@ -5,18 +5,20 @@
 require_once '../models/email.php';
 require_once '../models/users.php';
 
-$emailAllowed = [
-    'rsalazar@vittilog.com',
-    // 'ebernal@vittilog.com',
-    // 'evargas@vittilog.com',
-    // 'vmolar@vittilog.com',
-    // 'mleon@vittilog.com',
-    // 'igonzalez@vittilog.com',
-    // 'fmartinez@vittilog.com'
-];
+
 
 class CronController {
     private $usersModel;
+
+    private $emailAllowed = [
+        'rsalazar@vittilog.com',
+        'ebernal@vittilog.com',
+        'evargas@vittilog.com',
+        'vmolar@vittilog.com',
+        'mleon@vittilog.com',
+        'igonzalez@vittilog.com',
+        'fmartinez@vittilog.com'
+    ];
 
     public function __construct() {
         $this->usersModel = new Users();
@@ -109,8 +111,7 @@ class CronController {
             // Validate environment and filter emails when is local, dev or sandbox.
             if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN']) || $debug) {
                 $recipients = array_filter($recipients, function($email) {
-                    global $emailAllowed;
-                    return in_array($email, $emailAllowed);
+                    return in_array($email, $this->emailAllowed);
                 });
                 $recipients = array_values($recipients);
             }
@@ -148,8 +149,7 @@ class CronController {
                 
             if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN']) || $debug) {
                 $recipients = array_filter($recipients, function($email) {
-                    global $emailAllowed;
-                    return in_array($email, $emailAllowed);
+                    return in_array($email, $this->emailAllowed);
                 });
                 $recipients = array_values($recipients);
             }
