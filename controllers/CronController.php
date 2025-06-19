@@ -127,7 +127,8 @@ class CronController {
                 'recipients' => $recipients,
             ]);
         }catch(Exception $error) {
-            handleExceptionError($error);
+            handleError(400, $error->getMessage());
+            // handleExceptionError($error);
         }
 
         exit();
@@ -222,7 +223,7 @@ class CronController {
                 'recipients' => $recipients,
             ]);
         }catch(Exception $error) {
-            handleExceptionError($error);
+            handleError(400, $error->getMessage());
         }
 
         exit();
