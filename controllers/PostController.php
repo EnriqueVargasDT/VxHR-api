@@ -45,9 +45,9 @@ class PostController {
 
         $post = new Post();
         $post->author_id = $_SESSION['user']["pk_user_id"];
-        $post->post_type_id = $body['post_type_id'];
-        $post->title = $body['title'];
+        $post->post_type_id = $body['post_type_id'] ?? 5;
         $post->content = $body['content'];
+        $post->published_at = $body['published_at'] ?? date('Y-m-d H:i:s');
 
         $id = $post->create();
 
