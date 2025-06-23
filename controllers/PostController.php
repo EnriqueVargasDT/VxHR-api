@@ -83,7 +83,7 @@ class PostController {
 
             // Obtener post final con detalles
             $created = $post->getById($id);
-            jsonResponse($created);
+            jsonResponse(transformToNested($created));
         } else {
             handleError(400, 'Error creating post');
         }
