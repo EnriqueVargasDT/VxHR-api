@@ -109,9 +109,7 @@ class CronController {
             });
             
             // Validate environment and filter emails when is local, dev or sandbox.
-            $debug = false;
             if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN']) || $debug) {
-                $debug = true;
                 $recipients = array_filter($recipients, function($email) {
                     return in_array($email, $this->emailAllowed);
                 });
@@ -151,13 +149,11 @@ class CronController {
                 return filter_var($email, FILTER_VALIDATE_EMAIL);
             });
                 
-            $debug = false;
             if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN']) || $debug) {
                 $recipients = array_filter($recipients, function($email) {
                     return in_array($email, $this->emailAllowed);
                 });
                 $recipients = array_values($recipients);
-                $debug = true;
             }
             
             foreach ($users as $user) {
