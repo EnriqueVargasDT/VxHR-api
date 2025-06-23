@@ -17,7 +17,7 @@ class CronController {
         'vmolar@vittilog.com',
         'mleon@vittilog.com',
         'igonzalez@vittilog.com',
-        // 'fmartinez@vittilog.com'
+        'fmartinez@vittilog.com'
     ];
 
     public function __construct() {
