@@ -130,6 +130,7 @@ class CronController {
                 'users' => $users,
                 'info' => ['start_date' => $startDate, 'end_date' => $endDate],
                 'recipients' => $recipients,
+                'debug' => $debug
             ]);
         }catch(Exception $error) {
             handleError(400, $error->getMessage());
@@ -221,6 +222,7 @@ class CronController {
                 'users' => $users,
                 'info' => ['date' => $date],
                 'recipients' => $recipients,
+                'debug' => $debug
             ]);
         }catch(Exception $error) {
             handleError(400, $error->getMessage());
