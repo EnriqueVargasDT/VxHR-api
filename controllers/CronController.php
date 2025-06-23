@@ -216,7 +216,7 @@ class CronController {
     
             sendJsonResponse(200, [
                 'ok' => true,
-                'message' => 'Users with anniversaries retrieved successfully.',
+                'message' => 'User birthdays retrieved and send successfully.',
                 'count' => count($users),
                 'users' => $users,
                 'info' => ['date' => $date],
