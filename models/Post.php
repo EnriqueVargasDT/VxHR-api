@@ -168,6 +168,8 @@ class Post {
             LEFT JOIN [user].[files] tuf ON tuf.fk_user_id = tu.pk_user_id AND tuf.type_file = 1
             
             AND p.deleted = 0
+
+            ORDER BY p.published_at DESC
         ";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
