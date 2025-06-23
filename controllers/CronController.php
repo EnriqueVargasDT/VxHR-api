@@ -12,11 +12,11 @@ class CronController {
 
     private $emailAllowed = [
         'rsalazar@vittilog.com',
-        // 'ebernal@vittilog.com',
-        // 'evargas@vittilog.com',
-        // 'vmolar@vittilog.com',
-        // 'mleon@vittilog.com',
-        // 'igonzalez@vittilog.com',
+        'ebernal@vittilog.com',
+        'evargas@vittilog.com',
+        'vmolar@vittilog.com',
+        'mleon@vittilog.com',
+        'igonzalez@vittilog.com',
         // 'fmartinez@vittilog.com'
     ];
 
