@@ -12,12 +12,12 @@ class CronController {
 
     private $emailAllowed = [
         'rsalazar@vittilog.com',
-        'ebernal@vittilog.com',
-        'evargas@vittilog.com',
-        'vmolar@vittilog.com',
-        'mleon@vittilog.com',
-        'igonzalez@vittilog.com',
-        'fmartinez@vittilog.com'
+        // 'ebernal@vittilog.com',
+        // 'evargas@vittilog.com',
+        // 'vmolar@vittilog.com',
+        // 'mleon@vittilog.com',
+        // 'igonzalez@vittilog.com',
+        // 'fmartinez@vittilog.com'
     ];
 
     public function __construct() {
@@ -109,15 +109,19 @@ class CronController {
             });
             
             // Validate environment and filter emails when is local, dev or sandbox.
+            $debug = false;
             if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN']) || $debug) {
+                $debug = true;
                 $recipients = array_filter($recipients, function($email) {
                     return in_array($email, $this->emailAllowed);
                 });
                 $recipients = array_values($recipients);
             }
             
+            $subject = "🥳 ¡Gracias por un año más juntos! - Semana $weekNumber";
+            if ($debug) $subject = "[CORREO DE PRUEBA] " . $subject;
             $template = str_replace('[[EMPLOYEES]]', "<tr>" . $persons . "</tr>", $template);
-            $this->sendEmail($recipients, "🥳 ¡Gracias por un año más juntos! - Semana $weekNumber", $template);
+            $this->sendEmail($recipients, $subject, $template);
 
             sendJsonResponse(200, [
                 'ok' => true,
@@ -129,7 +133,6 @@ class CronController {
             ]);
         }catch(Exception $error) {
             handleError(400, $error->getMessage());
-            // handleExceptionError($error);
         }
 
         exit();
@@ -147,15 +150,16 @@ class CronController {
                 return filter_var($email, FILTER_VALIDATE_EMAIL);
             });
                 
+            $debug = false;
             if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN']) || $debug) {
                 $recipients = array_filter($recipients, function($email) {
                     return in_array($email, $this->emailAllowed);
                 });
                 $recipients = array_values($recipients);
+                $debug = true;
             }
             
             foreach ($users as $user) {
-                // $template = file_get_contents('../templates/birthdays.html');
                 $months = [
                     'January' => 'Enero',
                     'February' => 'Febrero',
@@ -200,14 +204,10 @@ class CronController {
                             <td>&nbsp;</td>
                         </tr>
                     </table>";
-
-                // $template = str_replace('[[NAME]]', $user['full_name'], $template);
-                // $template = str_replace('[[BIRTHDAY]]', $user['birthday'], $template);
-                // $template = str_replace('[[PROFILE_PICTURE]]', $user['profile_picture'] ?? $dummyImage, $template);
-                // $template = str_replace('[[JOB_POSITION]]', $user['job_position'], $template);
-                // $template = str_replace('[[OFFICE_NAME]]', $user['office_name'], $template);
                 
-                $this->sendEmail($recipients, "👏 Feliz cumpleaños te desea Vitti Logistics. 🎂", $template, $outputPath, "user-{$user["id"]}");
+                $subject = "🎉 ¡Feliz cumpleaños {$user["first_name"]} {$user["last_name_1"]}! 🎂";
+                if ($debug) $subject = "[CORREO DE PRUEBA] " . $subject;
+                $this->sendEmail($recipients, $subject, $template, $outputPath, "user-{$user["id"]}");
 
                 if (file_exists($outputPath)) {
                     unlink($outputPath);
