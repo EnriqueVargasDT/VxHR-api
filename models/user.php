@@ -138,7 +138,6 @@ class User {
     }
 
     public function save($data) {
-        // dd($data);
         try {
             $fieldsToValidate = [
                 'curp' => 'CURP',
