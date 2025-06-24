@@ -167,7 +167,7 @@ class Post {
             LEFT JOIN [job_position].[positions] jpt ON tu.fk_job_position_id = jpt.pk_job_position_id
             LEFT JOIN [user].[files] tuf ON tuf.fk_user_id = tu.pk_user_id AND tuf.type_file = 1
             
-            AND p.deleted = 0
+            WHERE p.deleted = 0
 
             ORDER BY p.published_at DESC
         ";
