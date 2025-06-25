@@ -24,6 +24,12 @@ class PostController {
                 return transformToNested($item);
             }, $comments);
 
+            $linksModel = new PostLink();
+            $links = $linksModel->getByPost($item['id']);
+            $item["links"] = array_map(function($item) {
+                return transformToNested($item);
+            }, $links);
+
             return transformToNested($item);
         }, $posts);
         jsonResponse($posts);

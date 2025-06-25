@@ -149,13 +149,7 @@ class Post {
                 (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted = 0) AS comments_count,
 
                 -- Conteo de reacciones por tipo
-                (SELECT COUNT(*) FROM post_reactions r WHERE r.post_id = p.id) AS reactions__total,
-
-                -- Link realacionado
-                pl.id as attachments__id,
-                pl.src as attachments__src,
-                pl.title as attachments__title,
-                pl.description as attachments__description
+                (SELECT COUNT(*) FROM post_reactions r WHERE r.post_id = p.id) AS reactions__total
 
             FROM posts p
 
@@ -172,9 +166,6 @@ class Post {
             LEFT JOIN [user].users tu ON tu.pk_user_id = tgt.target_user_id
             LEFT JOIN [job_position].[positions] jpt ON tu.fk_job_position_id = jpt.pk_job_position_id
             LEFT JOIN [user].[files] tuf ON tuf.fk_user_id = tu.pk_user_id AND tuf.type_file = 1
-
-            -- JOIN links
-            LEFT JOIN post_links pl ON p.id = pl.post_id
             
             WHERE p.deleted = 0
 
