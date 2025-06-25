@@ -69,7 +69,7 @@ else {
         $user = null;
         if(isset($validateToken["sub"])) $user = $userController->getByUsername($validateToken["sub"]);
         $_SESSION["user"] = $user;
-        $_SESSION["pk_user_id"] = $user->pk_user_id ?? 0;
+        $_SESSION["pk_user_id"] = $user["pk_user_id"] ?? 0;
         
         
         switch ($route) {
