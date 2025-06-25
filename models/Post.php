@@ -152,10 +152,10 @@ class Post {
                 (SELECT COUNT(*) FROM post_reactions r WHERE r.post_id = p.id) AS reactions__total,
 
                 -- Link realacionado
-                tl.id as attachments_id,
-                tl.src as attachments_src,
-                tl.title as attachments_title,
-                tl.description as attachments_description
+                pl.id as attachments_id,
+                pl.src as attachments_src,
+                pl.title as attachments_title,
+                pl.description as attachments_description
 
             FROM posts p
 
