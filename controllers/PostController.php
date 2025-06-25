@@ -81,8 +81,9 @@ class PostController {
                 $linkModel = new PostLink();
                 foreach ($body['links'] as $link) {
                     $linkModel->post_id = $id;
-                    $linkModel->external_url = $link['external_url'];
-                    $linkModel->internal_redirect_path = $link['internal_redirect_path'] ?? null;
+                    $linkModel->src = $link['src'];
+                    $linkModel->title = $link['title'];
+                    $linkModel->description = isset($link['description']) ? $link['description'] : null;
                     $linkModel->add();
                 }
             }
