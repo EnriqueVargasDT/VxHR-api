@@ -8,8 +8,9 @@ class PostLink {
 
     public $id;
     public $post_id;
-    public $external_url;
-    public $internal_redirect_path;
+    public $src;
+    public $title;
+    public $description;
 
     public function __construct() {
         $this->conn = dbConnection();
@@ -18,8 +19,9 @@ class PostLink {
     public function add() {
         $data = [
             'post_id' => $this->post_id,
-            'external_url' => $this->external_url,
-            'internal_redirect_path' => $this->internal_redirect_path
+            'src' => $this->src,
+            'title' => $this->title,
+            'description' => $this->description
         ];
 
         $result = buildInsertQuery($this->table, $data);
