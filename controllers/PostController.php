@@ -26,7 +26,7 @@ class PostController {
 
             $linksModel = new PostLink();
             $links = $linksModel->getByPost($item['id']);
-            $item["links"] = array_map(function($item) {
+            $item["attachments"] = array_map(function($item) {
                 return transformToNested($item);
             }, $links);
 
