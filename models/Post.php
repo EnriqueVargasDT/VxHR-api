@@ -149,7 +149,7 @@ class Post {
                 (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted = 0) AS comments_count,
 
                 -- Conteo de reacciones por tipo
-                (SELECT COUNT(*) FROM post_reactions r WHERE r.post_id = p.id) AS reactions__total
+                (SELECT COUNT(*) FROM post_reactions r WHERE r.post_id = p.id) AS reactions__total,
 
                 -- Link realacionado
                 tl.id as attachments_id,
