@@ -366,6 +366,22 @@ class User {
             if ($this->dbConnection->inTransaction()) {
                 $this->dbConnection->rollBack();
             }
+
+            $message = $error->getMessage();
+            if (preg_match("/UNIQUE KEY constraint '([^']+)'/", $message, $matches)) {
+                $constraint = $matches[1];
+                $constraintMap = [
+                    'UQ__users_au__F3DBC572C9555A2E' => 'user_id',
+                ];
+                $column = $constraintMap[$constraint] ?? 'valor duplicado';
+
+                if ($column === 'user_id') {
+                    $error = new Exception('Error: El usuario ya existe en la base de datos.');
+                } else {
+                    $error = new Exception("Error: El $column ya existe en la base de datos.");
+                }
+            }
+
             handleExceptionError($error);
         }
 
