@@ -478,7 +478,8 @@ function communication($method, $subroutes, $body) {
                         $communicationController->c4();
                     }
                     else if ($subroutes[0] === 'events') {
-                        $communicationController->events();
+                        $all = isset($_GET["all"]) ? true : null;
+                        $communicationController->events($all);
                     }
                     else if ($subroutes[0] === 'post') {
                         if (isset($_GET['id'])) {

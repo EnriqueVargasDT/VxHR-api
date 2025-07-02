@@ -193,16 +193,17 @@ class Communication {
         exit();
     }
 
-    public function events () {
+    public function events ($all = null) {
         try {
-            $sqlPosts = "
-                SELECT *
-                FROM [communication].[posts]
-                WHERE CAST(publish_date AS DATE) <= CAST(GETDATE() AS DATE)
-                AND [status] = 1
-                AND [fk_post_type_id] = 2
-                ORDER BY publish_date DESC
-            ";
+            $sqlPosts = "SELECT * FROM [communication].[posts] p WHERE ";
+
+            if($all){ 
+                $sqlPosts .= "DATEPART(YEAR, p.publish_date) = DATEPART(YEAR, GETDATE())";
+            } else {
+                $sqlPosts .= "DATEPART(MONTH, p.publish_date) = DATEPART(MONTH, GETDATE())";
+            }
+
+            $sqlPosts .= " AND [status] = 1 AND [fk_post_type_id] = 2 ORDER BY publish_date DESC";
 
             $data = $this->dbConnection->query($sqlPosts)->fetchAll(PDO::FETCH_ASSOC);
             sendJsonResponse(200, ['ok' => true, 'data' => $data, 'count' => count($data)]);

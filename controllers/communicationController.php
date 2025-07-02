@@ -28,8 +28,8 @@ class CommunicationController {
         $this->communication->communication();
     }
 
-    public function events() {
-        $this->communication->events();
+    public function events($all = null) {
+        $this->communication->events($all);
     }
 
     public function c4() {
