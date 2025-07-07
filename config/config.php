@@ -5,7 +5,7 @@ define('DB_PASSWORD', getenv('DB_PASSWORD'));
 
 $DB_DATABASE = 'VICA-PROD';
 $HTTP_ORIGIN = $_SERVER['HTTP_ORIGIN'];
-if (preg_match('/dev/', $HTTP_ORIGIN) || preg_match('/sandbox/', $HTTP_ORIGIN) || preg_match('/localhost/', $HTTP_ORIGIN) || preg_match('/lively-glacier-076b0c40f/', $HTTP_ORIGIN)) {
+if (preg_match('/dev/', $HTTP_ORIGIN) || preg_match('/sandbox/', $HTTP_ORIGIN) || preg_match('/localhost/', $HTTP_ORIGIN) || preg_match('/lively-glacier-076b0c40f/', $HTTP_ORIGIN) || preg_match('/gray-plant-0db0cdd0f/', $HTTP_ORIGIN)) {
     $DB_DATABASE = 'VICA-DEV';
 }
 define('DB_DATABASE', $DB_DATABASE);
