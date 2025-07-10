@@ -163,6 +163,46 @@ class Users {
         }
     
     }
+
+
+    public function getAllCommunicationUsers($job_position_type) {
+
+        try {
+
+            $allTypes = "";
+            if( $job_position_type !== 3) {
+                $allTypes = "p.fk_job_position_type_id = :position AND ";
+            }
+            $sql ="SELECT
+                CASE
+                    WHEN u.institutional_email IS NOT NULL AND u.institutional_email NOT IN ('', '-') THEN u.institutional_email
+                    WHEN u.personal_email IS NOT NULL AND u.personal_email NOT IN ('', '-') THEN u.personal_email
+                    ELSE NULL
+                END AS email
+                FROM [user].[users] u
+                INNER JOIN [job_position].[positions] p ON u.fk_job_position_id = p.pk_job_position_id
+                WHERE ".$allTypes." u.is_active = 1";
+            $stmt = $this->dbConnection->prepare($sql);
+
+            if( $job_position_type !== 3) {
+                $stmt->bindParam(':position',$job_position_type, PDO::PARAM_INT);
+            }
+            $stmt->execute();
+            // $result = $stmt->fetchAll();
+            //    return $result;
+            $users = [];
+            $i = 1;
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $users[] = $row;
+            }
+
+            return $users;
+
+        } catch(Exeption $error) {
+            handleExceptionError($error);
+        }
+        exit();
+    } 
     
 
     /*

@@ -40,6 +40,10 @@ class CommunicationController {
         $this->communication->getAllPostTypes();
     }
 
+    public function getAllPostJobPositions() {
+        $this->communication->getAllPostJobPositions();
+    }
+
     public function getPostById($id) {
         $this->communication->getPostById($id);
     }

@@ -3,6 +3,7 @@
 // TODO: Create a method to validate if any pulbication is schedule to show today and send the email to the marketing team with the publication.
 
 require_once '../models/email.php';
+require_once '../models/communication.php';
 require_once '../models/users.php';
 
 
@@ -22,6 +23,7 @@ class CronController {
 
     public function __construct() {
         $this->usersModel = new Users();
+        $this->communicationModel = new Communication();
     }
 
     public function getAnniversaries($startDate = null, $endDate = null, $debug = false) {
@@ -225,6 +227,104 @@ class CronController {
         }
 
         exit();
+    }
+
+    public function getAllCommunications($date = null,$debug = false) {
+        $comunications = $this->communicationModel->getAllCronPosts(); 
+
+        if(empty($comunications)) return sendJsonResponse(200, [
+            'ok' => true,
+            'message' => 'There is not communication in this moment',
+            'count' => count($comunications),
+            'comunications' => $comunications,
+            'info' => ['date' => $date],
+            'debug' => $debug
+        ]);
+
+        // dd($comunications);
+
+        foreach($comunications as $com) {
+            $emails = $this->usersModel->getAllCommunicationUsers($com['fk_job_position_type_id']);
+
+            $recipients = array_map(function($user) {
+                return $user['email'];
+            }, $emails);
+
+            $recipients = array_filter($recipients, function($email) {
+                return filter_var($email, FILTER_VALIDATE_EMAIL);
+            });
+                
+            if (preg_match('/dev/', $_SERVER['HTTP_ORIGIN']) || preg_match('/sandbox/', $_SERVER['HTTP_ORIGIN']) || preg_match('/localhost/', $_SERVER['HTTP_ORIGIN']) || $debug) {
+                $recipients = array_filter($recipients, function($email) {
+                    return in_array($email, $this->emailAllowed);
+                });
+                $recipients = array_values($recipients);
+            }
+
+            $template = file_get_contents('../templates/communicationEmail.html');
+            $image = "";
+            $outputPath = "";
+            $imagePath = "";
+            if(isset($com['file'])) {
+                $file = base64_decode($com['file']);
+                $outputPath = __DIR__ . "/../public/birthday-cards/communication-{$com["pk_post_id"]}.png";
+                $imagePath = "communication-{$com["pk_post_id"]}";
+                $file = file_put_contents($outputPath, $file);
+                $image .= "<img src='cid:communication-{$com["pk_post_id"]}' alt='".$com['title']."' width='600' style='display: block' />";
+            }
+
+            $template = str_replace('{{comunicationTitle}}', $com['title'], $template);
+            $template = str_replace('{{comunicationImage}}', $image, $template);
+            $template = str_replace('{{comunicationText}}', $com['content'], $template);
+
+
+            $HTTP_HOST = null;
+            if ($_SERVER['HTTP_HOST'] === 'localhost') {
+                $HTTP_HOST = 'http://localhost:3000';
+                // $HTTP_HOST = 'http://localhost:5173';
+            }
+            else {
+                $HTTP_HOST = $_SERVER['HTTP_ORIGIN'];
+            }
+
+
+            // 1 = communication
+            // 2 = events
+            // 3 = c4
+
+            $urlLink = "";
+            if($com['fk_post_type_id'] == 2) {
+                $urlLink = $HTTP_HOST."/events"."/".$com['pk_post_id'];
+
+            } else if($com['fk_post_type_id'] == 3) {
+                $urlLink = $HTTP_HOST."/internal-communication/c4/".$com['pk_post_id'];
+                // $urlLink = $HTTP_HOST."/internal-communication/c4";
+
+            } else {
+                $urlLink = $HTTP_HOST."/internal-communication"."/".$com['pk_post_id'];
+                // $urlLink = $HTTP_HOST."/internal-communication";
+            }
+            $template = str_replace('{{comunicationLink}}', $urlLink, $template);
+
+            $subject = "¡Hay novedades importantes, consulta el nuevo comunicado!";
+            if ($debug) $subject = "[CORREO DE PRUEBA] " . $subject;
+            // $this->sendEmail($recipients, $subject, $template, "path/to/save.png", "communication-image");
+            $this->sendEmail($recipients, $subject, $template, $outputPath, $imagePath);
+
+            if (file_exists($outputPath)) {
+                unlink($outputPath);
+            }
+        }
+
+        sendJsonResponse(200, [
+            'ok' => true,
+            'message' => 'Communication retrieved and send successfully.',
+            'count' => count($comunications),
+            'comunications' => $comunications,
+            'info' => ['date' => $date],
+            'recipients' => $recipients,
+            'debug' => $debug
+        ]);
     }
 
     private function sendEmail($email, $subject, $template, $attachmentPath = null, $attachmentEmbeddedName = null) {

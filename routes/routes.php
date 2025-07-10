@@ -56,6 +56,10 @@ else {
                 $cronController = new CronController();
                 $cronController->getBirthdays($queryParameters['date'] ?? null, $queryParameters['debug'] ?? null);
                 break;
+            case 'communication':
+                $cronController = new CronController();
+                $cronController->getAllCommunications($queryParameters['date'] ?? null, $queryParameters['debug'] ?? null);
+                break;
             default:
                 pathNotFound();
                 break;
@@ -491,6 +495,9 @@ function communication($method, $subroutes, $body) {
                     }
                     else if ($subroutes[0] === 'post_types') {
                         $communicationController->getAllPostTypes();
+                    }
+                    else if ($subroutes[0] === 'job_position') {
+                        $communicationController->getAllPostJobPositions();
                     }
                 }
             }

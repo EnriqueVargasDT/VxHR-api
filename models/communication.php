@@ -259,6 +259,35 @@ class Communication {
         exit();
     }
 
+    public function getAllCronPosts() {
+        try {
+            $sql = "SELECT
+                p.pk_post_id,
+                p.fk_post_type_id,
+                p.publish_date,
+                p.title,
+                p.content,
+                p.[file],
+                pt.post_type,
+                p.status,
+                p.send_email,
+                p.fk_job_position_type_id,
+                CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name
+                FROM [communication].[posts] p
+                INNER JOIN [communication].[post_types] pt ON p.fk_post_type_id = pt.pk_post_type_id
+                LEFT JOIN [user].[users] u ON p.created_by = u.pk_user_id
+                WHERE p.status = 1 AND DATEPART(DAY, p.publish_date) = DATEPART(DAY, GETDATE()) AND p.send_email = 1
+                ORDER BY p.created_at DESC";
+            $stmt = $this->dbConnection->query($sql);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $result;
+
+        } catch (Exeption $error) {
+            handleExeptionError($error);
+        }
+        exit();
+    }
+
     public function getPostById($pk_post_id) {
         try {
             $sql = 'SELECT TOP 1 * FROM [communication].[posts] WHERE pk_post_id = :pk_post_id';
@@ -289,6 +318,20 @@ class Communication {
         exit();
     }
 
+    public function getAllPostJobPositions() {
+        try {
+            $sql = 'SELECT * FROM [job_position].[type]';
+            $stmt = $this->dbConnection->query($sql);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            sendJsonResponse(200, ['ok' => true, 'data' => $result]);
+        }
+        catch(Exception $error) {
+            handleExceptionError($error);
+        }
+
+        exit();
+    }
+
     public function savePost($data) {
         try {
             $this->dbConnection->beginTransaction();
@@ -302,6 +345,10 @@ class Communication {
             $stmt->bindParam(':title', $data['title'], PDO::PARAM_STR);
             $stmt->bindParam(':content', $data['content'], PDO::PARAM_STR);
             $stmt->bindParam(':created_by', $pk_user_id, PDO::PARAM_INT);
+            if(isset($data['fk_job_position_type_id']) && $data['fk_job_position_type_id'] !== "") {
+                $stmt->bindParam(':send_email', $data['send_email'], PDO::PARAM_INT);
+                $stmt->bindParam(':fk_job_position_type_id', $data['fk_job_position_type_id'], PDO::PARAM_INT);
+            }
             if (!$stmt->execute() || $stmt->rowCount() === 0) {
                 throw new Exception('Error: No se pudo crear la publicación.');
             }
