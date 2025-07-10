@@ -241,6 +241,8 @@ class CronController {
             'debug' => $debug
         ]);
 
+        // dd($comunications);
+
         foreach($comunications as $com) {
             $emails = $this->usersModel->getAllCommunicationUsers($com['fk_job_position_type_id']);
 
@@ -278,18 +280,29 @@ class CronController {
 
             $HTTP_HOST = null;
             if ($_SERVER['HTTP_HOST'] === 'localhost') {
-                // $HTTP_HOST = 'http://localhost:3000';
-                $HTTP_HOST = 'http://localhost:5173';
+                $HTTP_HOST = 'http://localhost:3000';
+                // $HTTP_HOST = 'http://localhost:5173';
             }
             else {
                 $HTTP_HOST = $_SERVER['HTTP_ORIGIN'];
             }
 
-            // $urlLink = $HTTP_HOST."/internal-communication?id=".$com['pk_post_id'];
-            $urlLink = $HTTP_HOST."/internal-communication";
-            if($com['fk_post_type_id'] === 3) {
-                // $urlLink = $HTTP_HOST."/internal-communication/c4?id=".$com['pk_post_id'];
-                $urlLink = $HTTP_HOST."/internal-communication/c4";
+
+            // 1 = communication
+            // 2 = events
+            // 3 = c4
+
+            $urlLink = "";
+            if($com['fk_post_type_id'] == 2) {
+                $urlLink = $HTTP_HOST."/events"."/".$com['pk_post_id'];
+
+            } else if($com['fk_post_type_id'] == 3) {
+                $urlLink = $HTTP_HOST."/internal-communication/c4/".$com['pk_post_id'];
+                // $urlLink = $HTTP_HOST."/internal-communication/c4";
+
+            } else {
+                $urlLink = $HTTP_HOST."/internal-communication"."/".$com['pk_post_id'];
+                // $urlLink = $HTTP_HOST."/internal-communication";
             }
             $template = str_replace('{{comunicationLink}}', $urlLink, $template);
 
