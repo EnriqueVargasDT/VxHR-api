@@ -12,13 +12,13 @@ class CronController {
     private $usersModel;
 
     private $emailAllowed = [
-        'rsalazar@vittilog.com',
-        'ebernal@vittilog.com',
-        'evargas@vittilog.com',
-        'vmolar@vittilog.com',
+        // 'rsalazar@vittilog.com',
+        // 'ebernal@vittilog.com',
+        // 'evargas@vittilog.com',
+        // 'vmolar@vittilog.com',
         'mleon@vittilog.com',
-        'igonzalez@vittilog.com',
-        'fmartinez@vittilog.com'
+        // 'igonzalez@vittilog.com',
+        // 'fmartinez@vittilog.com'
     ];
 
     public function __construct() {
@@ -241,16 +241,10 @@ class CronController {
             'debug' => $debug
         ]);
 
-        // dd($comunications);
-
         foreach($comunications as $com) {
             $emails = $this->usersModel->getAllCommunicationUsers($com['fk_job_position_type_id']);
 
-            $recipients = array_map(function($user) {
-                return $user['email'];
-            }, $emails);
-
-            $recipients = array_filter($recipients, function($email) {
+            $recipients = array_filter($emails, function($email) {
                 return filter_var($email, FILTER_VALIDATE_EMAIL);
             });
                 
@@ -277,38 +271,26 @@ class CronController {
             $template = str_replace('{{comunicationImage}}', $image, $template);
             $template = str_replace('{{comunicationText}}', $com['content'], $template);
 
-
-            $HTTP_HOST = null;
-            if ($_SERVER['HTTP_HOST'] === 'localhost') {
-                $HTTP_HOST = 'http://localhost:3000';
-                // $HTTP_HOST = 'http://localhost:5173';
-            }
-            else {
-                $HTTP_HOST = $_SERVER['HTTP_ORIGIN'];
-            }
-
+            $HTTP_HOST = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : $_SERVER['HTTP_HOST'];
 
             // 1 = communication
             // 2 = events
             // 3 = c4
-
             $urlLink = "";
             if($com['fk_post_type_id'] == 2) {
                 $urlLink = $HTTP_HOST."/events"."/".$com['pk_post_id'];
 
             } else if($com['fk_post_type_id'] == 3) {
                 $urlLink = $HTTP_HOST."/internal-communication/c4/".$com['pk_post_id'];
-                // $urlLink = $HTTP_HOST."/internal-communication/c4";
 
             } else {
                 $urlLink = $HTTP_HOST."/internal-communication"."/".$com['pk_post_id'];
-                // $urlLink = $HTTP_HOST."/internal-communication";
             }
             $template = str_replace('{{comunicationLink}}', $urlLink, $template);
 
             $subject = "¡Hay novedades importantes, consulta el nuevo comunicado!";
             if ($debug) $subject = "[CORREO DE PRUEBA] " . $subject;
-            // $this->sendEmail($recipients, $subject, $template, "path/to/save.png", "communication-image");
+
             $this->sendEmail($recipients, $subject, $template, $outputPath, $imagePath);
 
             if (file_exists($outputPath)) {

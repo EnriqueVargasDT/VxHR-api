@@ -188,12 +188,10 @@ class Users {
                 $stmt->bindParam(':position',$job_position_type, PDO::PARAM_INT);
             }
             $stmt->execute();
-            // $result = $stmt->fetchAll();
-            //    return $result;
             $users = [];
             $i = 1;
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $users[] = $row;
+                $users[] = $row["email"];
             }
 
             return $users;
