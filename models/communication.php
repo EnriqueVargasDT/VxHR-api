@@ -271,12 +271,16 @@ class Communication {
                 pt.post_type,
                 p.status,
                 p.send_email,
-                p.fk_job_position_type_id,
-                CONCAT(u.first_name, ' ', u.last_name_1, ' ', u.last_name_2) AS created_by_full_name
+                p.fk_job_position_type_id
                 FROM [communication].[posts] p
                 INNER JOIN [communication].[post_types] pt ON p.fk_post_type_id = pt.pk_post_type_id
                 LEFT JOIN [user].[users] u ON p.created_by = u.pk_user_id
-                WHERE p.status = 1 AND DATEPART(DAY, p.publish_date) = DATEPART(DAY, GETDATE()) AND p.send_email = 1
+                WHERE 
+                    p.status = 1
+                    AND DATEPART(DAY, p.publish_date) = DATEPART(DAY, GETDATE())
+                    AND DATEPART(MONTH, p.publish_date) = DATEPART(MONTH, GETDATE())
+                    AND DATEPART(YEAR, p.publish_date) = DATEPART(YEAR, GETDATE())
+                    AND p.send_email = 1
                 ORDER BY p.created_at DESC";
             $stmt = $this->dbConnection->query($sql);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
