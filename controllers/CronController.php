@@ -131,8 +131,8 @@ class CronController {
                 'info' => ['start_date' => $startDate, 'end_date' => $endDate],
                 'recipients' => $recipients,
                 'debug' => $debug,
-                "origin" => isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : null
-
+                "origin" => isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : null,
+                "db" => DB_DATABASE
             ]);
         }catch(Exception $error) {
             handleError(400, $error->getMessage());
