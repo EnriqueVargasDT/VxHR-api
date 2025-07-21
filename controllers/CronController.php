@@ -13,12 +13,12 @@ class CronController {
 
     private $emailAllowed = [
         'rsalazar@vittilog.com',
-        'ebernal@vittilog.com',
-        'evargas@vittilog.com',
-        'vmolar@vittilog.com',
+        // 'ebernal@vittilog.com',
+        // 'evargas@vittilog.com',
+        // 'vmolar@vittilog.com',
         'mleon@vittilog.com',
-        'igonzalez@vittilog.com',
-        'fmartinez@vittilog.com'
+        // 'igonzalez@vittilog.com',
+        // 'fmartinez@vittilog.com'
     ];
 
     public function __construct() {
@@ -130,7 +130,9 @@ class CronController {
                 'users' => $users,
                 'info' => ['start_date' => $startDate, 'end_date' => $endDate],
                 'recipients' => $recipients,
-                'debug' => $debug
+                'debug' => $debug,
+                "origin" => isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : null
+
             ]);
         }catch(Exception $error) {
             handleError(400, $error->getMessage());
