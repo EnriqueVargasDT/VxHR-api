@@ -118,10 +118,12 @@ class CronController {
                 $recipients = array_values($recipients);
             }
             
-            $subject = "🥳 ¡Gracias por un año más juntos! - Semana $weekNumber";
-            if ($debug) $subject = "[CORREO DE PRUEBA] " . $subject;
-            $template = str_replace('[[EMPLOYEES]]', "<tr>" . $persons . "</tr>", $template);
-            $this->sendEmail($recipients, $subject, $template);
+            if (count($users) > 0) {
+                $subject = "🥳 ¡Gracias por un año más juntos! - Semana $weekNumber";
+                if ($debug) $subject = "[CORREO DE PRUEBA] " . $subject;
+                $template = str_replace('[[EMPLOYEES]]', "<tr>" . $persons . "</tr>", $template);
+                $this->sendEmail($recipients, $subject, $template);
+            }
 
             sendJsonResponse(200, [
                 'ok' => true,
