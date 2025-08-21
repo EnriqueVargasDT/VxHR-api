@@ -21,13 +21,14 @@ function sendJsonResponse($statusCode, $response) {
 
     exit;}
 
-function jsonResponse($data = null, $message = null, $status = 200) {
+function jsonResponse($data = null, $message = null, $status = 200, $extras = []) {
     http_response_code($status);
     header('Content-Type: application/json');
     echo json_encode([
         'ok' => true,
         'message' => $message,
-        'data' => $data
+        'data' => $data,
+        ...$extras
     ]);
     exit;
 }
