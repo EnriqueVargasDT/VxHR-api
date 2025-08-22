@@ -128,6 +128,10 @@ else {
                 require_once '../routes/reactions_catalog.php';
                 reactions_catalog($method, $subroutes, $body);
                 break;
+            case 'notifications':
+                require_once '../routes/notifications.php';
+                notifications($method, $subroutes, $body);
+                break;
             default:
                 pathNotFound();
                 break;

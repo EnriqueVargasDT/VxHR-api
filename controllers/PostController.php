@@ -8,35 +8,15 @@ require_once '../models/PostTarget.php';
 require_once '../models/Reaction.php';
 require_once '../models/Comment.php';
 
+
+
 class PostController {
-    // public function index() {
-    //     $post = new Post();
-    //     $posts = $post->getAll();
-    //     $posts = array_map(function($item) {
-    //         $reactionModel = new Reaction();
-    //         $rows = $reactionModel->getReactionsByPost($item['id']); // Ejecuta el query
-    //         $reactions = formatReactions($rows);
-    //         $item["reactions"] = $reactions;
+    private $reactionCodes = [
+        'like','love','applause','birthday-cake','smile',
+        'trophy','idea','appreciation','sympathy','star'
+    ];
 
-    //         $commentModel = new Comment();
-    //         $comments = $commentModel->getByPost($item['id']);
-    //         $item["comments"] = array_map(function($item) {
-    //             return transformToNested($item);
-    //         }, $comments);
-
-    //         $linksModel = new PostLink();
-    //         $links = $linksModel->getByPost($item['id']);
-    //         $item["attachments"] = array_map(function($item) {
-    //             return transformToNested($item);
-    //         }, $links);
-
-    //         return transformToNested($item);
-    //     }, $posts);
-    //     jsonResponse($posts);
-    // }
-
-    public function index(): void
-    {
+    public function index(): void {
         $page  = max(1, (int)($_GET['page']  ?? 1));
         $limit = max(1, min((int)($_GET['limit'] ?? 20), 50));
         $offset = ($page - 1) * $limit;
@@ -45,20 +25,14 @@ class PostController {
         $total = $postModel->countAll();
         $rows  = $postModel->getPage($limit, $offset);
 
-        // catálogo esperado (asegura llaves con 0)
-        $reactionCodes = [
-            'like','love','applause','birthday-cake','smile',
-            'trophy','idea','appreciation','sympathy','star'
-        ];
-
         $data = [];
         foreach ($rows as $r) {
-            // 1) anidar created_by / user / reactions.total
+        
             $nested = transformToNested($r);
 
-            // 2) reactions.count (de JSON -> mapa con ceros)
+        
             $countArr = json_decode($nested['reactions']['count_json'] ?? '[]', true) ?: [];
-            $countMap = array_fill_keys($reactionCodes, 0);
+            $countMap = array_fill_keys($this->reactionCodes, 0);
             foreach ($countArr as $it) {
                 if (isset($it['code'])) $countMap[$it['code']] = (int)($it['qty'] ?? 0);
             }
@@ -66,17 +40,17 @@ class PostController {
             $nested['reactions']['count']  = $countMap;
             $nested['reactions']['total']  = (int)($nested['reactions']['total'] ?? 0);
 
-            // 3) reactions.items
+        
             $nested['reactions']['items'] =
                 json_decode($nested['reactions']['items_json'] ?? '[]', true) ?: [];
             unset($nested['reactions']['items_json']);
 
-            // 4) comments (array) y comments_count top-level ya viene
+        
             $nested['comments'] =
                 json_decode($nested['comments']['items_json'] ?? '[]', true) ?: [];
-            unset($nested['comments']['items_json']); // no usamos objeto comments
+            unset($nested['comments']['items_json']);
 
-            // 5) attachments
+        
             $nested['attachments'] =
                 json_decode($nested['attachments']['items_json'] ?? '[]', true) ?: [];
             unset($nested['attachments']['items_json']);
@@ -94,31 +68,40 @@ class PostController {
         ]);
     }
 
-
-
-    /**
-     * Convierte una fecha (string de DB) desde UTC a la TZ deseada, en ISO 8601.
-     * Si tus columnas NO están en UTC, ajusta el timezone de origen aquí.
-     */
-    private function toTz(?string $dbDate, DateTimeZone $tz): ?string
-    {
-        if (!$dbDate) return null;
-
-        // Si DB guarda datetime/datetime2 en UTC sin tz, interpreta como UTC:
-        $src = new DateTimeImmutable($dbDate, new DateTimeZone('UTC'));
-        return $src->setTimezone($tz)->format(DATE_ATOM); // ISO 8601
-    }
-
-
     public function show($id) {
         $post = new Post();
-        $data = $post->getById($id);
-        if (!$data) {
+        $response = $post->getById($id);
+        if (!$response) {
             handleError(404, 'Post not found');
             return;
         }
 
-        jsonResponse(transformToNested($data));
+        $nested = transformToNested($response);
+        $countArr = json_decode($nested['reactions']['count_json'] ?? '[]', true) ?: [];
+        $countMap = array_fill_keys($this->reactionCodes, 0);
+        foreach ($countArr as $it) {
+            if (isset($it['code'])) $countMap[$it['code']] = (int)($it['qty'] ?? 0);
+        }
+        unset($nested['reactions']['count_json']);
+        $nested['reactions']['count']  = $countMap;
+        $nested['reactions']['total']  = (int)($nested['reactions']['total'] ?? 0);
+
+    
+        $nested['reactions']['items'] =
+            json_decode($nested['reactions']['items_json'] ?? '[]', true) ?: [];
+        unset($nested['reactions']['items_json']);
+
+    
+        $nested['comments'] =
+            json_decode($nested['comments']['items_json'] ?? '[]', true) ?: [];
+        unset($nested['comments']['items_json']);
+
+    
+        $nested['attachments'] =
+            json_decode($nested['attachments']['items_json'] ?? '[]', true) ?: [];
+        unset($nested['attachments']['items_json']);
+
+        jsonResponse($nested);
     }
 
     public function store() {
